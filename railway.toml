@@ -1,0 +1,12 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[build.args]
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = "${{NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}}"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
