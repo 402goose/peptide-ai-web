@@ -1,45 +1,29 @@
-# Deploying Peptide AI to Vercel
+# Deploying Peptide AI
 
-## Quick Deploy (Recommended)
+## Railway (Recommended)
 
-### 1. Push to GitHub
+### 1. Deploy to Railway
 
-```bash
-# Create a new repo on GitHub, then:
-git remote add origin https://github.com/YOUR_USERNAME/peptide-ai-web.git
-git add .
-git commit -m "Initial commit - Peptide AI web app"
-git push -u origin main
-```
+1. Go to [railway.app](https://railway.app) and sign in
+2. Click "New Project" → "Deploy from GitHub repo"
+3. Select `peptide-ai-web` repository
+4. Railway will auto-detect Next.js
+5. Add environment variables (see below)
+6. Click "Deploy"
 
-### 2. Deploy to Vercel
+You'll get a URL like `peptide-ai-web-production.up.railway.app`
+
+### Custom Domain
+Settings → Domains → Add your domain (e.g., `app.peptide.ai`)
+
+---
+
+## Alternative: Vercel
 
 1. Go to [vercel.com](https://vercel.com) and sign in with GitHub
-2. Click "New Project"
-3. Import your `peptide-ai-web` repository
-4. Configure environment variables:
-   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Your Clerk publishable key
-   - `CLERK_SECRET_KEY` - Your Clerk secret key
-   - `OPENAI_API_KEY` - Your OpenAI API key
-5. Click "Deploy"
-
-That's it! You'll get a URL like `peptide-ai-web.vercel.app`
-
-## Alternative: Deploy with Vercel CLI
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Login
-vercel login
-
-# Deploy (from the web directory)
-vercel
-
-# For production:
-vercel --prod
-```
+2. Click "New Project" → Import `peptide-ai-web`
+3. Add environment variables
+4. Click "Deploy"
 
 ## Environment Variables Required
 
