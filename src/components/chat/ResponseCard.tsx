@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import {
   FlaskConical, Users, Pill, ShoppingCart,
-  ChevronDown, ChevronRight, ExternalLink,
-  CheckCircle2, AlertTriangle, Clock, TrendingUp
+  ExternalLink, CheckCircle2, AlertTriangle, Clock, TrendingUp
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Source } from '@/types'
@@ -53,21 +52,10 @@ const VENDORS = [
 
 export function ResponseCard({ sources, peptidesMentioned = [], showVendors = true }: ResponseCardProps) {
   const [activeTab, setActiveTab] = useState<TabId>('research')
-  const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set())
 
   // Separate sources by type
   const researchSources = sources.filter(s => s.type === 'pubmed' || s.type === 'arxiv' || s.type === 'biorxiv')
   const experienceSources = sources.filter(s => s.type === 'reddit' || s.type === 'user_journey')
-
-  const toggleSource = (index: number) => {
-    const newExpanded = new Set(expandedSources)
-    if (newExpanded.has(index)) {
-      newExpanded.delete(index)
-    } else {
-      newExpanded.add(index)
-    }
-    setExpandedSources(newExpanded)
-  }
 
   return (
     <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900">
@@ -128,39 +116,48 @@ export function ResponseCard({ sources, peptidesMentioned = [], showVendors = tr
                   key={index}
                   className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden"
                 >
-                  <button
-                    onClick={() => toggleSource(index)}
-                    className="w-full flex items-start gap-3 p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                  >
+                  <div className="flex items-start gap-3 p-3">
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-blue-100 dark:bg-blue-900/50 text-xs font-medium text-blue-600 dark:text-blue-400">
                       {index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">
-                        {source.title}
-                      </h4>
+                      {source.url ? (
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group"
+                        >
+                          <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {source.title}
+                            <ExternalLink className="inline h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </h4>
+                        </a>
+                      ) : (
+                        <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">
+                          {source.title}
+                        </h4>
+                      )}
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         {source.citation}
                       </p>
+                      {/* Always show link if available */}
+                      {source.url && (
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mt-2"
+                        >
+                          {source.type === 'pubmed' ? 'View on PubMed' :
+                           source.type === 'arxiv' ? 'View on arXiv' :
+                           source.type === 'biorxiv' ? 'View on bioRxiv' :
+                           'View Source'}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
                     </div>
-                    {expandedSources.has(index) ? (
-                      <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-                    )}
-                  </button>
-                  {expandedSources.has(index) && source.url && (
-                    <div className="px-3 pb-3 pt-0">
-                      <a
-                        href={source.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-                      >
-                        View on PubMed <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </div>
-                  )}
+                  </div>
                 </div>
               ))
             )}
