@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect } from 'react'
 import { MessageBubble } from './MessageBubble'
 import { TypingIndicator } from './TypingIndicator'
 import { FollowUpChips } from './FollowUpChips'
@@ -26,72 +26,48 @@ export function MessageList({
   onFollowUpClick,
 }: MessageListProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const isUserScrollingRef = useRef(false)
+  const lastAssistantRef = useRef<HTMLDivElement>(null)
 
   // Check if we're actively streaming (loading + last message is assistant with content)
   const lastMessage = messages[messages.length - 1]
   const isStreaming = isLoading && lastMessage?.role === 'assistant' && lastMessage?.content?.length > 0
 
-  // Check if user is at the bottom (within threshold)
-  const isAtBottom = useCallback(() => {
-    const container = scrollContainerRef.current
-    if (!container) return true
-    const threshold = 50
-    return container.scrollHeight - container.scrollTop - container.clientHeight < threshold
-  }, [])
-
-  // Scroll to bottom - only when appropriate
-  const scrollToBottom = useCallback(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-    container.scrollTop = container.scrollHeight
-  }, [])
-
-  // Track user scrolling - set flag when user scrolls away from bottom
-  const handleScroll = useCallback(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    const atBottom = isAtBottom()
-
-    // If user is at bottom, they want to follow new content
-    // If they've scrolled up, don't auto-scroll
-    isUserScrollingRef.current = !atBottom
-  }, [isAtBottom])
-
-  // Only auto-scroll when content changes AND user hasn't scrolled away
-  useEffect(() => {
-    if (!isUserScrollingRef.current) {
-      // Use requestAnimationFrame to ensure DOM has updated
-      requestAnimationFrame(() => {
-        scrollToBottom()
-      })
-    }
-  }, [messages, scrollToBottom])
-
-  // Force scroll when user sends a NEW message (reset scroll lock)
+  // When a new assistant message appears, scroll to show it from the TOP
   const prevMessageCountRef = useRef(messages.length)
   useEffect(() => {
-    const lastMsg = messages[messages.length - 1]
-    const isNewUserMessage = messages.length > prevMessageCountRef.current && lastMsg?.role === 'user'
+    const container = scrollContainerRef.current
+    if (!container) return
 
-    if (isNewUserMessage) {
-      isUserScrollingRef.current = false
-      scrollToBottom()
+    // Check if this is a new message (count increased)
+    if (messages.length > prevMessageCountRef.current) {
+      const lastMsg = messages[messages.length - 1]
+
+      // If user just sent a message, scroll to bottom to see typing indicator
+      if (lastMsg?.role === 'user') {
+        container.scrollTop = container.scrollHeight
+      }
     }
 
     prevMessageCountRef.current = messages.length
-  }, [messages, scrollToBottom])
+  }, [messages.length])
+
+  // When assistant response appears (loading ends), scroll to show it from top
+  const wasLoadingRef = useRef(false)
+  useEffect(() => {
+    if (wasLoadingRef.current && !isLoading && lastAssistantRef.current) {
+      // Response just finished - scroll to show the assistant message from the top
+      lastAssistantRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    wasLoadingRef.current = isLoading
+  }, [isLoading])
 
   return (
     <div
       ref={scrollContainerRef}
-      onScroll={handleScroll}
-      className="h-full overflow-y-auto scroll-smooth flex flex-col"
+      className="h-full overflow-y-auto"
     >
-      {/* Spacer pushes content to bottom when there's not enough to fill screen */}
-      <div className="flex-1" />
+      {/* Min height ensures content starts at top, not pushed to bottom */}
+      <div className="min-h-full flex flex-col justify-end">
 
       <div className="mx-auto max-w-3xl w-full px-4 py-6">
         {messages.map((message, index) => {
@@ -103,13 +79,19 @@ export function MessageList({
 
           if (isEmptyStreamingMessage) return null
 
+          const isLastAssistant = message.role === 'assistant' && index === messages.length - 1
+
           return (
-            <MessageBubble
+            <div
               key={`${message.timestamp}-${index}`}
-              message={message}
-              isLast={index === messages.length - 1 && !isLoading}
-              isStreaming={isStreaming && index === messages.length - 1}
-            />
+              ref={isLastAssistant ? lastAssistantRef : undefined}
+            >
+              <MessageBubble
+                message={message}
+                isLast={index === messages.length - 1 && !isLoading}
+                isStreaming={isStreaming && index === messages.length - 1}
+              />
+            </div>
           )
         })}
 
@@ -166,7 +148,8 @@ export function MessageList({
         )}
 
         {/* Scroll anchor */}
-        <div ref={messagesEndRef} className="h-4" />
+        <div className="h-4" />
+      </div>
       </div>
     </div>
   )
