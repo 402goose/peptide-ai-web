@@ -1,65 +1,118 @@
-import Image from "next/image";
+import Link from 'next/link'
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Beaker, Search, BookOpen, Shield, ArrowRight } from 'lucide-react'
 
-export default function Home() {
+export default async function HomePage() {
+  const { userId } = await auth()
+
+  // If logged in, redirect to chat
+  if (userId) {
+    redirect('/chat')
+  }
+
+  // Landing page for non-authenticated users
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+      {/* Header */}
+      <header className="flex items-center justify-between p-4 md:p-6">
+        <div className="flex items-center gap-2">
+          <Beaker className="h-6 w-6 text-blue-600" />
+          <span className="text-xl font-semibold text-slate-900 dark:text-white">
+            Peptide AI
+          </span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="flex items-center gap-3">
+          <Link href="/sign-in">
+            <Button variant="ghost">Sign In</Button>
+          </Link>
+          <Link href="/sign-up">
+            <Button>Get Started</Button>
+          </Link>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <main className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
+        <div className="mb-4 inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+          Research-grade peptide intelligence
+        </div>
+
+        <h1 className="mb-4 max-w-3xl text-4xl font-bold tracking-tight text-slate-900 dark:text-white md:text-6xl">
+          Your AI Research Assistant for{' '}
+          <span className="text-blue-600">Peptide Science</span>
+        </h1>
+
+        <p className="mb-8 max-w-2xl text-lg text-slate-600 dark:text-slate-400">
+          Access peer-reviewed research and real user experiences. Ask questions
+          about peptides, protocols, mechanisms, and safety—all powered by
+          advanced RAG technology.
+        </p>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Link href="/sign-up">
+            <Button size="lg" className="gap-2">
+              Start Researching <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Link href="/sign-in">
+            <Button size="lg" variant="outline">
+              Sign In
+            </Button>
+          </Link>
+        </div>
+
+        {/* Features */}
+        <div className="mt-16 grid max-w-4xl gap-6 md:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 text-left dark:border-slate-800 dark:bg-slate-900">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+              <Search className="h-5 w-5 text-blue-600" />
+            </div>
+            <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">
+              Research Database
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Search through thousands of peer-reviewed papers from PubMed,
+              arXiv, and bioRxiv.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-6 text-left dark:border-slate-800 dark:bg-slate-900">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+              <BookOpen className="h-5 w-5 text-blue-600" />
+            </div>
+            <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">
+              User Experiences
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Learn from real user journeys and reported outcomes across the
+              peptide community.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-6 text-left dark:border-slate-800 dark:bg-slate-900">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+              <Shield className="h-5 w-5 text-blue-600" />
+            </div>
+            <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">
+              Safety First
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Get balanced information with proper disclaimers and citations for
+              every claim.
+            </p>
+          </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 p-6 text-center text-sm text-slate-500 dark:border-slate-800">
+        <p>
+          This is a research platform, not medical advice. Always consult
+          healthcare professionals.
+        </p>
+      </footer>
     </div>
-  );
+  )
 }

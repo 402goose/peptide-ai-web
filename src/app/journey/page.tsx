@@ -1,0 +1,721 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { DoseLogForm } from '@/components/journey/DoseLogForm'
+import { CheckInForm } from '@/components/journey/CheckInForm'
+import {
+  Plus, ArrowLeft, Syringe, Heart, Beaker, Play, Pause,
+  CheckCircle, XCircle, Clock, Pill, Calendar, Trash2,
+  ChevronDown, ChevronUp, TrendingUp, Search
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+// Local journey types for localStorage
+interface LocalJourney {
+  id: string
+  title: string
+  primaryPeptide: string
+  additionalPeptides: string[]
+  status: 'planning' | 'active' | 'paused' | 'completed' | 'discontinued'
+  startDate?: string
+  endDate?: string
+  goals: string
+  doseLogs: LocalDoseLog[]
+  checkIns: LocalCheckIn[]
+  createdAt: string
+  updatedAt: string
+}
+
+interface LocalDoseLog {
+  id: string
+  peptide: string
+  doseAmount: number
+  doseUnit: string
+  route?: string
+  injectionSite?: string
+  timeOfDay?: string
+  fasted?: boolean
+  notes?: string
+  loggedAt: string
+}
+
+interface LocalCheckIn {
+  id: string
+  date: string
+  energyLevel?: number
+  sleepQuality?: number
+  mood?: number
+  recoveryFeeling?: number
+  sideEffects: string[]
+  sideEffectSeverity: 'none' | 'mild' | 'moderate' | 'severe'
+  notes?: string
+  loggedAt: string
+}
+
+// Peptide database (matching StackBuilder)
+const PEPTIDES = [
+  { id: 'bpc-157', name: 'BPC-157', category: 'Healing' },
+  { id: 'tb-500', name: 'TB-500', category: 'Healing' },
+  { id: 'ghk-cu', name: 'GHK-Cu', category: 'Healing' },
+  { id: 'pentadecarginine', name: 'Pentadecarginine', category: 'Healing' },
+  { id: 'semaglutide', name: 'Semaglutide', category: 'Weight Management' },
+  { id: 'tirzepatide', name: 'Tirzepatide', category: 'Weight Management' },
+  { id: 'aod-9604', name: 'AOD-9604', category: 'Weight Management' },
+  { id: 'tesamorelin', name: 'Tesamorelin', category: 'Weight Management' },
+  { id: 'sr9009', name: 'SR9009', category: 'Weight Management' },
+  { id: 'ipamorelin', name: 'Ipamorelin', category: 'Performance' },
+  { id: 'cjc-1295', name: 'CJC-1295', category: 'Performance' },
+  { id: 'mk-677', name: 'MK-677', category: 'Performance' },
+  { id: 'ghrp-6', name: 'GHRP-6', category: 'Performance' },
+  { id: 'ghrp-2', name: 'GHRP-2', category: 'Performance' },
+  { id: 'semax', name: 'Semax', category: 'Cognitive' },
+  { id: 'selank', name: 'Selank', category: 'Cognitive' },
+  { id: 'dihexa', name: 'Dihexa', category: 'Cognitive' },
+  { id: 'epithalon', name: 'Epithalon', category: 'Anti-Aging' },
+  { id: 'thymosin-alpha-1', name: 'Thymosin Alpha-1', category: 'Immune' },
+  { id: 'll-37', name: 'LL-37', category: 'Immune' },
+  { id: 'pt-141', name: 'PT-141', category: 'Sexual Health' },
+  { id: 'kisspeptin', name: 'Kisspeptin', category: 'Sexual Health' },
+]
+
+type View = 'list' | 'create' | 'dose' | 'checkin' | 'detail'
+
+const STORAGE_KEY = 'peptide-ai-journeys'
+
+// Load journeys from localStorage
+function loadJourneys(): LocalJourney[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : []
+  } catch (e) {
+    console.error('Failed to load journeys:', e)
+    return []
+  }
+}
+
+// Save journeys to localStorage
+function saveJourneys(journeys: LocalJourney[]) {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(journeys))
+  } catch (e) {
+    console.error('Failed to save journeys:', e)
+  }
+}
+
+const STATUS_CONFIG = {
+  planning: { label: 'Planning', color: 'text-slate-600 bg-slate-100 dark:bg-slate-700 dark:text-slate-300', icon: Clock },
+  active: { label: 'Active', color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400', icon: Play },
+  paused: { label: 'Paused', color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400', icon: Pause },
+  completed: { label: 'Completed', color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400', icon: CheckCircle },
+  discontinued: { label: 'Discontinued', color: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
+}
+
+export default function JourneyPage() {
+  const router = useRouter()
+  const [journeys, setJourneys] = useState<LocalJourney[]>([])
+  const [loading, setLoading] = useState(true)
+  const [view, setView] = useState<View>('list')
+  const [selectedJourney, setSelectedJourney] = useState<LocalJourney | null>(null)
+  const [expandedJourney, setExpandedJourney] = useState<string | null>(null)
+
+  // Form state for creating journey
+  const [newJourney, setNewJourney] = useState({
+    title: '',
+    primaryPeptide: '',
+    additionalPeptides: [] as string[],
+    goals: '',
+  })
+  const [peptideSearch, setPeptideSearch] = useState('')
+
+  useEffect(() => {
+    const loaded = loadJourneys()
+    setJourneys(loaded)
+    setLoading(false)
+  }, [])
+
+  const updateJourneys = useCallback((updater: (journeys: LocalJourney[]) => LocalJourney[]) => {
+    setJourneys(prev => {
+      const updated = updater(prev)
+      saveJourneys(updated)
+      return updated
+    })
+  }, [])
+
+  function handleCreateJourney() {
+    if (!newJourney.title || !newJourney.primaryPeptide) return
+
+    const journey: LocalJourney = {
+      id: `journey-${Date.now()}`,
+      title: newJourney.title,
+      primaryPeptide: newJourney.primaryPeptide,
+      additionalPeptides: newJourney.additionalPeptides,
+      status: 'planning',
+      goals: newJourney.goals,
+      doseLogs: [],
+      checkIns: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    updateJourneys(prev => [...prev, journey])
+    setNewJourney({ title: '', primaryPeptide: '', additionalPeptides: [], goals: '' })
+    setView('list')
+  }
+
+  function handleStartJourney(journeyId: string) {
+    updateJourneys(prev => prev.map(j =>
+      j.id === journeyId
+        ? { ...j, status: 'active' as const, startDate: new Date().toISOString(), updatedAt: new Date().toISOString() }
+        : j
+    ))
+  }
+
+  function handlePauseJourney(journeyId: string) {
+    updateJourneys(prev => prev.map(j =>
+      j.id === journeyId
+        ? { ...j, status: 'paused' as const, updatedAt: new Date().toISOString() }
+        : j
+    ))
+  }
+
+  function handleResumeJourney(journeyId: string) {
+    updateJourneys(prev => prev.map(j =>
+      j.id === journeyId
+        ? { ...j, status: 'active' as const, updatedAt: new Date().toISOString() }
+        : j
+    ))
+  }
+
+  function handleCompleteJourney(journeyId: string) {
+    updateJourneys(prev => prev.map(j =>
+      j.id === journeyId
+        ? { ...j, status: 'completed' as const, endDate: new Date().toISOString(), updatedAt: new Date().toISOString() }
+        : j
+    ))
+  }
+
+  function handleDeleteJourney(journeyId: string) {
+    if (!confirm('Are you sure you want to delete this journey?')) return
+    updateJourneys(prev => prev.filter(j => j.id !== journeyId))
+  }
+
+  async function handleLogDose(data: any) {
+    if (!selectedJourney) return
+
+    const doseLog: LocalDoseLog = {
+      id: `dose-${Date.now()}`,
+      peptide: data.peptide,
+      doseAmount: data.dose_amount,
+      doseUnit: data.dose_unit,
+      route: data.route,
+      injectionSite: data.injection_site,
+      timeOfDay: data.time_of_day,
+      fasted: data.fasted,
+      notes: data.notes,
+      loggedAt: new Date().toISOString(),
+    }
+
+    updateJourneys(prev => prev.map(j =>
+      j.id === selectedJourney.id
+        ? { ...j, doseLogs: [...j.doseLogs, doseLog], updatedAt: new Date().toISOString() }
+        : j
+    ))
+
+    setView('list')
+    setSelectedJourney(null)
+  }
+
+  async function handleCheckIn(data: any) {
+    if (!selectedJourney) return
+
+    const checkIn: LocalCheckIn = {
+      id: `checkin-${Date.now()}`,
+      date: data.log_date,
+      energyLevel: data.energy_level,
+      sleepQuality: data.sleep_quality,
+      mood: data.mood,
+      recoveryFeeling: data.recovery_feeling,
+      sideEffects: data.side_effects || [],
+      sideEffectSeverity: data.side_effect_severity || 'none',
+      notes: data.notes,
+      loggedAt: new Date().toISOString(),
+    }
+
+    updateJourneys(prev => prev.map(j =>
+      j.id === selectedJourney.id
+        ? { ...j, checkIns: [...j.checkIns, checkIn], updatedAt: new Date().toISOString() }
+        : j
+    ))
+
+    setView('list')
+    setSelectedJourney(null)
+  }
+
+  const activeJourneys = journeys.filter(j => j.status === 'active')
+  const filteredPeptides = PEPTIDES.filter(p =>
+    p.name.toLowerCase().includes(peptideSearch.toLowerCase()) ||
+    p.category.toLowerCase().includes(peptideSearch.toLowerCase())
+  )
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'Not started'
+    return new Date(dateStr).toLocaleDateString()
+  }
+
+  const getAverageRating = (journey: LocalJourney) => {
+    if (journey.checkIns.length === 0) return null
+    const recent = journey.checkIns.slice(-7) // Last 7 check-ins
+    const sum = recent.reduce((acc, c) => {
+      let count = 0
+      let total = 0
+      if (c.energyLevel) { total += c.energyLevel; count++ }
+      if (c.sleepQuality) { total += c.sleepQuality; count++ }
+      if (c.mood) { total += c.mood; count++ }
+      if (c.recoveryFeeling) { total += c.recoveryFeeling; count++ }
+      return acc + (count > 0 ? total / count : 0)
+    }, 0)
+    return (sum / recent.length).toFixed(1)
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      {/* Header */}
+      <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => router.push('/chat')}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 shadow-sm">
+              <Beaker className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-semibold text-slate-900 dark:text-white">
+              Journey Tracker
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-2xl px-4 py-6">
+        {view === 'list' && (
+          <>
+            {/* Quick Actions for Active Journeys */}
+            {activeJourneys.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                  Quick Actions
+                </h2>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    className="h-auto flex-col gap-2 py-4"
+                    onClick={() => {
+                      setSelectedJourney(activeJourneys[0])
+                      setView('dose')
+                    }}
+                  >
+                    <Syringe className="h-5 w-5 text-blue-500" />
+                    <span>Log Dose</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-auto flex-col gap-2 py-4"
+                    onClick={() => {
+                      setSelectedJourney(activeJourneys[0])
+                      setView('checkin')
+                    }}
+                  >
+                    <Heart className="h-5 w-5 text-red-500" />
+                    <span>Daily Check-In</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Journey List */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Your Journeys
+              </h2>
+              <Button size="sm" onClick={() => setView('create')}>
+                <Plus className="h-4 w-4 mr-1" />
+                New Journey
+              </Button>
+            </div>
+
+            {loading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-32 rounded-lg border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800 animate-pulse" />
+                ))}
+              </div>
+            ) : journeys.length === 0 ? (
+              <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                <Pill className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p className="font-medium">No journeys yet</p>
+                <p className="text-sm mt-1">Start tracking your peptide research!</p>
+                <Button className="mt-4" onClick={() => setView('create')}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Create Your First Journey
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {journeys.map((journey) => {
+                  const config = STATUS_CONFIG[journey.status]
+                  const StatusIcon = config.icon
+                  const isExpanded = expandedJourney === journey.id
+                  const avgRating = getAverageRating(journey)
+
+                  return (
+                    <div
+                      key={journey.id}
+                      className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 overflow-hidden"
+                    >
+                      {/* Journey Header */}
+                      <div
+                        className="p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-750"
+                        onClick={() => setExpandedJourney(isExpanded ? null : journey.id)}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-slate-900 dark:text-white">
+                              {journey.title}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Pill className="h-3.5 w-3.5 text-blue-500" />
+                              <span className="text-sm text-slate-600 dark:text-slate-400">
+                                {journey.primaryPeptide}
+                                {journey.additionalPeptides.length > 0 && (
+                                  <span className="text-slate-400"> +{journey.additionalPeptides.length}</span>
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className={cn('flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium', config.color)}>
+                              <StatusIcon className="h-3 w-3" />
+                              {config.label}
+                            </div>
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4 text-slate-400" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-slate-400" />
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {formatDate(journey.startDate)}
+                          </div>
+                          <div>
+                            {journey.doseLogs.length} doses
+                          </div>
+                          <div>
+                            {journey.checkIns.length} check-ins
+                          </div>
+                          {avgRating && (
+                            <div className="flex items-center gap-1 font-medium text-blue-600">
+                              <TrendingUp className="h-3.5 w-3.5" />
+                              {avgRating}/10 avg
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Expanded Details */}
+                      {isExpanded && (
+                        <div className="border-t border-slate-100 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-850">
+                          {journey.goals && (
+                            <div className="mb-4">
+                              <h4 className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Goals</h4>
+                              <p className="text-sm text-slate-700 dark:text-slate-300">{journey.goals}</p>
+                            </div>
+                          )}
+
+                          {journey.additionalPeptides.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Stack</h4>
+                              <div className="flex flex-wrap gap-2">
+                                <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                  {journey.primaryPeptide}
+                                </span>
+                                {journey.additionalPeptides.map(p => (
+                                  <span key={p} className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                                    {p}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Recent Dose Logs */}
+                          {journey.doseLogs.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Recent Doses</h4>
+                              <div className="space-y-2">
+                                {journey.doseLogs.slice(-3).reverse().map(dose => (
+                                  <div key={dose.id} className="flex items-center justify-between text-sm p-2 rounded bg-white dark:bg-slate-800">
+                                    <div className="flex items-center gap-2">
+                                      <Syringe className="h-3.5 w-3.5 text-blue-500" />
+                                      <span className="font-medium">{dose.peptide}</span>
+                                      <span className="text-slate-500">{dose.doseAmount}{dose.doseUnit}</span>
+                                    </div>
+                                    <span className="text-xs text-slate-400">
+                                      {new Date(dose.loggedAt).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Recent Check-ins */}
+                          {journey.checkIns.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Recent Check-ins</h4>
+                              <div className="space-y-2">
+                                {journey.checkIns.slice(-3).reverse().map(checkin => (
+                                  <div key={checkin.id} className="text-sm p-2 rounded bg-white dark:bg-slate-800">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className="text-xs text-slate-400">{new Date(checkin.date).toLocaleDateString()}</span>
+                                      {checkin.sideEffects.length > 0 && (
+                                        <span className="text-xs text-amber-600">{checkin.sideEffects.length} side effects</span>
+                                      )}
+                                    </div>
+                                    <div className="flex gap-3 text-xs">
+                                      {checkin.energyLevel && <span>Energy: {checkin.energyLevel}/10</span>}
+                                      {checkin.mood && <span>Mood: {checkin.mood}/10</span>}
+                                      {checkin.sleepQuality && <span>Sleep: {checkin.sleepQuality}/10</span>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Actions */}
+                          <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200 dark:border-slate-600">
+                            {journey.status === 'planning' && (
+                              <Button size="sm" onClick={() => handleStartJourney(journey.id)}>
+                                <Play className="h-3.5 w-3.5 mr-1" />
+                                Start Journey
+                              </Button>
+                            )}
+                            {journey.status === 'active' && (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => {
+                                  setSelectedJourney(journey)
+                                  setView('dose')
+                                }}>
+                                  <Syringe className="h-3.5 w-3.5 mr-1" />
+                                  Log Dose
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => {
+                                  setSelectedJourney(journey)
+                                  setView('checkin')
+                                }}>
+                                  <Heart className="h-3.5 w-3.5 mr-1" />
+                                  Check-In
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handlePauseJourney(journey.id)}>
+                                  <Pause className="h-3.5 w-3.5 mr-1" />
+                                  Pause
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handleCompleteJourney(journey.id)}>
+                                  <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                  Complete
+                                </Button>
+                              </>
+                            )}
+                            {journey.status === 'paused' && (
+                              <Button size="sm" onClick={() => handleResumeJourney(journey.id)}>
+                                <Play className="h-3.5 w-3.5 mr-1" />
+                                Resume
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50 ml-auto"
+                              onClick={() => handleDeleteJourney(journey.id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </>
+        )}
+
+        {view === 'create' && (
+          <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+              Start New Journey
+            </h2>
+
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Journey Name
+                </label>
+                <Input
+                  placeholder="e.g., BPC-157 Healing Protocol"
+                  value={newJourney.title}
+                  onChange={(e) => setNewJourney({ ...newJourney, title: e.target.value })}
+                />
+              </div>
+
+              {/* Primary Peptide */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Primary Peptide
+                </label>
+                <div className="relative mb-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Search peptides..."
+                    className="pl-9"
+                    value={peptideSearch}
+                    onChange={(e) => setPeptideSearch(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                  {filteredPeptides.map((peptide) => (
+                    <button
+                      key={peptide.id}
+                      type="button"
+                      className={cn(
+                        'p-2 text-left text-sm rounded-lg border transition-colors',
+                        newJourney.primaryPeptide === peptide.name
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                          : 'border-slate-200 hover:border-slate-300 dark:border-slate-600'
+                      )}
+                      onClick={() => setNewJourney({ ...newJourney, primaryPeptide: peptide.name })}
+                    >
+                      <div className="font-medium text-slate-900 dark:text-white">{peptide.name}</div>
+                      <div className="text-xs text-slate-500">{peptide.category}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Additional Peptides */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Additional Peptides (optional)
+                </label>
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                  {PEPTIDES.filter(p => p.name !== newJourney.primaryPeptide).map((peptide) => (
+                    <button
+                      key={peptide.id}
+                      type="button"
+                      className={cn(
+                        'px-3 py-1.5 text-xs rounded-full border transition-colors',
+                        newJourney.additionalPeptides.includes(peptide.name)
+                          ? 'border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                          : 'border-slate-200 hover:border-slate-300 dark:border-slate-600'
+                      )}
+                      onClick={() => {
+                        const current = newJourney.additionalPeptides
+                        if (current.includes(peptide.name)) {
+                          setNewJourney({ ...newJourney, additionalPeptides: current.filter(p => p !== peptide.name) })
+                        } else {
+                          setNewJourney({ ...newJourney, additionalPeptides: [...current, peptide.name] })
+                        }
+                      }}
+                    >
+                      {peptide.name}
+                    </button>
+                  ))}
+                </div>
+                {newJourney.additionalPeptides.length > 0 && (
+                  <div className="mt-2 text-xs text-slate-500">
+                    Selected: {newJourney.additionalPeptides.join(', ')}
+                  </div>
+                )}
+              </div>
+
+              {/* Goals */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Goals & Notes
+                </label>
+                <Textarea
+                  placeholder="What are you hoping to achieve? Any specific protocols you're following?"
+                  value={newJourney.goals}
+                  onChange={(e) => setNewJourney({ ...newJourney, goals: e.target.value })}
+                  rows={3}
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  onClick={handleCreateJourney}
+                  disabled={!newJourney.title || !newJourney.primaryPeptide}
+                >
+                  Create Journey
+                </Button>
+                <Button variant="outline" onClick={() => {
+                  setView('list')
+                  setNewJourney({ title: '', primaryPeptide: '', additionalPeptides: [], goals: '' })
+                  setPeptideSearch('')
+                }}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {view === 'dose' && selectedJourney && (
+          <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <div className="mb-4 text-sm text-slate-500">
+              Logging for: <span className="font-medium text-slate-700 dark:text-slate-300">{selectedJourney.title}</span>
+            </div>
+            <DoseLogForm
+              peptide={selectedJourney.primaryPeptide}
+              onSubmit={handleLogDose}
+              onCancel={() => {
+                setView('list')
+                setSelectedJourney(null)
+              }}
+              loading={false}
+            />
+          </div>
+        )}
+
+        {view === 'checkin' && selectedJourney && (
+          <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+            <div className="mb-4 text-sm text-slate-500">
+              Check-in for: <span className="font-medium text-slate-700 dark:text-slate-300">{selectedJourney.title}</span>
+            </div>
+            <CheckInForm
+              onSubmit={handleCheckIn}
+              onCancel={() => {
+                setView('list')
+                setSelectedJourney(null)
+              }}
+              loading={false}
+            />
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}

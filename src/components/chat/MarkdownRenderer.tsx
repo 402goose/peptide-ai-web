@@ -1,0 +1,196 @@
+'use client'
+
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { CitationBadge } from './CitationBadge'
+import type { Source } from '@/types'
+
+interface MarkdownRendererProps {
+  content: string
+  sources?: Source[]
+}
+
+export function MarkdownRenderer({ content, sources = [] }: MarkdownRendererProps) {
+  // Replace citation markers [1], [2], etc. with interactive badges
+  const processedContent = content.replace(
+    /\[(\d+)\]/g,
+    (match, num) => `<citation data-index="${num}">${match}</citation>`
+  )
+
+  return (
+    <div className="prose prose-slate dark:prose-invert prose-sm max-w-none
+      prose-headings:font-semibold prose-headings:text-slate-900 dark:prose-headings:text-slate-100
+      prose-h2:text-base prose-h2:mt-4 prose-h2:mb-2 prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-1 dark:prose-h2:border-slate-700
+      prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1
+      prose-p:my-2 prose-p:leading-relaxed
+      prose-li:my-0.5
+      prose-strong:text-slate-900 dark:prose-strong:text-white
+      prose-hr:my-3 prose-hr:border-slate-200 dark:prose-hr:border-slate-700
+    ">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          // Custom code block rendering
+          code({ node, className, children, ...props }) {
+            const match = /language-(\w+)/.exec(className || '')
+            const isInline = !match
+
+            if (isInline) {
+              return (
+                <code
+                  className="rounded bg-slate-200 px-1.5 py-0.5 font-mono text-xs dark:bg-slate-700"
+                  {...props}
+                >
+                  {children}
+                </code>
+              )
+            }
+
+            return (
+              <SyntaxHighlighter
+                style={oneDark}
+                language={match[1]}
+                PreTag="div"
+                className="rounded-lg !bg-slate-900 !text-sm"
+              >
+                {String(children).replace(/\n$/, '')}
+              </SyntaxHighlighter>
+            )
+          },
+
+          // Custom link rendering (open in new tab)
+          a({ node, children, href, ...props }) {
+            return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline dark:text-blue-400"
+                {...props}
+              >
+                {children}
+              </a>
+            )
+          },
+
+          // Custom paragraph to handle citation badges
+          p({ node, children, ...props }) {
+            // Check if children contains citation markers
+            const processChildren = (child: React.ReactNode): React.ReactNode => {
+              if (typeof child === 'string') {
+                // Split by citation pattern and render badges
+                const parts = child.split(/(\[\d+\])/)
+                return parts.map((part, index) => {
+                  const match = part.match(/\[(\d+)\]/)
+                  if (match) {
+                    const sourceIndex = parseInt(match[1]) - 1
+                    const source = sources[sourceIndex]
+                    return (
+                      <CitationBadge
+                        key={index}
+                        index={parseInt(match[1])}
+                        source={source}
+                      />
+                    )
+                  }
+                  return part
+                })
+              }
+              return child
+            }
+
+            const processedChildren = Array.isArray(children)
+              ? children.map(processChildren)
+              : processChildren(children)
+
+            return <p {...props}>{processedChildren}</p>
+          },
+
+          // Style tables professionally
+          table({ node, children, ...props }) {
+            return (
+              <div className="overflow-x-auto my-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700" {...props}>
+                  {children}
+                </table>
+              </div>
+            )
+          },
+
+          thead({ node, children, ...props }) {
+            return (
+              <thead className="bg-slate-50 dark:bg-slate-800" {...props}>
+                {children}
+              </thead>
+            )
+          },
+
+          th({ node, children, ...props }) {
+            return (
+              <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider" {...props}>
+                {children}
+              </th>
+            )
+          },
+
+          td({ node, children, ...props }) {
+            return (
+              <td className="px-3 py-2 text-sm text-slate-700 dark:text-slate-300" {...props}>
+                {children}
+              </td>
+            )
+          },
+
+          tr({ node, children, ...props }) {
+            return (
+              <tr className="border-b border-slate-100 dark:border-slate-800 last:border-0" {...props}>
+                {children}
+              </tr>
+            )
+          },
+
+          // Style blockquotes as research findings
+          blockquote({ node, children, ...props }) {
+            return (
+              <blockquote
+                className="border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30 pl-4 pr-3 py-2 my-3 rounded-r-lg text-slate-700 dark:text-slate-300 italic"
+                {...props}
+              >
+                {children}
+              </blockquote>
+            )
+          },
+
+          // Style lists
+          ul({ node, children, ...props }) {
+            return (
+              <ul className="my-2 space-y-1" {...props}>
+                {children}
+              </ul>
+            )
+          },
+
+          ol({ node, children, ...props }) {
+            return (
+              <ol className="my-2 space-y-1" {...props}>
+                {children}
+              </ol>
+            )
+          },
+
+          li({ node, children, ...props }) {
+            return (
+              <li className="text-slate-700 dark:text-slate-300" {...props}>
+                {children}
+              </li>
+            )
+          },
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  )
+}
