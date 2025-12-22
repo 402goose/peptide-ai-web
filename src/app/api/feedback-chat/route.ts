@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
-
 export async function POST(request: Request) {
   try {
-    const { messages, systemPrompt, componentName } = await request.json()
+    const { messages, systemPrompt } = await request.json()
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
