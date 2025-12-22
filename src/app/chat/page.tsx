@@ -2,9 +2,14 @@
 
 import { Suspense } from 'react'
 import { ChatContainer } from '@/components/chat/ChatContainer'
+import { Feedbackable } from '@/components/feedback'
 
 function ChatContent() {
-  return <ChatContainer />
+  return (
+    <Feedbackable name="Chat Interface" path="components/chat/ChatContainer.tsx" className="h-full">
+      <ChatContainer />
+    </Feedbackable>
+  )
 }
 
 export default function ChatPage() {

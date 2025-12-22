@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { StackBuilder } from '@/components/stacks/StackBuilder'
 import { CompareView } from '@/components/stacks/CompareView'
+import { Feedbackable } from '@/components/feedback'
 import { cn } from '@/lib/utils'
 import { FlaskConical, GitCompareArrows } from 'lucide-react'
 
@@ -53,9 +54,13 @@ export default function StacksPage() {
       {/* Tab Content */}
       <div className="flex-1 overflow-auto">
         {activeTab === 'build' ? (
-          <StackBuilder onAskAboutStack={handleAskAboutStack} />
+          <Feedbackable name="Stack Builder" path="components/stacks/StackBuilder.tsx">
+            <StackBuilder onAskAboutStack={handleAskAboutStack} />
+          </Feedbackable>
         ) : (
-          <CompareView />
+          <Feedbackable name="Compare View" path="components/stacks/CompareView.tsx">
+            <CompareView />
+          </Feedbackable>
         )}
       </div>
     </div>

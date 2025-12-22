@@ -6,8 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
 import { OnboardingFlow, type OnboardingContext } from './OnboardingFlow'
-import { api } from '@/lib/api'
-import type { Message, Source, StreamChunk } from '@/types'
+import type { Message, Source } from '@/types'
 import { Beaker, Sparkles, ArrowRight } from 'lucide-react'
 
 interface ChatContainerProps {
@@ -76,24 +75,13 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   }, [inputFocused, viewState])
 
   async function loadConversation(id: string) {
-    setIsLoading(true)
-    setViewState('chatting')
-    try {
-      const conversation = await api.getConversation(id)
-      setMessages(conversation.messages || [])
-      setActiveConversationId(id)
-    } catch (error) {
-      console.error('Failed to load conversation:', error)
-      // Clear state and go back to ready state
-      setMessages([])
-      setActiveConversationId(undefined)
-      setViewState('ready')
-      // Update URL to /chat without the conversation ID
-      if (typeof window !== 'undefined') {
-        window.history.replaceState(null, '', '/chat')
-      }
-    } finally {
-      setIsLoading(false)
+    // Without a backend, we can't load saved conversations
+    // Just redirect to fresh chat
+    setMessages([])
+    setActiveConversationId(undefined)
+    setViewState('ready')
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/chat')
     }
   }
 
@@ -115,91 +103,60 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       content,
       timestamp: new Date().toISOString(),
     }
-    setMessages(prev => [...prev, userMessage])
+    const newMessages = [...messages, userMessage]
+    setMessages(newMessages)
     setIsLoading(true)
     setCurrentSources([])
     setCurrentDisclaimers([])
     setCurrentFollowUps([])
 
-    // Add empty assistant message that we'll stream into
-    const assistantMessage: Message = {
-      role: 'assistant',
-      content: '',
-      timestamp: new Date().toISOString(),
-    }
-    setMessages(prev => [...prev, assistantMessage])
-
-    let streamedContent = ''
-
     try {
-      await api.streamMessage(
-        {
+      // Call our local API route
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           message: content,
-          conversation_id: activeConversationId,
-        },
-        (chunk: StreamChunk) => {
-          switch (chunk.type) {
-            case 'conversation_id':
-              if (!activeConversationId && chunk.conversation_id) {
-                setActiveConversationId(chunk.conversation_id)
-                // Update URL without causing navigation/remount
-                if (typeof window !== 'undefined') {
-                  window.history.replaceState(null, '', `/chat/c/${chunk.conversation_id}`)
-                }
-              }
-              break
+          messages: newMessages.filter(m => m.content).map(m => ({
+            role: m.role,
+            content: m.content,
+          })),
+        }),
+      })
 
-            case 'sources':
-              if (chunk.sources) {
-                setCurrentSources(chunk.sources)
-              }
-              break
+      if (!response.ok) {
+        throw new Error('Failed to get response')
+      }
 
-            case 'content':
-              if (chunk.content) {
-                streamedContent += chunk.content
-                setMessages(prev => {
-                  const updated = [...prev]
-                  const lastMsg = updated[updated.length - 1]
-                  if (lastMsg && lastMsg.role === 'assistant') {
-                    updated[updated.length - 1] = {
-                      ...lastMsg,
-                      content: streamedContent,
-                    }
-                  }
-                  return updated
-                })
-              }
-              break
+      const data = await response.json()
 
-            case 'done':
-              if (chunk.disclaimers) {
-                setCurrentDisclaimers(chunk.disclaimers)
-              }
-              if (chunk.follow_up_questions) {
-                setCurrentFollowUps(chunk.follow_up_questions)
-              }
-              break
-          }
-        }
-      )
+      // Add assistant response
+      const assistantMessage: Message = {
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date().toISOString(),
+      }
+      setMessages(prev => [...prev, assistantMessage])
+
+      // Set follow-ups and disclaimers
+      if (data.follow_ups) {
+        setCurrentFollowUps(data.follow_ups)
+      }
+      if (data.disclaimers) {
+        setCurrentDisclaimers(data.disclaimers)
+      }
     } catch (error) {
       console.error('Failed to send message:', error)
-      setMessages(prev => {
-        const updated = [...prev]
-        const lastMsg = updated[updated.length - 1]
-        if (lastMsg && lastMsg.role === 'assistant') {
-          updated[updated.length - 1] = {
-            ...lastMsg,
-            content: 'I apologize, but I encountered an error processing your request. Please try again.',
-          }
-        }
-        return updated
-      })
+      const errorMessage: Message = {
+        role: 'assistant',
+        content: 'I apologize, but I encountered an error processing your request. Please try again.',
+        timestamp: new Date().toISOString(),
+      }
+      setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
-  }, [activeConversationId, isLoading, router])
+  }, [messages, isLoading])
 
   function handleFollowUpClick(question: string) {
     handleSendMessage(question)
@@ -249,83 +206,45 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     setCurrentDisclaimers([])
     setCurrentFollowUps([])
 
-    // Add empty assistant message for streaming
-    const assistantMessage: Message = {
-      role: 'assistant',
-      content: '',
-      timestamp: new Date().toISOString(),
-    }
-    setMessages(prev => [...prev, assistantMessage])
-
-    let streamedContent = ''
-
     try {
-      await api.streamMessage(
-        {
-          message: `[GUIDED_START] User profile: ${context.experienceLevel} with peptides. Goal: ${context.primaryGoalLabel}. Focus areas: ${context.conditionLabels?.join(', ') || 'general'}. Suggested peptides to discuss: ${context.peptideSuggestions?.join(', ')}. Start by warmly acknowledging their goal, then dive into the most relevant peptides with specific research and protocols. Be direct and helpful.`,
-          conversation_id: activeConversationId,
-          context: context as unknown as Record<string, unknown>,
-        },
-        (chunk: StreamChunk) => {
-          switch (chunk.type) {
-            case 'conversation_id':
-              if (!activeConversationId && chunk.conversation_id) {
-                setActiveConversationId(chunk.conversation_id)
-                // Update URL without causing navigation/remount
-                // This prevents the race condition where navigation interrupts streaming
-                if (typeof window !== 'undefined') {
-                  window.history.replaceState(null, '', `/chat/c/${chunk.conversation_id}`)
-                }
-              }
-              break
+      const guidedMessage = `User profile: ${context.experienceLevel} with peptides. Goal: ${context.primaryGoalLabel}. Focus areas: ${context.conditionLabels?.join(', ') || 'general'}. Suggested peptides to discuss: ${context.peptideSuggestions?.join(', ')}. Start by warmly acknowledging their goal, then dive into the most relevant peptides with specific research and protocols.`
 
-            case 'sources':
-              if (chunk.sources) {
-                setCurrentSources(chunk.sources)
-              }
-              break
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: guidedMessage,
+          messages: [],
+        }),
+      })
 
-            case 'content':
-              if (chunk.content) {
-                streamedContent += chunk.content
-                setMessages(prev => {
-                  const updated = [...prev]
-                  const lastMsg = updated[updated.length - 1]
-                  if (lastMsg && lastMsg.role === 'assistant') {
-                    updated[updated.length - 1] = {
-                      ...lastMsg,
-                      content: streamedContent,
-                    }
-                  }
-                  return updated
-                })
-              }
-              break
+      if (!response.ok) {
+        throw new Error('Failed to get response')
+      }
 
-            case 'done':
-              if (chunk.disclaimers) {
-                setCurrentDisclaimers(chunk.disclaimers)
-              }
-              if (chunk.follow_up_questions) {
-                setCurrentFollowUps(chunk.follow_up_questions)
-              }
-              break
-          }
-        }
-      )
+      const data = await response.json()
+
+      const assistantMessage: Message = {
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date().toISOString(),
+      }
+      setMessages(prev => [...prev, assistantMessage])
+
+      if (data.follow_ups) {
+        setCurrentFollowUps(data.follow_ups)
+      }
+      if (data.disclaimers) {
+        setCurrentDisclaimers(data.disclaimers)
+      }
     } catch (error) {
       console.error('Failed to start guided journey:', error)
-      setMessages(prev => {
-        const updated = [...prev]
-        const lastMsg = updated[updated.length - 1]
-        if (lastMsg && lastMsg.role === 'assistant') {
-          updated[updated.length - 1] = {
-            ...lastMsg,
-            content: 'I apologize, but I encountered an error. Please try again or ask me directly about peptides.',
-          }
-        }
-        return updated
-      })
+      const errorMessage: Message = {
+        role: 'assistant',
+        content: 'I apologize, but I encountered an error. Please try again or ask me directly about peptides.',
+        timestamp: new Date().toISOString(),
+      }
+      setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }

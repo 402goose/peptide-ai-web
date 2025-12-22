@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { DoseLogForm } from '@/components/journey/DoseLogForm'
 import { CheckInForm } from '@/components/journey/CheckInForm'
+import { Feedbackable } from '@/components/feedback'
 import {
   Plus, ArrowLeft, Syringe, Heart, Beaker, Play, Pause,
   CheckCircle, XCircle, Clock, Pill, Calendar, Trash2,
@@ -284,6 +285,7 @@ export default function JourneyPage() {
   }
 
   return (
+    <Feedbackable name="Journey Tracker" path="app/journey/page.tsx" className="min-h-screen">
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Header */}
       <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950">
@@ -717,5 +719,6 @@ export default function JourneyPage() {
         )}
       </main>
     </div>
+    </Feedbackable>
   )
 }
