@@ -20,6 +20,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   const searchParams = useSearchParams()
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [streamingContent, setStreamingContent] = useState('')
   const [currentSources, setCurrentSources] = useState<Source[]>([])
   const [currentDisclaimers, setCurrentDisclaimers] = useState<string[]>([])
   const [currentFollowUps, setCurrentFollowUps] = useState<string[]>([])
@@ -86,7 +88,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   }
 
   const handleSendMessage = useCallback(async (content: string) => {
-    if (!content.trim() || isLoading) return
+    if (!content.trim() || isLoading || isStreaming) return
 
     // Mark that user has started chatting - persists across navigation
     hasStartedChatting.current = true
@@ -106,13 +108,15 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     const newMessages = [...messages, userMessage]
     setMessages(newMessages)
     setIsLoading(true)
+    setIsStreaming(true)
+    setStreamingContent('')
     setCurrentSources([])
     setCurrentDisclaimers([])
     setCurrentFollowUps([])
 
     try {
-      // Call our local API route
-      const response = await fetch('/api/chat', {
+      // Try streaming first
+      const response = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -124,39 +128,101 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         }),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to get response')
+      if (!response.ok || !response.body) {
+        throw new Error('Streaming failed, falling back')
       }
 
-      const data = await response.json()
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let fullContent = ''
+      let buffer = ''
 
-      // Add assistant response
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date().toISOString(),
-      }
-      setMessages(prev => [...prev, assistantMessage])
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-      // Set follow-ups and disclaimers
-      if (data.follow_ups) {
-        setCurrentFollowUps(data.follow_ups)
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+
+              if (data.type === 'conversation_id') {
+                setActiveConversationId(data.conversation_id)
+              } else if (data.type === 'sources' && data.sources) {
+                setCurrentSources(data.sources)
+              } else if (data.type === 'content' && data.content) {
+                fullContent += data.content
+                setStreamingContent(fullContent)
+              } else if (data.type === 'done') {
+                if (data.disclaimers) setCurrentDisclaimers(data.disclaimers)
+                if (data.follow_up_questions) setCurrentFollowUps(data.follow_up_questions)
+              } else if (data.type === 'error') {
+                throw new Error(data.error)
+              }
+            } catch (e) {
+              // Skip invalid JSON
+            }
+          }
+        }
       }
-      if (data.disclaimers) {
-        setCurrentDisclaimers(data.disclaimers)
+
+      // Add final message
+      if (fullContent) {
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: fullContent,
+          timestamp: new Date().toISOString(),
+        }
+        setMessages(prev => [...prev, assistantMessage])
       }
+
     } catch (error) {
-      console.error('Failed to send message:', error)
-      const errorMessage: Message = {
-        role: 'assistant',
-        content: 'I apologize, but I encountered an error processing your request. Please try again.',
-        timestamp: new Date().toISOString(),
+      console.error('Streaming failed, trying non-streaming:', error)
+
+      // Fallback to non-streaming
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: content,
+            messages: newMessages.filter(m => m.content).map(m => ({
+              role: m.role,
+              content: m.content,
+            })),
+          }),
+        })
+
+        if (!response.ok) throw new Error('Failed to get response')
+
+        const data = await response.json()
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: data.response,
+          timestamp: new Date().toISOString(),
+        }
+        setMessages(prev => [...prev, assistantMessage])
+        if (data.follow_ups) setCurrentFollowUps(data.follow_ups)
+        if (data.disclaimers) setCurrentDisclaimers(data.disclaimers)
+      } catch (fallbackError) {
+        console.error('All methods failed:', fallbackError)
+        const errorMessage: Message = {
+          role: 'assistant',
+          content: 'I apologize, but I encountered an error processing your request. Please try again.',
+          timestamp: new Date().toISOString(),
+        }
+        setMessages(prev => [...prev, errorMessage])
       }
-      setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
+      setIsStreaming(false)
+      setStreamingContent('')
     }
-  }, [messages, isLoading])
+  }, [messages, isLoading, isStreaming])
 
   function handleFollowUpClick(question: string) {
     handleSendMessage(question)
@@ -387,6 +453,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 <MessageList
                   messages={messages}
                   isLoading={isLoading}
+                  isStreaming={isStreaming}
+                  streamingContent={streamingContent}
                   sources={currentSources}
                   disclaimers={currentDisclaimers}
                   followUps={currentFollowUps}

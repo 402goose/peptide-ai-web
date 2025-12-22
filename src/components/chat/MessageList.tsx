@@ -11,6 +11,8 @@ import type { Message, Source } from '@/types'
 interface MessageListProps {
   messages: Message[]
   isLoading: boolean
+  isStreaming?: boolean
+  streamingContent?: string
   sources: Source[]
   disclaimers: string[]
   followUps: string[]
@@ -20,6 +22,8 @@ interface MessageListProps {
 export function MessageList({
   messages,
   isLoading,
+  isStreaming = false,
+  streamingContent = '',
   sources,
   disclaimers,
   followUps,
@@ -27,10 +31,7 @@ export function MessageList({
 }: MessageListProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const lastAssistantRef = useRef<HTMLDivElement>(null)
-
-  // Check if we're actively streaming (loading + last message is assistant with content)
-  const lastMessage = messages[messages.length - 1]
-  const isStreaming = isLoading && lastMessage?.role === 'assistant' && lastMessage?.content?.length > 0
+  const streamingRef = useRef<HTMLDivElement>(null)
 
   // When a new assistant message appears, scroll to show it from the TOP
   const prevMessageCountRef = useRef(messages.length)
@@ -60,6 +61,18 @@ export function MessageList({
     }
     wasLoadingRef.current = isLoading
   }, [isLoading])
+
+  // Auto-scroll while streaming
+  useEffect(() => {
+    if (isStreaming && streamingContent && scrollContainerRef.current) {
+      const container = scrollContainerRef.current
+      // Only auto-scroll if user is near the bottom
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 200
+      if (isNearBottom) {
+        container.scrollTop = container.scrollHeight
+      }
+    }
+  }, [isStreaming, streamingContent])
 
   return (
     <div
@@ -96,7 +109,22 @@ export function MessageList({
         })}
 
         {/* Show typing indicator only when waiting for first content */}
-        {isLoading && !isStreaming && <TypingIndicator />}
+        {isLoading && !isStreaming && !streamingContent && <TypingIndicator />}
+
+        {/* Show streaming content as it comes in */}
+        {isStreaming && streamingContent && (
+          <div ref={streamingRef}>
+            <MessageBubble
+              message={{
+                role: 'assistant',
+                content: streamingContent,
+                timestamp: new Date().toISOString(),
+              }}
+              isLast={true}
+              isStreaming={true}
+            />
+          </div>
+        )}
 
         {/* Show interactive elements after the last assistant message */}
         {!isLoading && messages.length > 0 && messages[messages.length - 1].role === 'assistant' && (

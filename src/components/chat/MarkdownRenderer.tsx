@@ -22,12 +22,13 @@ export function MarkdownRenderer({ content, sources = [] }: MarkdownRendererProp
   return (
     <div className="prose prose-slate dark:prose-invert prose-sm max-w-none
       prose-headings:font-semibold prose-headings:text-slate-900 dark:prose-headings:text-slate-100
-      prose-h2:text-base prose-h2:mt-4 prose-h2:mb-2 prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-1 dark:prose-h2:border-slate-700
-      prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1
+      prose-h2:text-lg prose-h2:mt-5 prose-h2:mb-3 prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2 dark:prose-h2:border-slate-700
+      prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2 prose-h3:text-blue-600 dark:prose-h3:text-blue-400
       prose-p:my-2 prose-p:leading-relaxed
-      prose-li:my-0.5
-      prose-strong:text-slate-900 dark:prose-strong:text-white
-      prose-hr:my-3 prose-hr:border-slate-200 dark:prose-hr:border-slate-700
+      prose-li:my-0.5 prose-li:marker:text-blue-500
+      prose-strong:text-slate-900 dark:prose-strong:text-white prose-strong:font-semibold
+      prose-hr:my-4 prose-hr:border-slate-300 dark:prose-hr:border-slate-600
+      [&>*:first-child]:mt-0
     ">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
@@ -148,6 +149,24 @@ export function MarkdownRenderer({ content, sources = [] }: MarkdownRendererProp
               <tr className="border-b border-slate-100 dark:border-slate-800 last:border-0" {...props}>
                 {children}
               </tr>
+            )
+          },
+
+          // Custom h2 rendering
+          h2({ node, children, ...props }) {
+            return (
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700" {...props}>
+                {children}
+              </h2>
+            )
+          },
+
+          // Custom h3 rendering with emoji support
+          h3({ node, children, ...props }) {
+            return (
+              <h3 className="flex items-center gap-2 text-base font-semibold text-blue-600 dark:text-blue-400 mt-5 mb-2" {...props}>
+                {children}
+              </h3>
             )
           },
 
