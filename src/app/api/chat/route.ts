@@ -1,59 +1,15 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-const SYSTEM_PROMPT = `You are a friendly, knowledgeable peptide research guide. Think of yourself as a helpful friend who happens to know a lot about peptides - NOT a textbook or encyclopedia.
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_KEY = process.env.PEPTIDE_AI_MASTER_KEY
 
-## YOUR STYLE
-- **Conversational**: Talk like a knowledgeable friend, not a medical journal
-- **Curious**: Ask questions to understand their specific situation
-- **Guided**: Don't dump all info at once - reveal it progressively based on what they need
-- **Concise**: Keep responses SHORT (2-3 paragraphs max). Let them ask for more.
-
-## HOW TO RESPOND
-
-**First message from someone new:**
-- Warmly acknowledge what they're asking about
-- Ask 1-2 clarifying questions to understand their situation better
-- Give a brief teaser of what you can help with
-- Example: "BPC-157 is fascinating for healing! Are you dealing with a specific injury, or more interested in gut health? And have you used peptides before? That'll help me point you in the right direction."
-
-**Follow-up messages:**
-- Build on what you've learned about them
-- Give targeted info for THEIR situation (not generic overviews)
-- Offer to go deeper on specific aspects
-- Keep it conversational - "Based on what you mentioned about X..."
-
-**When they ask about a peptide:**
-- Start with WHY it might interest them (connect to their goals)
-- Give 2-3 key points, not everything
-- Ask what aspect they want to explore: mechanism? dosing? experiences? stacking?
-
-**When they share their situation:**
-- Show you heard them ("That sounds frustrating..." or "Interesting that you've tried X...")
-- Connect their experience to relevant research
-- Suggest 1-2 specific things to consider
-
-## AVOID
-- Wall-of-text responses
-- Listing every fact you know
-- Generic disclaimers (save for end if needed)
-- Repeating info they already know
-- Being robotic or clinical
-
-## PEPTIDES YOU KNOW
-Healing: BPC-157, TB-500, GHK-Cu | Weight: Semaglutide, Tirzepatide, AOD-9604 | Performance: Ipamorelin, CJC-1295, MK-677 | Cognitive: Semax, Selank | Other: Epithalon, Thymosin Alpha-1, PT-141
-
-## END RESPONSES WITH
-A natural follow-up question or offer, like:
-- "Want me to break down the typical protocol?"
-- "Curious about how it compares to [related peptide]?"
-- "Should we talk about what to look for in sourcing?"
-
-Remember: You're having a conversation, not writing a Wikipedia article. Keep it human.`
+// Fallback system prompt for when backend is unavailable
+const FALLBACK_SYSTEM_PROMPT = `You are a friendly, knowledgeable peptide research guide. Keep responses conversational and concise (2-3 paragraphs max). Ask clarifying questions to understand the user's situation.`
 
 export async function POST(request: Request) {
   try {
-    const { message, messages: history = [] } = await request.json()
+    const { message, messages: history = [], conversation_id } = await request.json()
 
     if (!message) {
       return NextResponse.json(
@@ -62,13 +18,49 @@ export async function POST(request: Request) {
       )
     }
 
+    // Try backend API first (with RAG)
+    if (API_URL && API_KEY) {
+      try {
+        const backendResponse = await fetch(`${API_URL}/api/v1/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': API_KEY,
+          },
+          body: JSON.stringify({
+            message,
+            conversation_id,
+            history: history.map((m: { role: string; content: string }) => ({
+              role: m.role,
+              content: m.content,
+            })),
+          }),
+        })
+
+        if (backendResponse.ok) {
+          const data = await backendResponse.json()
+          return NextResponse.json({
+            response: data.response,
+            sources: data.sources || [],
+            follow_ups: data.follow_ups || [],
+            disclaimers: data.disclaimers || [],
+            conversation_id: data.conversation_id,
+          })
+        }
+        console.error('Backend API error:', backendResponse.status, await backendResponse.text())
+      } catch (backendError) {
+        console.error('Backend API unavailable:', backendError)
+      }
+    }
+
+    // Fallback to direct OpenAI if backend unavailable
+    console.log('Using fallback OpenAI directly')
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     })
 
-    // Build message history
     const chatMessages = [
-      { role: 'system' as const, content: SYSTEM_PROMPT },
+      { role: 'system' as const, content: FALLBACK_SYSTEM_PROMPT },
       ...history.map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
@@ -85,23 +77,10 @@ export async function POST(request: Request) {
 
     const response = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.'
 
-    // Extract follow-up questions if they're in the response
-    const followUps: string[] = []
-    const lines = response.split('\n')
-    let inFollowUps = false
-    for (const line of lines) {
-      if (line.toLowerCase().includes('follow-up') || line.toLowerCase().includes('you might want to ask')) {
-        inFollowUps = true
-        continue
-      }
-      if (inFollowUps && line.trim().startsWith('-')) {
-        followUps.push(line.trim().replace(/^-\s*/, '').replace(/\?.*$/, '?'))
-      }
-    }
-
     return NextResponse.json({
       response,
-      follow_ups: followUps.slice(0, 3),
+      sources: [],
+      follow_ups: [],
       disclaimers: [
         'This information is for research purposes only.',
         'Always consult healthcare professionals before using any peptides.',
