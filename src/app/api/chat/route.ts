@@ -40,9 +40,9 @@ export async function POST(request: Request) {
         if (backendResponse.ok) {
           const data = await backendResponse.json()
           return NextResponse.json({
-            response: data.response,
+            response: data.message,  // Backend returns 'message' not 'response'
             sources: data.sources || [],
-            follow_ups: data.follow_ups || [],
+            follow_ups: data.follow_up_questions || [],  // Backend uses follow_up_questions
             disclaimers: data.disclaimers || [],
             conversation_id: data.conversation_id,
           })
