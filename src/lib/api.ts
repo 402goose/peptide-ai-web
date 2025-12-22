@@ -7,7 +7,8 @@ import type {
   LogSymptomsRequest,
 } from '@/types/journey'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// API_BASE: Set NEXT_PUBLIC_API_URL in production, otherwise API features are disabled
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
 
 // Default API key for development - should be set via env in production
 const DEFAULT_API_KEY = process.env.NEXT_PUBLIC_API_KEY || 'dev-key-change-me'
@@ -50,6 +51,12 @@ class ApiClient {
   }
 
   private async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    // Skip API calls if no backend is configured
+    if (!API_BASE) {
+      console.log('[API] No backend configured, skipping:', endpoint)
+      throw new ApiError(503, { error: 'Backend not configured' })
+    }
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -94,6 +101,10 @@ class ApiClient {
     request: ChatRequest,
     onChunk: (data: StreamChunk) => void
   ): Promise<void> {
+    if (!API_BASE) {
+      throw new ApiError(503, { error: 'Backend not configured' })
+    }
+
     const url = `${API_BASE}/api/v1/chat/stream`
     console.log('[API] Streaming:', url)
 
