@@ -1,9 +1,12 @@
 'use client'
 
-import { UserButton } from '@clerk/nextjs'
+import { UserButton, useUser } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
-import { Menu, Moon, Sun, Beaker, BookOpen, Shield } from 'lucide-react'
+import { Menu, Moon, Sun, Beaker, BookOpen, Shield, Settings } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import Link from 'next/link'
+
+const ADMIN_EMAILS = ['vibetradefox@gmail.com']
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -11,6 +14,10 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const { theme, setTheme } = useTheme()
+  const { user } = useUser()
+
+  const isAdmin = user?.primaryEmailAddress?.emailAddress &&
+    ADMIN_EMAILS.includes(user.primaryEmailAddress.emailAddress)
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950">
@@ -50,6 +57,14 @@ export function Header({ onMenuClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2">
+        {isAdmin && (
+          <Link href="/admin">
+            <Button variant="ghost" size="icon" title="Admin Dashboard">
+              <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              <span className="sr-only">Admin</span>
+            </Button>
+          </Link>
+        )}
         <Button
           variant="ghost"
           size="icon"
