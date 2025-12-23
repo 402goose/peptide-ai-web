@@ -58,6 +58,30 @@ function saveFeedback(items: FeedbackItem[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
 }
 
+async function sendFeedbackToAPI(feedback: FeedbackItem): Promise<boolean> {
+  try {
+    const response = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        component_name: feedback.componentName,
+        component_path: feedback.componentPath,
+        conversation: feedback.conversation,
+        summary: feedback.summary,
+        product_prompt: feedback.productPrompt,
+        insights: feedback.insights,
+        priority: feedback.priority,
+        category: feedback.category,
+        user_context: feedback.userContext,
+      }),
+    })
+    return response.ok
+  } catch (error) {
+    console.error('Failed to send feedback to API:', error)
+    return false
+  }
+}
+
 export function FeedbackProvider({ children }: { children: ReactNode }) {
   const [isEnabled, setIsEnabled] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -70,10 +94,17 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const addFeedback = useCallback((feedback: FeedbackItem) => {
+    // Save locally first (backup)
     setFeedbackItems(prev => {
       const updated = [feedback, ...prev]
       saveFeedback(updated)
       return updated
+    })
+    // Send to API (async, don't block)
+    sendFeedbackToAPI(feedback).then(success => {
+      if (success) {
+        console.log('Feedback sent to server')
+      }
     })
   }, [])
 
