@@ -8,6 +8,20 @@ import { MessageInput } from './MessageInput'
 import { OnboardingFlow, type OnboardingContext } from './OnboardingFlow'
 import type { Message, Source } from '@/types'
 import { Beaker, Sparkles, ArrowRight } from 'lucide-react'
+import { trackSessionStart, trackPageView, trackChatSent, trackSourceClicked } from '@/lib/analytics'
+
+// Common peptide names for tracking
+const PEPTIDE_NAMES = [
+  'bpc-157', 'bpc157', 'tb-500', 'tb500', 'semaglutide', 'tirzepatide',
+  'ipamorelin', 'cjc-1295', 'ghrp-6', 'ghrp-2', 'mk-677', 'pt-141',
+  'melanotan', 'aod-9604', 'sermorelin', 'hexarelin', 'epithalon',
+  'thymosin', 'll-37', 'ghk-cu', 'selank', 'semax', 'dihexa'
+]
+
+function extractPeptideMention(text: string): string | undefined {
+  const lower = text.toLowerCase()
+  return PEPTIDE_NAMES.find(p => lower.includes(p))
+}
 
 interface ChatContainerProps {
   conversationId?: string
@@ -46,6 +60,12 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         }
       }
     }
+  }, [])
+
+  // Track session and page view on mount
+  useEffect(() => {
+    trackSessionStart()
+    trackPageView('chat')
   }, [])
 
   // Determine initial view state
@@ -89,6 +109,13 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
 
   const handleSendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading || isStreaming) return
+
+    // Track chat sent
+    trackChatSent({
+      conversationId: activeConversationId,
+      messageLength: content.length,
+      peptideMentioned: extractPeptideMention(content),
+    })
 
     // Mark that user has started chatting - persists across navigation
     hasStartedChatting.current = true

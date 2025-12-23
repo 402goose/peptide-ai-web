@@ -7,11 +7,21 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Source } from '@/types'
+import { trackSourceClicked } from '@/lib/analytics'
 
 interface ResponseCardProps {
   sources: Source[]
   peptidesMentioned?: string[]
   showVendors?: boolean
+}
+
+// Handle source click with tracking
+function handleSourceClick(source: Source) {
+  trackSourceClicked({
+    sourceType: source.type || 'unknown',
+    sourceUrl: source.url,
+    sourceTitle: source.title,
+  })
 }
 
 type TabId = 'research' | 'experiences' | 'protocol' | 'vendors'
@@ -127,6 +137,7 @@ export function ResponseCard({ sources, peptidesMentioned = [], showVendors = tr
                           target="_blank"
                           rel="noopener noreferrer"
                           className="group"
+                          onClick={() => handleSourceClick(source)}
                         >
                           <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                             {source.title}
@@ -148,6 +159,7 @@ export function ResponseCard({ sources, peptidesMentioned = [], showVendors = tr
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mt-2"
+                          onClick={() => handleSourceClick(source)}
                         >
                           {source.type === 'pubmed' ? 'View on PubMed' :
                            source.type === 'arxiv' ? 'View on arXiv' :
