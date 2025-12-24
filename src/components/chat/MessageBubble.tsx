@@ -38,7 +38,7 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
       scale: 1,
       transition: {
         duration: 0.25,
-        ease: [0.25, 0.1, 0.25, 1], // Custom ease for smooth feel
+        ease: [0.25, 0.1, 0.25, 1] as const, // Custom ease for smooth feel
       }
     },
   }
