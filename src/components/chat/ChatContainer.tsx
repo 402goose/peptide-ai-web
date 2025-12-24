@@ -266,6 +266,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: content,
+          conversation_id: activeConversationId, // Continue existing conversation
           messages: newMessages.filter(m => m.content).map(m => ({
             role: m.role,
             content: m.content,
@@ -340,6 +341,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: content,
+            conversation_id: activeConversationId, // Continue existing conversation
             messages: newMessages.filter(m => m.content).map(m => ({
               role: m.role,
               content: m.content,
