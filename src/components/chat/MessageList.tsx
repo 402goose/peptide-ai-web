@@ -7,7 +7,7 @@ import { TypingIndicator } from './TypingIndicator'
 import { FollowUpChips } from './FollowUpChips'
 import { ResponseCard } from './ResponseCard'
 import { DisclaimerBanner } from './DisclaimerBanner'
-import { ChevronDown, BookOpen } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Message, Source } from '@/types'
 
@@ -189,62 +189,33 @@ export function MessageList({
         {/* Show interactive elements after the last assistant message */}
         {!isLoading && messages.length > 0 && messages[messages.length - 1].role === 'assistant' && (
           <motion.div
-            className="mt-6 space-y-4"
+            className="mt-4 space-y-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
+            transition={{ duration: 0.2 }}
           >
-            {/* Sources Preview - Always visible teaser */}
-            {sources.length > 0 && (
-              <motion.div
-                className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200/50 dark:border-blue-800/30 shadow-sm"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-md shadow-blue-500/20">
-                  <BookOpen className="h-5 w-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                    {sources.length} research source{sources.length !== 1 ? 's' : ''} found
-                  </span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Scroll down to explore references
-                  </p>
-                </div>
-                <ChevronDown className="h-5 w-5 text-blue-400 animate-bounce" />
-              </motion.div>
-            )}
-
-            {/* Follow-up questions - More prominent */}
+            {/* Follow-up suggestions - compact horizontal chips */}
             {followUps.length > 0 && (
               <FollowUpChips followUps={followUps} onClick={onFollowUpClick} />
             )}
 
-            {/* Disclaimer banner - compact */}
-            {disclaimers.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, delay: 0.15 }}
-              >
-                <DisclaimerBanner disclaimers={disclaimers} />
-              </motion.div>
-            )}
-
-            {/* Full tabbed response card with sources, experiences, protocol, vendors */}
+            {/* Collapsible research card with sources */}
             {sources.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, delay: 0.2 }}
+                transition={{ duration: 0.2, delay: 0.1 }}
               >
                 <ResponseCard
                   sources={sources}
                   showVendors={true}
                 />
               </motion.div>
+            )}
+
+            {/* Subtle disclaimer - just a text line */}
+            {disclaimers.length > 0 && (
+              <DisclaimerBanner disclaimers={disclaimers} />
             )}
           </motion.div>
         )}
