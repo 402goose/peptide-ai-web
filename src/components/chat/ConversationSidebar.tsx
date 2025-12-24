@@ -108,6 +108,8 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
     const diff = now.getTime() - date.getTime()
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
+    // Handle negative days (future dates due to timezone issues)
+    if (days < 0) return 'Today'
     if (days === 0) return 'Today'
     if (days === 1) return 'Yesterday'
     if (days < 7) return `${days} days ago`

@@ -93,9 +93,9 @@ export default function SharedConversationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
+    <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 shrink-0">
+      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 shrink-0">
         <div className="mx-auto max-w-3xl px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600">
@@ -112,7 +112,7 @@ export default function SharedConversationPage() {
       </header>
 
       {/* Scrollable Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto overscroll-contain">
         <div className="mx-auto max-w-3xl px-4 py-6">
           {/* Title */}
           <div className="mb-6 text-center">
