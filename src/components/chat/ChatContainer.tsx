@@ -528,9 +528,9 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         </AnimatePresence>
       </div>
 
-      {/* Input Area - Always visible */}
-      <div className="shrink-0 bg-white dark:bg-slate-950 pb-safe">
-        <div className="mx-auto max-w-3xl px-4 py-3">
+      {/* Input Area - Always visible and fixed at bottom */}
+      <div className="shrink-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800">
+        <div className="mx-auto max-w-3xl px-4 py-3 pb-6">
           <MessageInput
             ref={inputRef}
             onSend={handleSendMessage}

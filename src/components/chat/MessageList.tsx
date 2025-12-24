@@ -116,24 +116,9 @@ export function MessageList({
     prevMessageCountRef.current = messages.length
   }, [messages.length, scrollToUserMessage])
 
-  // During streaming, only auto-scroll if user hasn't scrolled up
-  useEffect(() => {
-    if (!isStreaming || !streamingContent) return
-    if (userScrolledUpRef.current) return
-
-    // Gentle scroll during streaming - not aggressive
-    const container = scrollContainerRef.current
-    if (container && isAtBottom) {
-      // Only scroll if content is pushing past viewport
-      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
-      if (distanceFromBottom > 50) {
-        container.scrollTo({
-          top: container.scrollHeight - container.clientHeight - 100,
-          behavior: 'instant'
-        })
-      }
-    }
-  }, [isStreaming, streamingContent, isAtBottom])
+  // During streaming - don't auto-scroll, let user control
+  // The arrow will show automatically when not at bottom
+  // User can tap arrow to scroll to bottom if they want
 
   return (
     <div
