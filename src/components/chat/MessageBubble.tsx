@@ -47,37 +47,31 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
   if (isOnboardingContext && message.metadata) {
     return (
       <motion.div
-        className="mb-6 flex justify-center"
+        className="mb-6 flex justify-center px-4"
         initial={skipAnimation ? "visible" : "hidden"}
         animate="visible"
         variants={messageVariants}
       >
-        <div className="inline-flex items-center gap-3 px-5 py-3 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-100 dark:border-blue-800/50 shadow-sm">
-          <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-blue-500" />
-            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+        <div className="flex flex-wrap items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-100 dark:border-blue-800/50 shadow-sm">
+          {/* Goal pill */}
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-800/50">
+            <Target className="h-3.5 w-3.5 text-blue-500" />
+            <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
               {message.metadata.goal}
             </span>
           </div>
+          {/* Condition pills */}
           {message.metadata.conditions && message.metadata.conditions.length > 0 && (
-            <>
-              <div className="w-px h-4 bg-blue-200 dark:bg-blue-700" />
-              <div className="flex items-center gap-1.5">
-                {message.metadata.conditions.slice(0, 2).map((condition, i) => (
-                  <span key={i} className="px-2 py-0.5 text-xs rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                    {condition}
-                  </span>
-                ))}
-                {message.metadata.conditions.length > 2 && (
-                  <span className="text-xs text-slate-400">+{message.metadata.conditions.length - 2}</span>
-                )}
-              </div>
-            </>
+            message.metadata.conditions.map((condition: string, i: number) => (
+              <span key={i} className="px-3 py-1 text-xs rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                {condition}
+              </span>
+            ))
           )}
-          <div className="w-px h-4 bg-blue-200 dark:bg-blue-700" />
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+          {/* Experience pill */}
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-800/50">
+            <Sparkles className="h-3 w-3 text-indigo-500" />
+            <span className="text-xs text-indigo-600 dark:text-indigo-300">
               {EXPERIENCE_LABELS[message.metadata.experience || 'new'] || message.metadata.experience}
             </span>
           </div>

@@ -295,6 +295,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     }
     setMessages([contextMessage])
     setIsLoading(true)
+    setIsStreaming(true)
+    setStreamingContent('')
     setCurrentSources([])
     setCurrentDisclaimers([])
     setCurrentFollowUps([])
@@ -302,7 +304,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     try {
       const guidedMessage = `User profile: ${context.experienceLevel} with peptides. Goal: ${context.primaryGoalLabel}. Focus areas: ${context.conditionLabels?.join(', ') || 'general'}. Suggested peptides to discuss: ${context.peptideSuggestions?.join(', ')}. Start by warmly acknowledging their goal, then dive into the most relevant peptides with specific research and protocols.`
 
-      const response = await fetch('/api/chat', {
+      // Use streaming endpoint for progressive response
+      const response = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -311,24 +314,54 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         }),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to get response')
+      if (!response.ok || !response.body) {
+        throw new Error('Streaming failed')
       }
 
-      const data = await response.json()
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let fullContent = ''
+      let buffer = ''
 
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date().toISOString(),
-      }
-      setMessages(prev => [...prev, assistantMessage])
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-      if (data.follow_ups) {
-        setCurrentFollowUps(data.follow_ups)
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+
+              if (data.type === 'conversation_id') {
+                setActiveConversationId(data.conversation_id)
+              } else if (data.type === 'sources' && data.sources) {
+                setCurrentSources(data.sources)
+              } else if (data.type === 'content' && data.content) {
+                fullContent += data.content
+                setStreamingContent(fullContent)
+              } else if (data.type === 'done') {
+                if (data.disclaimers) setCurrentDisclaimers(data.disclaimers)
+                if (data.follow_up_questions) setCurrentFollowUps(data.follow_up_questions)
+              }
+            } catch {
+              // Skip invalid JSON
+            }
+          }
+        }
       }
-      if (data.disclaimers) {
-        setCurrentDisclaimers(data.disclaimers)
+
+      // Add final message
+      if (fullContent) {
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: fullContent,
+          timestamp: new Date().toISOString(),
+        }
+        setMessages(prev => [...prev, assistantMessage])
       }
     } catch (error) {
       console.error('Failed to start guided journey:', error)
@@ -340,6 +373,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
+      setIsStreaming(false)
+      setStreamingContent('')
     }
   }
 
