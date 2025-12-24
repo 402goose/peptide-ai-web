@@ -193,12 +193,16 @@ export function FeedbackModal({
       const validPriorities = ['low', 'medium', 'high']
       const validCategories = ['bug', 'feature', 'ux', 'content', 'other']
 
-      const normalizedPriority = validPriorities.includes(summary.priority?.toLowerCase())
-        ? summary.priority.toLowerCase() as 'low' | 'medium' | 'high'
+      // Safely get string values
+      const priorityStr = typeof summary.priority === 'string' ? summary.priority.toLowerCase() : ''
+      const categoryStr = typeof summary.category === 'string' ? summary.category.toLowerCase() : ''
+
+      const normalizedPriority = validPriorities.includes(priorityStr)
+        ? priorityStr as 'low' | 'medium' | 'high'
         : 'medium'
 
-      const normalizedCategory = validCategories.includes(summary.category?.toLowerCase())
-        ? summary.category.toLowerCase() as 'bug' | 'feature' | 'ux' | 'content' | 'other'
+      const normalizedCategory = validCategories.includes(categoryStr)
+        ? categoryStr as 'bug' | 'feature' | 'ux' | 'content' | 'other'
         : 'other'
 
       const feedbackItem: FeedbackItem = {
