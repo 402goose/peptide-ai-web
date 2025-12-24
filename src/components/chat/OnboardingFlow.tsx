@@ -134,14 +134,23 @@ const EXPERIENCE_LEVELS = [
 
 export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
   const [step, setStep] = useState<'goals' | 'conditions' | 'experience'>('goals')
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null)
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([])
   const [selectedConditions, setSelectedConditions] = useState<string[]>([])
   const [experienceLevel, setExperienceLevel] = useState<string | null>(null)
 
-  const handleGoalSelect = (goalId: string) => {
-    setSelectedGoal(goalId)
-    setSelectedConditions([])
-    setStep('conditions')
+  const handleGoalToggle = (goalId: string) => {
+    setSelectedGoals(prev =>
+      prev.includes(goalId)
+        ? prev.filter(g => g !== goalId)
+        : [...prev, goalId]
+    )
+  }
+
+  const handleGoalsNext = () => {
+    if (selectedGoals.length > 0) {
+      setSelectedConditions([])
+      setStep('conditions')
+    }
   }
 
   const handleConditionToggle = (conditionId: string) => {
@@ -159,20 +168,31 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
   const handleExperienceSelect = (level: string) => {
     setExperienceLevel(level)
 
-    const goal = GOALS.find(g => g.id === selectedGoal)
+    // Get all selected goals data
+    const selectedGoalData = GOALS.filter(g => selectedGoals.includes(g.id))
+    const goalLabels = selectedGoalData.map(g => g.label)
+
+    // Get condition labels from all selected goals
     const conditionLabels = selectedConditions.map(c => {
-      const condList = CONDITIONS[selectedGoal as keyof typeof CONDITIONS]
-      return condList?.find(cond => cond.id === c)?.label || c
+      for (const goalId of selectedGoals) {
+        const condList = CONDITIONS[goalId as keyof typeof CONDITIONS]
+        const found = condList?.find(cond => cond.id === c)
+        if (found) return found.label
+      }
+      return c
     })
+
+    // Collect peptides from all selected goals
+    const allPeptides = [...new Set(selectedGoalData.flatMap(g => g.peptides))]
 
     // Create context object with all the details
     const context: OnboardingContext = {
-      primaryGoal: selectedGoal || '',
-      primaryGoalLabel: goal?.label || '',
+      primaryGoal: selectedGoals.join(','),
+      primaryGoalLabel: goalLabels.join(' & '),
       conditions: selectedConditions,
       conditionLabels,
       experienceLevel: level,
-      peptideSuggestions: goal?.peptides || [],
+      peptideSuggestions: allPeptides,
     }
 
     // The query is minimal - just triggers the conversation
@@ -180,8 +200,11 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
     onComplete('START_GUIDED_JOURNEY', context)
   }
 
-  const selectedGoalData = GOALS.find(g => g.id === selectedGoal)
-  const currentConditions = selectedGoal ? CONDITIONS[selectedGoal as keyof typeof CONDITIONS] : []
+  // Get conditions from all selected goals
+  const currentConditions = selectedGoals.flatMap(goalId => {
+    const conditions = CONDITIONS[goalId as keyof typeof CONDITIONS] || []
+    return conditions.map(c => ({ ...c, goalId }))
+  })
 
   return (
     <div className="flex flex-1 flex-col items-center justify-start px-4 py-4 sm:py-8 overflow-y-auto">
@@ -193,12 +216,12 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
           </div>
         </div>
         <h1 className="mb-1 sm:mb-2 text-lg sm:text-2xl font-bold text-slate-900 dark:text-white">
-          {step === 'goals' && "What's your primary goal?"}
-          {step === 'conditions' && `Tell us more about your ${selectedGoalData?.label.toLowerCase()}`}
+          {step === 'goals' && "What are your goals?"}
+          {step === 'conditions' && "Tell us more about your needs"}
           {step === 'experience' && "What's your experience level?"}
         </h1>
         <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-md">
-          {step === 'goals' && "We'll recommend peptides based on research for your specific needs"}
+          {step === 'goals' && "Select one or more goals (scroll to see all)"}
           {step === 'conditions' && "Select any that apply to get personalized recommendations"}
           {step === 'experience' && "This helps us tailor the information to your knowledge level"}
         </p>
@@ -251,86 +274,126 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
 
       {/* Step Content */}
       {step === 'goals' && (
-        <div className="grid w-full max-w-3xl gap-2 grid-cols-2 lg:grid-cols-3 px-2">
-          {GOALS.map((goal) => (
-            <button
-              key={goal.id}
-              onClick={() => handleGoalSelect(goal.id)}
-              className={cn(
-                "group flex flex-col items-start gap-2 rounded-xl border-2 p-3 text-left transition-all hover:scale-[1.02]",
-                goal.bgColor,
-                goal.borderColor,
-                "hover:shadow-md"
-              )}
+        <div className="w-full max-w-3xl flex flex-col flex-1 min-h-0">
+          <div className="flex-1 overflow-y-auto px-2 pb-2">
+            <div className="grid gap-2 grid-cols-2 lg:grid-cols-3">
+              {GOALS.map((goal) => {
+                const isSelected = selectedGoals.includes(goal.id)
+                return (
+                  <button
+                    key={goal.id}
+                    onClick={() => handleGoalToggle(goal.id)}
+                    className={cn(
+                      "group flex flex-col items-start gap-2 rounded-xl border-2 p-3 text-left transition-all relative",
+                      isSelected
+                        ? `${goal.bgColor} ${goal.borderColor} ring-2 ring-blue-500 ring-offset-2`
+                        : `${goal.bgColor} ${goal.borderColor} hover:shadow-md hover:scale-[1.02]`
+                    )}
+                  >
+                    {/* Selection indicator */}
+                    {isSelected && (
+                      <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
+                        <Check className="h-3 w-3 text-white" />
+                      </div>
+                    )}
+                    <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", goal.bgColor)}>
+                      <goal.icon className={cn("h-4 w-4", goal.color)} />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1 text-sm sm:text-base pr-6">
+                        {goal.label}
+                      </div>
+                      <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">
+                        {goal.description}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-auto">
+                      {goal.peptides.slice(0, 2).map(p => (
+                        <span key={p} className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-600 dark:text-slate-300">
+                          {p}
+                        </span>
+                      ))}
+                      {goal.peptides.length > 2 && (
+                        <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-500 dark:text-slate-400">
+                          +{goal.peptides.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Continue button - sticky at bottom */}
+          <div className="pt-3 px-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950">
+            <Button
+              onClick={handleGoalsNext}
+              disabled={selectedGoals.length === 0}
+              className="w-full gap-2"
             >
-              <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", goal.bgColor)}>
-                <goal.icon className={cn("h-4 w-4", goal.color)} />
-              </div>
-              <div>
-                <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1 text-sm sm:text-base">
-                  {goal.label}
-                  <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">
-                  {goal.description}
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-1 mt-auto">
-                {goal.peptides.slice(0, 2).map(p => (
-                  <span key={p} className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-600 dark:text-slate-300">
-                    {p}
-                  </span>
-                ))}
-                {goal.peptides.length > 2 && (
-                  <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-500 dark:text-slate-400">
-                    +{goal.peptides.length - 2}
-                  </span>
-                )}
-              </div>
-            </button>
-          ))}
+              Continue with {selectedGoals.length || 'selected'} goal{selectedGoals.length !== 1 ? 's' : ''}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
 
       {step === 'conditions' && (
-        <div className="w-full max-w-2xl">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {currentConditions.map((condition) => (
-              <button
-                key={condition.id}
-                onClick={() => handleConditionToggle(condition.id)}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all",
-                  selectedConditions.includes(condition.id)
-                    ? `${selectedGoalData?.bgColor} ${selectedGoalData?.borderColor}`
-                    : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
-                )}
-              >
-                <div className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-                  selectedConditions.includes(condition.id)
-                    ? selectedGoalData?.bgColor
-                    : "bg-slate-100 dark:bg-slate-800"
-                )}>
-                  {selectedConditions.includes(condition.id) ? (
-                    <Check className={cn("h-4 w-4", selectedGoalData?.color)} />
-                  ) : (
-                    <condition.icon className="h-4 w-4 text-slate-400" />
-                  )}
-                </div>
-                <span className={cn(
-                  "font-medium",
-                  selectedConditions.includes(condition.id)
-                    ? "text-slate-900 dark:text-white"
-                    : "text-slate-600 dark:text-slate-300"
-                )}>
-                  {condition.label}
+        <div className="w-full max-w-2xl px-2">
+          {/* Show selected goals */}
+          <div className="flex flex-wrap gap-2 mb-4 justify-center">
+            {selectedGoals.map(goalId => {
+              const goal = GOALS.find(g => g.id === goalId)
+              if (!goal) return null
+              return (
+                <span key={goalId} className={cn("text-xs px-3 py-1 rounded-full", goal.bgColor, goal.color)}>
+                  {goal.label}
                 </span>
-              </button>
-            ))}
+              )
+            })}
           </div>
 
-          <div className="flex justify-between mt-6">
+          <div className="grid gap-2 sm:grid-cols-2">
+            {currentConditions.map((condition) => {
+              const goalData = GOALS.find(g => g.id === condition.goalId)
+              return (
+                <button
+                  key={`${condition.goalId}-${condition.id}`}
+                  onClick={() => handleConditionToggle(condition.id)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all",
+                    selectedConditions.includes(condition.id)
+                      ? `${goalData?.bgColor} ${goalData?.borderColor}`
+                      : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                  )}
+                >
+                  <div className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-lg transition-colors shrink-0",
+                    selectedConditions.includes(condition.id)
+                      ? goalData?.bgColor
+                      : "bg-slate-100 dark:bg-slate-800"
+                  )}>
+                    {selectedConditions.includes(condition.id) ? (
+                      <Check className={cn("h-4 w-4", goalData?.color)} />
+                    ) : (
+                      <condition.icon className="h-4 w-4 text-slate-400" />
+                    )}
+                  </div>
+                  <span className={cn(
+                    "text-sm font-medium",
+                    selectedConditions.includes(condition.id)
+                      ? "text-slate-900 dark:text-white"
+                      : "text-slate-600 dark:text-slate-300"
+                  )}>
+                    {condition.label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="flex justify-between mt-4">
             <Button variant="ghost" onClick={() => setStep('goals')}>
               Back
             </Button>
