@@ -30,9 +30,20 @@ export async function POST(request: Request) {
       let errorMessage = 'Failed to save feedback'
       try {
         const errorJson = JSON.parse(errorText)
-        errorMessage = errorJson.detail || errorJson.error || errorMessage
+        // Ensure we get a string, not an object
+        if (typeof errorJson.detail === 'string') {
+          errorMessage = errorJson.detail
+        } else if (typeof errorJson.error === 'string') {
+          errorMessage = errorJson.error
+        } else if (typeof errorJson.message === 'string') {
+          errorMessage = errorJson.message
+        } else if (errorJson.detail) {
+          errorMessage = JSON.stringify(errorJson.detail)
+        }
       } catch {
-        if (errorText) errorMessage = errorText.slice(0, 200)
+        if (errorText && errorText.length < 300) {
+          errorMessage = errorText
+        }
       }
       return NextResponse.json(
         { error: errorMessage },

@@ -77,15 +77,36 @@ async function sendFeedbackToAPI(feedback: FeedbackItem): Promise<{ success: boo
     })
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-      console.error('Feedback API error:', response.status, errorData)
-      return { success: false, error: errorData.error || `HTTP ${response.status}` }
+      let errorMessage = `HTTP ${response.status}`
+      try {
+        const errorData = await response.json()
+        // Handle different error formats
+        if (typeof errorData.error === 'string') {
+          errorMessage = errorData.error
+        } else if (typeof errorData.detail === 'string') {
+          errorMessage = errorData.detail
+        } else if (errorData.message) {
+          errorMessage = String(errorData.message)
+        } else {
+          errorMessage = JSON.stringify(errorData)
+        }
+      } catch {
+        // If JSON parsing fails, try text
+        try {
+          errorMessage = await response.text() || errorMessage
+        } catch {
+          // Use default
+        }
+      }
+      console.error('Feedback API error:', response.status, errorMessage)
+      return { success: false, error: errorMessage }
     }
 
     return { success: true }
   } catch (error) {
     console.error('Failed to send feedback to API:', error)
-    return { success: false, error: String(error) }
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return { success: false, error: errorMessage }
   }
 }
 
