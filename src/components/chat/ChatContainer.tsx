@@ -381,14 +381,21 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     setCurrentFollowUps([])
 
     try {
-      const guidedMessage = `User profile: ${context.experienceLevel} with peptides. Goal: ${context.primaryGoalLabel}. Focus areas: ${context.conditionLabels?.join(', ') || 'general'}. Suggested peptides to discuss: ${context.peptideSuggestions?.join(', ')}. Start by warmly acknowledging their goal, then dive into the most relevant peptides with specific research and protocols.`
+      // Create a user-friendly first message that will make a good title
+      // Format: "Help me with [goal] - focusing on [conditions]"
+      const userFriendlyMessage = context.conditionLabels?.length
+        ? `Help me with ${context.primaryGoalLabel?.toLowerCase()} - focusing on ${context.conditionLabels.join(', ')}`
+        : `Help me with ${context.primaryGoalLabel?.toLowerCase()}`
+
+      // System context for the AI (not shown to user, but guides the response)
+      const systemContext = `[Context: User is ${context.experienceLevel} with peptides. Suggested peptides: ${context.peptideSuggestions?.join(', ')}. Please acknowledge their goal warmly and provide specific research-backed recommendations.]`
 
       // Use streaming endpoint for progressive response
       const response = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: guidedMessage,
+          message: `${userFriendlyMessage}\n\n${systemContext}`,
           messages: [],
         }),
       })
