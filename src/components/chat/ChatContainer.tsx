@@ -2,14 +2,20 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useUser } from '@clerk/nextjs'
 import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
 import { OnboardingFlow, type OnboardingContext } from './OnboardingFlow'
 import type { Message, Source } from '@/types'
-import { Beaker, Sparkles, ArrowRight } from 'lucide-react'
+import { Beaker, Sparkles, ArrowRight, Lock } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { trackSessionStart, trackPageView, trackChatSent, trackSourceClicked } from '@/lib/analytics'
 import { api } from '@/lib/api'
+
+// Limit for anonymous users
+const ANONYMOUS_CHAT_LIMIT = 3
 
 // Common peptide names for tracking
 const PEPTIDE_NAMES = [
@@ -33,6 +39,7 @@ type ViewState = 'onboarding' | 'ready' | 'chatting'
 export function ChatContainer({ conversationId }: ChatContainerProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user, isLoaded: isUserLoaded } = useUser()
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
@@ -43,11 +50,27 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>(conversationId)
   const [userContext, setUserContext] = useState<OnboardingContext | null>(null)
   const [inputFocused, setInputFocused] = useState(false)
+  const [anonChatCount, setAnonChatCount] = useState(0)
+  const [showSignUpPrompt, setShowSignUpPrompt] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const hasHandledQueryParam = useRef(false)
 
   // Track if user has started chatting (persists across navigation via sessionStorage)
   const hasStartedChatting = useRef(false)
+
+  // Check if user is anonymous
+  const isAnonymous = isUserLoaded && !user
+
+  // Load anonymous chat count from sessionStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isAnonymous) {
+      const count = parseInt(sessionStorage.getItem('peptide-ai-anon-chats') || '0', 10)
+      setAnonChatCount(count)
+      if (count >= ANONYMOUS_CHAT_LIMIT) {
+        setShowSignUpPrompt(true)
+      }
+    }
+  }, [isAnonymous])
 
   // Initialize chatting state from sessionStorage on mount
   useEffect(() => {
@@ -189,6 +212,22 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   const handleSendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading || isStreaming) return
 
+    // Check anonymous chat limit
+    if (isAnonymous) {
+      const currentCount = parseInt(sessionStorage.getItem('peptide-ai-anon-chats') || '0', 10)
+      if (currentCount >= ANONYMOUS_CHAT_LIMIT) {
+        setShowSignUpPrompt(true)
+        return
+      }
+      // Increment anonymous chat count
+      const newCount = currentCount + 1
+      sessionStorage.setItem('peptide-ai-anon-chats', String(newCount))
+      setAnonChatCount(newCount)
+      if (newCount >= ANONYMOUS_CHAT_LIMIT) {
+        // Will show prompt after this message completes
+      }
+    }
+
     // Track chat sent
     trackChatSent({
       conversationId: activeConversationId,
@@ -327,8 +366,16 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       setIsLoading(false)
       setIsStreaming(false)
       setStreamingContent('')
+
+      // Show sign-up prompt after response if anonymous limit reached
+      if (isAnonymous) {
+        const count = parseInt(sessionStorage.getItem('peptide-ai-anon-chats') || '0', 10)
+        if (count >= ANONYMOUS_CHAT_LIMIT) {
+          setShowSignUpPrompt(true)
+        }
+      }
     }
-  }, [messages, isLoading, isStreaming])
+  }, [messages, isLoading, isStreaming, isAnonymous])
 
   function handleFollowUpClick(question: string) {
     handleSendMessage(question)
@@ -617,19 +664,43 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       {/* Input Area - Always visible and fixed at bottom */}
       <div className="shrink-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 safe-area-bottom">
         <div className="mx-auto max-w-3xl px-4 pt-3 pb-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
-          <MessageInput
-            ref={inputRef}
-            onSend={handleSendMessage}
-            disabled={isLoading}
-            placeholder={
-              viewState === 'onboarding'
-                ? "Or type your question here..."
-                : "Ask about peptide research..."
-            }
-            onFocus={() => setInputFocused(true)}
-            onBlur={() => setInputFocused(false)}
-            showSkipHint={viewState === 'onboarding'}
-          />
+          {showSignUpPrompt ? (
+            // Sign up prompt for anonymous users who hit the limit
+            <div className="text-center py-2">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+                Sign up to continue chatting and save your conversations
+              </p>
+              <div className="flex justify-center gap-3">
+                <Link href="/sign-up">
+                  <Button size="sm" className="gap-2">
+                    <Lock className="h-3.5 w-3.5" />
+                    Create Free Account
+                  </Button>
+                </Link>
+                <Link href="/sign-in">
+                  <Button size="sm" variant="outline">
+                    Sign In
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <MessageInput
+              ref={inputRef}
+              onSend={handleSendMessage}
+              disabled={isLoading}
+              placeholder={
+                viewState === 'onboarding'
+                  ? "Or type your question here..."
+                  : isAnonymous
+                    ? `Ask about peptide research... (${ANONYMOUS_CHAT_LIMIT - anonChatCount} free ${ANONYMOUS_CHAT_LIMIT - anonChatCount === 1 ? 'chat' : 'chats'} left)`
+                    : "Ask about peptide research..."
+              }
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              showSkipHint={viewState === 'onboarding'}
+            />
+          )}
         </div>
       </div>
     </div>
