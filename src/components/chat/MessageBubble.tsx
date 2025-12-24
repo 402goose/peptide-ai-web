@@ -111,7 +111,7 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
       {/* Message Content */}
       <div
         className={cn(
-          'max-w-[85%] rounded-2xl px-4 py-3 transition-shadow duration-200',
+          'max-w-[85%] rounded-2xl px-4 py-3 transition-shadow duration-200 overflow-hidden',
           isUser
             ? 'rounded-br-sm bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/10'
             : 'rounded-bl-sm bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100 shadow-sm border border-slate-100 dark:border-slate-700/50'

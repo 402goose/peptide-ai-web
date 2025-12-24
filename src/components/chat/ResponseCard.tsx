@@ -171,7 +171,7 @@ export function ResponseCard({ sources, peptidesMentioned = [], showVendors = tr
             </div>
 
             {/* Tab Content */}
-            <div className="p-4 max-h-[400px] overflow-y-auto">
+            <div className="p-4 max-h-[400px] overflow-y-auto overflow-x-hidden break-words">
               {/* Research Tab */}
               {activeTab === 'research' && (
                 <div className="space-y-2">

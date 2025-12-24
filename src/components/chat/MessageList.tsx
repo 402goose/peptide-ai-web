@@ -144,7 +144,7 @@ export function MessageList({
   return (
     <div
       ref={scrollContainerRef}
-      className="h-full overflow-y-auto scroll-smooth"
+      className="h-full overflow-y-auto overflow-x-hidden scroll-smooth"
     >
       {/* Min height ensures content starts at top, not pushed to bottom */}
       <div className="min-h-full flex flex-col justify-end">

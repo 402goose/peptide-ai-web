@@ -20,7 +20,7 @@ export function MarkdownRenderer({ content, sources = [] }: MarkdownRendererProp
   )
 
   return (
-    <div className="prose prose-slate dark:prose-invert prose-sm max-w-none
+    <div className="prose prose-slate dark:prose-invert prose-sm max-w-none break-words overflow-hidden
       prose-headings:font-semibold prose-headings:text-slate-900 dark:prose-headings:text-slate-100
       prose-h2:text-lg prose-h2:mt-5 prose-h2:mb-3 prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2 dark:prose-h2:border-slate-700
       prose-h3:text-base prose-h3:mt-4 prose-h3:mb-2 prose-h3:text-blue-600 dark:prose-h3:text-blue-400
