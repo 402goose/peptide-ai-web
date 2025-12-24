@@ -2,7 +2,6 @@
 
 import { User, Beaker, Target, Sparkles } from 'lucide-react'
 import { MarkdownRenderer } from './MarkdownRenderer'
-import { StreamingMessage } from './StreamingMessage'
 import { cn } from '@/lib/utils'
 import type { Message } from '@/types'
 
@@ -95,17 +94,20 @@ export function MessageBubble({ message, isLast, isStreaming }: MessageBubblePro
       >
         {isUser ? (
           <p className="whitespace-pre-wrap">{message.content}</p>
-        ) : isStreaming ? (
-          <StreamingMessage
-            content={message.content}
-            isStreaming={isStreaming}
-            sources={message.sources}
-          />
         ) : (
-          <MarkdownRenderer
-            content={message.content}
-            sources={message.sources}
-          />
+          <>
+            <MarkdownRenderer
+              content={message.content}
+              sources={message.sources}
+            />
+            {/* Streaming cursor indicator */}
+            {isStreaming && (
+              <span
+                className="inline-block w-0.5 h-4 ml-0.5 bg-blue-500 animate-pulse align-middle"
+                aria-hidden="true"
+              />
+            )}
+          </>
         )}
       </div>
     </div>
