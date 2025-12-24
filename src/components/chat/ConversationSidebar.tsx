@@ -31,11 +31,11 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
   const [editTitle, setEditTitle] = useState('')
 
   useEffect(() => {
-    // Only fetch on client side
+    // Fetch on client side and refresh when URL changes (new conversation created)
     if (typeof window !== 'undefined') {
       loadConversations()
     }
-  }, [])
+  }, [currentId]) // Re-fetch when conversation ID changes
 
   async function loadConversations() {
     try {

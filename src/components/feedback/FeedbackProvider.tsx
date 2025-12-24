@@ -178,9 +178,10 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
       />
 
       {/* Floating feedback button - opens feedback modal */}
+      {/* On mobile: position in top-right area to avoid input box overlap */}
       <button
         onClick={() => openFeedback('General Feedback', window.location.pathname)}
-        className="fixed bottom-32 sm:bottom-4 right-4 z-40 p-3 rounded-full shadow-lg transition-all bg-purple-500 text-white hover:bg-purple-600 hover:scale-105 active:scale-95"
+        className="fixed top-20 sm:bottom-4 sm:top-auto right-4 z-40 p-3 rounded-full shadow-lg transition-all bg-purple-500 text-white hover:bg-purple-600 hover:scale-105 active:scale-95"
         title="Give feedback"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
