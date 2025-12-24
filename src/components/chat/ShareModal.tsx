@@ -35,7 +35,7 @@ export function ShareModal({
     setError(null)
     try {
       const result = await api.createShareLink(conversationId)
-      const url = `${window.location.origin}/share/${result.share_id}`
+      const url = `${window.location.origin}/share/c/${result.share_id}`
       setShareUrl(url)
     } catch (err) {
       console.error('Failed to create share link:', err)

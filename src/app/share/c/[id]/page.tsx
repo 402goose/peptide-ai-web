@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Beaker, MessageSquare, User, ArrowRight, ExternalLink } from 'lucide-react'
+import { Beaker, MessageSquare, User, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface SharedMessage {
