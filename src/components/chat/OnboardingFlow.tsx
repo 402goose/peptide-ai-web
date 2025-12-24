@@ -274,68 +274,74 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
 
       {/* Step Content */}
       {step === 'goals' && (
-        <div className="w-full max-w-3xl flex flex-col flex-1 min-h-0">
-          <div className="flex-1 overflow-y-auto px-2 pb-2">
-            <div className="grid gap-2 grid-cols-2 lg:grid-cols-3">
-              {GOALS.map((goal) => {
-                const isSelected = selectedGoals.includes(goal.id)
-                return (
-                  <button
-                    key={goal.id}
-                    onClick={() => handleGoalToggle(goal.id)}
-                    className={cn(
-                      "group flex flex-col items-start gap-2 rounded-xl border-2 p-3 text-left transition-all relative",
-                      isSelected
-                        ? `${goal.bgColor} ${goal.borderColor} ring-2 ring-blue-500 ring-offset-2`
-                        : `${goal.bgColor} ${goal.borderColor} hover:shadow-md hover:scale-[1.02]`
+        <div className="w-full max-w-3xl px-2">
+          {/* Scrollable goals grid */}
+          <div className="grid gap-2 grid-cols-2 lg:grid-cols-3 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto pb-20">
+            {GOALS.map((goal) => {
+              const isSelected = selectedGoals.includes(goal.id)
+              return (
+                <button
+                  key={goal.id}
+                  onClick={() => handleGoalToggle(goal.id)}
+                  className={cn(
+                    "group flex flex-col items-start gap-2 rounded-xl border-2 p-3 text-left transition-all relative",
+                    isSelected
+                      ? `${goal.bgColor} ${goal.borderColor} ring-2 ring-blue-500 ring-offset-2`
+                      : `${goal.bgColor} ${goal.borderColor} hover:shadow-md hover:scale-[1.02]`
+                  )}
+                >
+                  {/* Selection indicator */}
+                  {isSelected && (
+                    <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
+                      <Check className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                  <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", goal.bgColor)}>
+                    <goal.icon className={cn("h-4 w-4", goal.color)} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1 text-sm sm:text-base pr-6">
+                      {goal.label}
+                    </div>
+                    <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">
+                      {goal.description}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-auto">
+                    {goal.peptides.slice(0, 2).map(p => (
+                      <span key={p} className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-600 dark:text-slate-300">
+                        {p}
+                      </span>
+                    ))}
+                    {goal.peptides.length > 2 && (
+                      <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-500 dark:text-slate-400">
+                        +{goal.peptides.length - 2}
+                      </span>
                     )}
-                  >
-                    {/* Selection indicator */}
-                    {isSelected && (
-                      <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
-                        <Check className="h-3 w-3 text-white" />
-                      </div>
-                    )}
-                    <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", goal.bgColor)}>
-                      <goal.icon className={cn("h-4 w-4", goal.color)} />
-                    </div>
-                    <div>
-                      <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1 text-sm sm:text-base pr-6">
-                        {goal.label}
-                      </div>
-                      <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">
-                        {goal.description}
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-auto">
-                      {goal.peptides.slice(0, 2).map(p => (
-                        <span key={p} className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-600 dark:text-slate-300">
-                          {p}
-                        </span>
-                      ))}
-                      {goal.peptides.length > 2 && (
-                        <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-500 dark:text-slate-400">
-                          +{goal.peptides.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
+                  </div>
+                </button>
+              )
+            })}
           </div>
 
-          {/* Continue button - sticky at bottom */}
-          <div className="pt-3 px-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950">
-            <Button
-              onClick={handleGoalsNext}
-              disabled={selectedGoals.length === 0}
-              className="w-full gap-2"
+          {/* Floating Continue button - always visible when goals selected */}
+          {selectedGoals.length > 0 && (
+            <motion.div
+              className="fixed bottom-24 left-1/2 -translate-x-1/2 z-20"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
             >
-              Continue with {selectedGoals.length || 'selected'} goal{selectedGoals.length !== 1 ? 's' : ''}
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
+              <Button
+                onClick={handleGoalsNext}
+                className="gap-2 shadow-lg shadow-blue-500/25 px-6"
+                size="lg"
+              >
+                Continue with {selectedGoals.length} goal{selectedGoals.length !== 1 ? 's' : ''}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </motion.div>
+          )}
         </div>
       )}
 
