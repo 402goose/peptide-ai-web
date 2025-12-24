@@ -52,6 +52,8 @@ export default function AdminOverview() {
   const [error, setError] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
   const [clearResult, setClearResult] = useState<string | null>(null);
+  const [clearingShares, setClearingShares] = useState(false);
+  const [clearSharesResult, setClearSharesResult] = useState<string | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://peptide-ai-api-production.up.railway.app';
 
@@ -71,6 +73,30 @@ export default function AdminOverview() {
       setClearResult('Failed to clear conversations. Check console for details.');
     } finally {
       setClearing(false);
+    }
+  };
+
+  const handleClearSharedConversations = async (all: boolean = false) => {
+    const message = all
+      ? 'Delete ALL shared conversation links?'
+      : 'Delete shared links older than 3 days?';
+
+    if (!confirm(message)) {
+      return;
+    }
+
+    setClearingShares(true);
+    setClearSharesResult(null);
+
+    try {
+      const endpoint = all ? 'deleteAllSharedConversations' : 'cleanupOldSharedConversations';
+      const result = await api[endpoint]();
+      setClearSharesResult(`Successfully deleted ${result.deleted} shared links`);
+    } catch (err) {
+      console.error('Failed to clear shared conversations:', err);
+      setClearSharesResult('Failed to clear shared links. Check console for details.');
+    } finally {
+      setClearingShares(false);
     }
   };
 
@@ -351,6 +377,43 @@ export default function AdminOverview() {
               : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
           }`}>
             {clearResult}
+          </div>
+        )}
+
+        {/* Clear Shared Links */}
+        <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-lg mt-4">
+          <div>
+            <h3 className="font-medium">Clear Shared Links</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Delete shared conversation links from the database.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleClearSharedConversations(false)}
+              disabled={clearingShares}
+              className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm"
+            >
+              {clearingShares ? 'Clearing...' : 'Old (3+ days)'}
+            </button>
+            <button
+              onClick={() => handleClearSharedConversations(true)}
+              disabled={clearingShares}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors text-sm"
+            >
+              <Trash2 className={`w-4 h-4 ${clearingShares ? 'animate-pulse' : ''}`} />
+              {clearingShares ? 'Clearing...' : 'All'}
+            </button>
+          </div>
+        </div>
+
+        {clearSharesResult && (
+          <div className={`mt-4 p-3 rounded-lg text-sm ${
+            clearSharesResult.includes('Successfully')
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+              : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+          }`}>
+            {clearSharesResult}
           </div>
         )}
       </div>

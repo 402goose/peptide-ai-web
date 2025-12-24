@@ -295,6 +295,18 @@ class ApiClient {
   }
 
   // Share endpoints
+  async cleanupOldSharedConversations(): Promise<{ deleted: number }> {
+    return this.fetch<{ deleted: number }>('/api/v1/admin/shared-conversations/cleanup', {
+      method: 'DELETE',
+    })
+  }
+
+  async deleteAllSharedConversations(): Promise<{ deleted: number }> {
+    return this.fetch<{ deleted: number }>('/api/v1/admin/shared-conversations/all', {
+      method: 'DELETE',
+    })
+  }
+
   async createShareLink(conversationId: string): Promise<{ share_id: string; share_url: string }> {
     return this.fetch<{ share_id: string; share_url: string }>(`/api/v1/chat/conversations/${conversationId}/share`, {
       method: 'POST',
