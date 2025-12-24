@@ -34,7 +34,6 @@ interface StreamingTextProps {
 export interface StreamingTextHandle {
   appendText: (text: string) => void
   getDisplayedText: () => string
-  getFullText: () => string
   reset: () => void
   skipAnimation: () => void
   isComplete: () => boolean
@@ -53,7 +52,6 @@ export const StreamingText = forwardRef<StreamingTextHandle, StreamingTextProps>
   ) {
     const {
       displayedText,
-      fullText,
       isAnimating,
       isComplete,
       appendText,
@@ -62,7 +60,6 @@ export const StreamingText = forwardRef<StreamingTextHandle, StreamingTextProps>
       skipAnimation,
     } = useStreamingText({
       charDelay,
-      batchSize: 2, // Smaller batches for smoother appearance
       onComplete,
     })
 
@@ -80,11 +77,10 @@ export const StreamingText = forwardRef<StreamingTextHandle, StreamingTextProps>
     useImperativeHandle(ref, () => ({
       appendText,
       getDisplayedText: () => displayedText,
-      getFullText: () => fullText,
       reset,
       skipAnimation,
       isComplete: () => isComplete,
-    }), [appendText, displayedText, fullText, reset, skipAnimation, isComplete])
+    }), [appendText, displayedText, reset, skipAnimation, isComplete])
 
     // Render the text with proper whitespace handling
     const renderText = () => {

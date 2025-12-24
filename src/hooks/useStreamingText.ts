@@ -6,19 +6,12 @@ interface UseStreamingTextOptions {
   /**
    * Milliseconds between each character render
    * Lower = faster typing, Higher = slower typing
-   * Default: 20ms (~50 chars/second, feels natural)
+   * Default: 15ms (~67 chars/second)
    */
   charDelay?: number
 
   /**
-   * How many characters to batch before updating React state
-   * Higher = better performance, Lower = smoother appearance
-   * Default: 3
-   */
-  batchSize?: number
-
-  /**
-   * Callback when streaming completes
+   * Callback when all text has been displayed
    */
   onComplete?: () => void
 }
@@ -28,11 +21,6 @@ interface UseStreamingTextReturn {
    * The currently displayed text (animated)
    */
   displayedText: string
-
-  /**
-   * The full text received so far (may be ahead of displayedText)
-   */
-  fullText: string
 
   /**
    * Whether we're still animating characters
@@ -66,29 +54,75 @@ interface UseStreamingTextReturn {
 }
 
 export function useStreamingText(options: UseStreamingTextOptions = {}): UseStreamingTextReturn {
-  const {
-    charDelay = 20,
-    batchSize = 3,
-    onComplete,
-  } = options
+  const { charDelay = 15, onComplete } = options
 
-  // Full text buffer (all tokens received)
-  const [fullText, setFullText] = useState('')
+  // Use ref for the full text to avoid closure issues in animation loop
+  const fullTextRef = useRef('')
 
-  // Currently displayed text (animated portion)
+  // Currently displayed text (React state for rendering)
   const [displayedText, setDisplayedText] = useState('')
 
+  // Current character index in the animation
+  const charIndexRef = useRef(0)
+
   // Animation state
+  const isAnimatingRef = useRef(false)
   const [isAnimating, setIsAnimating] = useState(false)
-  const [streamingDone, setStreamingDone] = useState(false)
 
-  // Refs for animation loop
+  // Stream state
+  const streamingDoneRef = useRef(false)
+  const [isComplete, setIsComplete] = useState(false)
+
+  // Animation frame ref
   const animationFrameRef = useRef<number | null>(null)
-  const lastCharTimeRef = useRef<number>(0)
-  const charIndexRef = useRef<number>(0)
-  const charBatchRef = useRef<string>('')
+  const lastCharTimeRef = useRef(0)
 
-  // Cleanup animation frame on unmount
+  // The animation loop - uses refs to always get current values
+  const runAnimation = useCallback(() => {
+    const now = performance.now()
+    const fullText = fullTextRef.current
+    const currentIndex = charIndexRef.current
+
+    // If we've displayed all available text
+    if (currentIndex >= fullText.length) {
+      // If streaming is done, we're complete
+      if (streamingDoneRef.current) {
+        isAnimatingRef.current = false
+        setIsAnimating(false)
+        setIsComplete(true)
+        onComplete?.()
+        return
+      }
+      // Otherwise keep waiting for more text
+      animationFrameRef.current = requestAnimationFrame(runAnimation)
+      return
+    }
+
+    // Check if enough time passed for next character
+    if (now - lastCharTimeRef.current >= charDelay) {
+      // Advance by one character
+      charIndexRef.current++
+      lastCharTimeRef.current = now
+
+      // Update displayed text from the ref (single source of truth)
+      setDisplayedText(fullText.slice(0, charIndexRef.current))
+    }
+
+    // Continue animation
+    animationFrameRef.current = requestAnimationFrame(runAnimation)
+  }, [charDelay, onComplete])
+
+  // Start animation if not already running
+  const startAnimation = useCallback(() => {
+    if (!isAnimatingRef.current) {
+      isAnimatingRef.current = true
+      setIsAnimating(true)
+      lastCharTimeRef.current = performance.now()
+      animationFrameRef.current = requestAnimationFrame(runAnimation)
+    }
+  }, [runAnimation])
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (animationFrameRef.current) {
@@ -97,107 +131,54 @@ export function useStreamingText(options: UseStreamingTextOptions = {}): UseStre
     }
   }, [])
 
-  // Animation loop using requestAnimationFrame
-  const animate = useCallback((timestamp: number) => {
-    const fullTextCurrent = fullText
-    const currentIndex = charIndexRef.current
-
-    // Check if we've caught up to the full text
-    if (currentIndex >= fullTextCurrent.length) {
-      // If streaming is done and we've displayed everything, we're complete
-      if (streamingDone) {
-        setIsAnimating(false)
-        onComplete?.()
-        return
-      }
-      // Otherwise, keep waiting for more text
-      animationFrameRef.current = requestAnimationFrame(animate)
-      return
-    }
-
-    // Check if enough time has passed since last character
-    if (timestamp - lastCharTimeRef.current >= charDelay) {
-      // Add next character to batch
-      charBatchRef.current += fullTextCurrent[currentIndex]
-      charIndexRef.current++
-      lastCharTimeRef.current = timestamp
-
-      // Update React state every batchSize characters or if we hit a space/newline
-      const lastChar = fullTextCurrent[currentIndex]
-      const shouldFlush =
-        charBatchRef.current.length >= batchSize ||
-        lastChar === ' ' ||
-        lastChar === '\n' ||
-        currentIndex >= fullTextCurrent.length - 1
-
-      if (shouldFlush && charBatchRef.current.length > 0) {
-        setDisplayedText(prev => prev + charBatchRef.current)
-        charBatchRef.current = ''
-      }
-    }
-
-    // Continue animation loop
-    animationFrameRef.current = requestAnimationFrame(animate)
-  }, [fullText, streamingDone, charDelay, batchSize, onComplete])
-
-  // Start/restart animation when fullText changes
-  useEffect(() => {
-    if (fullText.length > 0 && !isAnimating) {
-      setIsAnimating(true)
-      lastCharTimeRef.current = performance.now()
-      animationFrameRef.current = requestAnimationFrame(animate)
-    }
-  }, [fullText, isAnimating, animate])
-
-  // Restart animation loop when animate callback changes
-  useEffect(() => {
-    if (isAnimating && animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current)
-      animationFrameRef.current = requestAnimationFrame(animate)
-    }
-  }, [animate, isAnimating])
-
   const appendText = useCallback((text: string) => {
-    setFullText(prev => prev + text)
-  }, [])
+    // Append to the ref (source of truth)
+    fullTextRef.current += text
+    // Start animation if not running
+    startAnimation()
+  }, [startAnimation])
 
   const finishStreaming = useCallback(() => {
-    setStreamingDone(true)
+    streamingDoneRef.current = true
   }, [])
 
   const reset = useCallback(() => {
+    // Cancel any running animation
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current)
       animationFrameRef.current = null
     }
-    setFullText('')
+    // Reset all state
+    fullTextRef.current = ''
+    charIndexRef.current = 0
+    lastCharTimeRef.current = 0
+    isAnimatingRef.current = false
+    streamingDoneRef.current = false
     setDisplayedText('')
     setIsAnimating(false)
-    setStreamingDone(false)
-    charIndexRef.current = 0
-    charBatchRef.current = ''
-    lastCharTimeRef.current = 0
+    setIsComplete(false)
   }, [])
 
   const skipAnimation = useCallback(() => {
+    // Cancel animation
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current)
       animationFrameRef.current = null
     }
-    setDisplayedText(fullText)
+    // Show all text immediately
+    const fullText = fullTextRef.current
     charIndexRef.current = fullText.length
-    charBatchRef.current = ''
+    setDisplayedText(fullText)
+    isAnimatingRef.current = false
     setIsAnimating(false)
-    if (streamingDone) {
+    if (streamingDoneRef.current) {
+      setIsComplete(true)
       onComplete?.()
     }
-  }, [fullText, streamingDone, onComplete])
-
-  const isComplete = streamingDone && !isAnimating && displayedText === fullText
+  }, [onComplete])
 
   return {
     displayedText,
-    fullText,
     isAnimating,
     isComplete,
     appendText,
