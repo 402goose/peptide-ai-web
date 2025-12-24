@@ -298,8 +298,9 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               if (data.type === 'conversation_id') {
                 setActiveConversationId(data.conversation_id)
                 // Update URL to include conversation ID (enables sharing)
-                if (typeof window !== 'undefined' && !conversationId) {
-                  window.history.replaceState(null, '', `/chat/c/${data.conversation_id}`)
+                // Use router.replace to trigger usePathname update in layout
+                if (!conversationId) {
+                  router.replace(`/chat/c/${data.conversation_id}`, { scroll: false })
                 }
               } else if (data.type === 'sources' && data.sources) {
                 setCurrentSources(data.sources)
@@ -476,9 +477,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               if (data.type === 'conversation_id') {
                 setActiveConversationId(data.conversation_id)
                 // Update URL to include conversation ID (enables sharing)
-                if (typeof window !== 'undefined') {
-                  window.history.replaceState(null, '', `/chat/c/${data.conversation_id}`)
-                }
+                // Use router.replace to trigger usePathname update in layout
+                router.replace(`/chat/c/${data.conversation_id}`, { scroll: false })
               } else if (data.type === 'sources' && data.sources) {
                 setCurrentSources(data.sources)
               } else if (data.type === 'content' && data.content) {
