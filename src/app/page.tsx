@@ -14,7 +14,8 @@ export default async function HomePage() {
 
   // Landing page for non-authenticated users
   return (
-    <div className="min-h-screen overflow-y-auto bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+    <div className="fixed inset-0 overflow-y-auto bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+      <div className="min-h-full">
       {/* Header */}
       <header className="flex items-center justify-between p-4 md:p-6">
         <div className="flex items-center gap-2">
@@ -63,45 +64,47 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        {/* Features */}
-        <div className="mt-16 grid max-w-4xl gap-6 md:grid-cols-3">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 text-left dark:border-slate-800 dark:bg-slate-900">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-              <Search className="h-5 w-5 text-blue-600" />
+        {/* Features - horizontal scroll on mobile, grid on desktop */}
+        <div className="mt-12 md:mt-16 w-full max-w-4xl">
+          <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto md:overflow-visible pb-4 md:pb-0 px-4 md:px-0 -mx-4 md:mx-0 snap-x snap-mandatory scrollbar-hide">
+            <div className="flex-shrink-0 w-[280px] md:w-auto snap-center rounded-xl border border-slate-200 bg-white p-5 md:p-6 text-left dark:border-slate-800 dark:bg-slate-900">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <Search className="h-5 w-5 text-blue-600" />
+              </div>
+              <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">
+                Research Database
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Search through thousands of peer-reviewed papers from PubMed,
+                arXiv, and bioRxiv.
+              </p>
             </div>
-            <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">
-              Research Database
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Search through thousands of peer-reviewed papers from PubMed,
-              arXiv, and bioRxiv.
-            </p>
-          </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 text-left dark:border-slate-800 dark:bg-slate-900">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-              <BookOpen className="h-5 w-5 text-blue-600" />
+            <div className="flex-shrink-0 w-[280px] md:w-auto snap-center rounded-xl border border-slate-200 bg-white p-5 md:p-6 text-left dark:border-slate-800 dark:bg-slate-900">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <BookOpen className="h-5 w-5 text-blue-600" />
+              </div>
+              <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">
+                User Experiences
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Learn from real user journeys and reported outcomes across the
+                peptide community.
+              </p>
             </div>
-            <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">
-              User Experiences
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Learn from real user journeys and reported outcomes across the
-              peptide community.
-            </p>
-          </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 text-left dark:border-slate-800 dark:bg-slate-900">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-              <Shield className="h-5 w-5 text-blue-600" />
+            <div className="flex-shrink-0 w-[280px] md:w-auto snap-center rounded-xl border border-slate-200 bg-white p-5 md:p-6 text-left dark:border-slate-800 dark:bg-slate-900">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <Shield className="h-5 w-5 text-blue-600" />
+              </div>
+              <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">
+                Safety First
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Get balanced information with proper disclaimers and citations for
+                every claim.
+              </p>
             </div>
-            <h3 className="mb-2 font-semibold text-slate-900 dark:text-white">
-              Safety First
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Get balanced information with proper disclaimers and citations for
-              every claim.
-            </p>
           </div>
         </div>
       </main>
@@ -113,6 +116,7 @@ export default async function HomePage() {
           healthcare professionals.
         </p>
       </footer>
+      </div>
     </div>
   )
 }
