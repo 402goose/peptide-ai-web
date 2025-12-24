@@ -149,3 +149,15 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Safe area padding for mobile devices */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Ensure viewport accounts for mobile browser chrome */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

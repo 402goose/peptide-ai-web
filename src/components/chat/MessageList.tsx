@@ -210,27 +210,28 @@ export function MessageList({
       </div>
       </div>
 
-      {/* Scroll to bottom arrow - ChatGPT style */}
+      {/* Scroll to bottom arrow - ChatGPT style, centered */}
       <AnimatePresence>
         {!isAtBottom && (
           <motion.button
             onClick={() => scrollToBottom(true)}
             className={cn(
-              "absolute bottom-4 right-4 z-10",
+              "absolute bottom-6 left-1/2 -translate-x-1/2 z-20",
               "flex items-center justify-center",
-              "h-10 w-10 rounded-full",
-              "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300",
-              "shadow-md",
-              "hover:bg-slate-300 dark:hover:bg-slate-600",
+              "h-9 w-9 rounded-full",
+              "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400",
+              "border border-slate-200 dark:border-slate-700",
+              "shadow-lg",
+              "hover:bg-slate-50 dark:hover:bg-slate-700",
               "transition-all duration-200"
             )}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.15 }}
             aria-label="Scroll to bottom"
           >
-            <ArrowDown className="h-5 w-5" />
+            <ArrowDown className="h-4 w-4" />
           </motion.button>
         )}
       </AnimatePresence>

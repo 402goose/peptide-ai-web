@@ -529,8 +529,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       </div>
 
       {/* Input Area - Always visible and fixed at bottom */}
-      <div className="shrink-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800">
-        <div className="mx-auto max-w-3xl px-4 py-3 pb-6">
+      <div className="shrink-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 safe-area-bottom">
+        <div className="mx-auto max-w-3xl px-4 pt-3 pb-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
           <MessageInput
             ref={inputRef}
             onSend={handleSendMessage}
