@@ -9,7 +9,10 @@ export async function GET(request: NextRequest) {
   const { userId } = await auth()
   const clerkUserId = userId || `anon_${request.headers.get('x-forwarded-for') || 'unknown'}`
 
+  console.log('[Conversations API] Clerk userId:', userId, '| Using:', clerkUserId)
+
   if (!API_URL || !API_KEY) {
+    console.log('[Conversations API] Backend not configured')
     return NextResponse.json({ error: 'Backend not configured' }, { status: 503 })
   }
 
@@ -36,7 +39,12 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await backendResponse.json()
-    return NextResponse.json(data)
+    console.log('[Conversations API] Backend returned', data.length || 0, 'conversations')
+    // Add debug info to response headers
+    const response = NextResponse.json(data)
+    response.headers.set('X-Debug-User-Id', clerkUserId)
+    response.headers.set('X-Debug-Count', String(data.length || 0))
+    return response
   } catch (error) {
     console.error('Error fetching conversations:', error)
     return NextResponse.json({ error: 'Failed to fetch conversations' }, { status: 500 })

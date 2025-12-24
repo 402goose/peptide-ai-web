@@ -11,6 +11,8 @@ export async function POST(request: NextRequest) {
   const { userId } = await auth()
   const clerkUserId = userId || `anon_${request.headers.get('x-forwarded-for') || 'unknown'}`
 
+  console.log('[Chat Stream API] Clerk userId:', userId, '| Using:', clerkUserId, '| conversation_id:', conversation_id)
+
   if (!message) {
     return new Response(JSON.stringify({ error: 'Message is required' }), {
       status: 400,
