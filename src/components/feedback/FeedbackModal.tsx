@@ -15,7 +15,7 @@ interface FeedbackModalProps {
   onClose: () => void
   componentName: string
   componentPath: string
-  onSubmit: (feedback: FeedbackItem) => void
+  onSubmit: (feedback: FeedbackItem) => Promise<{ success: boolean; error?: string }>
 }
 
 const SYSTEM_PROMPT = `You are a product feedback assistant for Peptide AI. You have COMPLETE awareness of the product and its goals.
@@ -136,11 +136,12 @@ export function FeedbackModal({
         setIsComplete(true)
       }
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Feedback chat error:', error)
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "I'm having trouble connecting. Could you try again?"
+        content: "I'm having trouble connecting. The feedback system may not be configured. You can still submit your feedback directly."
       }])
+      setIsComplete(true) // Allow submission even if AI chat fails
     } finally {
       setIsLoading(false)
     }
@@ -207,10 +208,32 @@ export function FeedbackModal({
         },
       }
 
-      onSubmit(feedbackItem)
-      handleClose()
+      const result = await onSubmit(feedbackItem)
+
+      if (result.success) {
+        // Show success message briefly before closing
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: '✅ Thank you! Your feedback has been submitted.'
+        }])
+
+        // Close after a brief delay to show success message
+        setTimeout(() => handleClose(), 1500)
+      } else {
+        // Show error with details
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `❌ Failed to save feedback: ${result.error || 'Unknown error'}. Your feedback is saved locally.`
+        }])
+        setIsComplete(false)
+      }
     } catch (error) {
       console.error('Error submitting feedback:', error)
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: '❌ Failed to submit feedback. Please try again.'
+      }])
+      setIsComplete(false)
     } finally {
       setIsSubmitting(false)
     }

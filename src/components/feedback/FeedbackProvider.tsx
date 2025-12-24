@@ -27,7 +27,7 @@ interface FeedbackContextType {
   setIsEnabled: (enabled: boolean) => void
   openFeedback: (componentName: string, componentPath: string) => void
   feedbackItems: FeedbackItem[]
-  addFeedback: (feedback: FeedbackItem) => void
+  addFeedback: (feedback: FeedbackItem) => Promise<{ success: boolean; error?: string }>
   updateFeedbackStatus: (id: string, status: FeedbackItem['status']) => void
 }
 
@@ -58,7 +58,7 @@ function saveFeedback(items: FeedbackItem[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
 }
 
-async function sendFeedbackToAPI(feedback: FeedbackItem): Promise<boolean> {
+async function sendFeedbackToAPI(feedback: FeedbackItem): Promise<{ success: boolean; error?: string }> {
   try {
     const response = await fetch('/api/feedback', {
       method: 'POST',
@@ -75,10 +75,17 @@ async function sendFeedbackToAPI(feedback: FeedbackItem): Promise<boolean> {
         user_context: feedback.userContext,
       }),
     })
-    return response.ok
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+      console.error('Feedback API error:', response.status, errorData)
+      return { success: false, error: errorData.error || `HTTP ${response.status}` }
+    }
+
+    return { success: true }
   } catch (error) {
     console.error('Failed to send feedback to API:', error)
-    return false
+    return { success: false, error: String(error) }
   }
 }
 
@@ -93,19 +100,24 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     setIsModalOpen(true)
   }, [])
 
-  const addFeedback = useCallback((feedback: FeedbackItem) => {
+  const addFeedback = useCallback(async (feedback: FeedbackItem): Promise<{ success: boolean; error?: string }> => {
     // Save locally first (backup)
     setFeedbackItems(prev => {
       const updated = [feedback, ...prev]
       saveFeedback(updated)
       return updated
     })
-    // Send to API (async, don't block)
-    sendFeedbackToAPI(feedback).then(success => {
-      if (success) {
-        console.log('Feedback sent to server')
-      }
-    })
+
+    // Send to API and wait for result
+    const result = await sendFeedbackToAPI(feedback)
+
+    if (result.success) {
+      console.log('✅ Feedback saved to server')
+    } else {
+      console.warn('⚠️ Feedback saved locally but failed to sync to server:', result.error)
+    }
+
+    return result
   }, [])
 
   const updateFeedbackStatus = useCallback((id: string, status: FeedbackItem['status']) => {
