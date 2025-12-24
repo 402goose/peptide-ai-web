@@ -33,7 +33,7 @@ export default function ChatLayout({
   }, [])
 
   return (
-    <div className="flex bg-white dark:bg-slate-950" style={{ height: '100dvh' }}>
+    <div className="fixed inset-0 flex bg-white dark:bg-slate-950">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-slate-200 dark:md:border-slate-800">
         <ConversationSidebar />
