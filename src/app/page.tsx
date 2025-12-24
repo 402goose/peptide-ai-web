@@ -14,7 +14,7 @@ export default async function HomePage() {
 
   // Landing page for non-authenticated users
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+    <div className="min-h-screen overflow-y-auto bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
       {/* Header */}
       <header className="flex items-center justify-between p-4 md:p-6">
         <div className="flex items-center gap-2">
@@ -34,7 +34,7 @@ export default async function HomePage() {
       </header>
 
       {/* Hero */}
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
+      <main className="flex flex-col items-center px-4 py-12 md:py-16 text-center">
         <div className="mb-4 inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
           Research-grade peptide intelligence
         </div>
@@ -51,7 +51,7 @@ export default async function HomePage() {
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Link href="/sign-up">
+          <Link href="/chat">
             <Button size="lg" className="gap-2">
               Start Researching <ArrowRight className="h-4 w-4" />
             </Button>

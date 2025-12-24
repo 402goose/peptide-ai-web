@@ -76,14 +76,22 @@ export function Header({ onMenuClick }: HeaderProps) {
           <span className="sr-only">Toggle theme</span>
         </Button>
         <div className="flex items-center">
-          <UserButton
-            afterSignOutUrl="/"
-            appearance={{
-              elements: {
-                avatarBox: "h-8 w-8"
-              }
-            }}
-          />
+          {user ? (
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: "h-8 w-8"
+                }
+              }}
+            />
+          ) : (
+            <Link href="/sign-in">
+              <Button size="sm" className="h-8">
+                Sign In
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </header>
