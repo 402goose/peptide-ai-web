@@ -119,11 +119,15 @@
   * {
     @apply border-border outline-ring/50;
   }
-  html, body {
-    @apply h-full overflow-hidden;
+  html {
+    height: 100%;
+    overflow: hidden;
   }
   body {
     @apply bg-background text-foreground;
+    height: 100%;
+    height: 100dvh; /* Dynamic viewport height - accounts for mobile browser chrome */
+    overflow: hidden;
   }
 }
 

@@ -15,7 +15,7 @@ export default function ChatLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex h-screen bg-white dark:bg-slate-950">
+    <div className="flex bg-white dark:bg-slate-950" style={{ height: '100dvh' }}>
       {/* Desktop Sidebar */}
       <div className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-slate-200 dark:md:border-slate-800">
         <ConversationSidebar />
