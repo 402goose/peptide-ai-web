@@ -123,7 +123,7 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
           Stack Builder
         </Button>
         <Button
-          onClick={() => router.push('/feedback')}
+          onClick={() => router.push('/admin/feedback')}
           className="w-full justify-start gap-2"
           variant="ghost"
         >
