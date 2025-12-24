@@ -661,8 +661,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         </AnimatePresence>
       </div>
 
-      {/* Input Area - Always visible and fixed at bottom */}
-      <div className="shrink-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 safe-area-bottom">
+      {/* Input Area - Hidden on mobile during onboarding to save space */}
+      <div className={`shrink-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 safe-area-bottom ${viewState === 'onboarding' ? 'hidden md:block' : ''}`}>
         <div className="mx-auto max-w-3xl px-4 pt-3 pb-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
           {showSignUpPrompt ? (
             // Sign up prompt for anonymous users who hit the limit
