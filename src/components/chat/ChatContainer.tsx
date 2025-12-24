@@ -528,16 +528,9 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         </AnimatePresence>
       </div>
 
-      {/* Input Area - Always visible with subtle animation */}
-      <motion.div
-        initial={false}
-        animate={{
-          y: 0,
-          opacity: 1,
-        }}
-        className="shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
-      >
-        <div className="mx-auto max-w-3xl px-4 py-4">
+      {/* Input Area - Always visible */}
+      <div className="shrink-0 bg-white dark:bg-slate-950 pb-safe">
+        <div className="mx-auto max-w-3xl px-4 py-3">
           <MessageInput
             ref={inputRef}
             onSend={handleSendMessage}
@@ -552,7 +545,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
             showSkipHint={viewState === 'onboarding'}
           />
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }

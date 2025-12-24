@@ -63,9 +63,9 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
         <form
           onSubmit={handleSubmit}
           className={cn(
-            "flex items-end gap-2 rounded-2xl border bg-white dark:bg-slate-900 p-2 transition-all duration-200",
+            "flex items-end gap-3 rounded-2xl border bg-slate-50 dark:bg-slate-900 p-3 transition-all duration-200",
             isFocused
-              ? "border-blue-300 dark:border-blue-700 shadow-lg shadow-blue-500/10"
+              ? "border-slate-300 dark:border-slate-600 shadow-lg"
               : "border-slate-200 dark:border-slate-700"
           )}
         >
@@ -76,28 +76,26 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
             onKeyDown={handleKeyDown}
             onFocus={handleFocus}
             onBlur={handleBlur}
-            placeholder={placeholder}
+            placeholder={placeholder || "Ask anything"}
             disabled={disabled}
             rows={1}
-            className="min-h-[44px] max-h-[200px] resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
+            className="min-h-[44px] max-h-[200px] resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-1 text-base"
           />
           <Button
             type="submit"
             size="icon"
             disabled={disabled || !message.trim()}
             className={cn(
-              "shrink-0 rounded-xl transition-all duration-200",
+              "shrink-0 h-10 w-10 rounded-full transition-all duration-200",
               message.trim()
-                ? "bg-blue-500 hover:bg-blue-600"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                ? "bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900"
+                : "bg-slate-200 dark:bg-slate-700 text-slate-400"
             )}
           >
             <Send className="h-4 w-4" />
             <span className="sr-only">Send message</span>
           </Button>
         </form>
-
-{/* Skip hint removed - now handled in OnboardingFlow */}
 
         <p className="mt-2 text-center text-xs text-slate-400">
           Research platform · Not medical advice
