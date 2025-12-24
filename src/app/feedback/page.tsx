@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import {
   ArrowLeft, MessageSquare, Lightbulb, AlertCircle, CheckCircle,
   Clock, ChevronDown, ChevronUp, Trash2, Copy, Filter, Bug,
-  Sparkles, Layout, FileText, HelpCircle, Eye, EyeOff
+  Sparkles, Layout, FileText, HelpCircle, Eye, EyeOff, RefreshCw
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -24,8 +24,31 @@ interface FeedbackItem {
   status: 'new' | 'reviewed' | 'implemented' | 'dismissed'
   userContext: {
     page: string
-    screenSize: string
-    timestamp: string
+    screenSize?: string
+    timestamp?: string
+    persona_id?: string
+    session_num?: number
+    satisfaction?: number
+  }
+  source?: 'local' | 'api'
+}
+
+// Convert API snake_case to camelCase
+function convertApiFeedback(apiFeedback: any): FeedbackItem {
+  return {
+    id: apiFeedback.id,
+    componentName: apiFeedback.component_name || 'Unknown',
+    componentPath: apiFeedback.component_path || '',
+    timestamp: apiFeedback.created_at || new Date().toISOString(),
+    conversation: apiFeedback.conversation || [],
+    summary: apiFeedback.summary || '',
+    productPrompt: apiFeedback.product_prompt || '',
+    insights: apiFeedback.insights || [],
+    priority: apiFeedback.priority || 'medium',
+    category: apiFeedback.category || 'other',
+    status: apiFeedback.status || 'new',
+    userContext: apiFeedback.user_context || { page: '/' },
+    source: 'api'
   }
 }
 
@@ -58,16 +81,49 @@ export default function FeedbackPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'new' | 'reviewed' | 'implemented' | 'dismissed'>('all')
   const [copied, setCopied] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
+  const fetchFeedback = async () => {
+    setLoading(true)
+    const allItems: FeedbackItem[] = []
+
+    // 1. Load from localStorage (legacy/local items)
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
       try {
-        setFeedbackItems(JSON.parse(saved))
+        const localItems = JSON.parse(saved) as FeedbackItem[]
+        localItems.forEach(item => {
+          allItems.push({ ...item, source: 'local' })
+        })
       } catch (e) {
-        console.error('Failed to load feedback:', e)
+        console.error('Failed to load local feedback:', e)
       }
     }
+
+    // 2. Fetch from API
+    try {
+      const response = await fetch('/api/feedback')
+      if (response.ok) {
+        const apiItems = await response.json()
+        apiItems.forEach((item: any) => {
+          // Skip if we already have this ID from localStorage
+          if (!allItems.find(i => i.id === item.id)) {
+            allItems.push(convertApiFeedback(item))
+          }
+        })
+      }
+    } catch (e) {
+      console.error('Failed to fetch API feedback:', e)
+    }
+
+    // Sort by timestamp (newest first)
+    allItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    setFeedbackItems(allItems)
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchFeedback()
   }, [])
 
   const saveFeedback = (items: FeedbackItem[]) => {
@@ -122,6 +178,14 @@ export default function FeedbackPage() {
             </span>
           </div>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => fetchFeedback()}
+          disabled={loading}
+        >
+          <RefreshCw className={cn("h-5 w-5", loading && "animate-spin")} />
+        </Button>
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6">
@@ -231,6 +295,17 @@ export default function FeedbackPage() {
                         {new Date(item.timestamp).toLocaleDateString()}
                       </div>
                       <div>{item.componentPath}</div>
+                      {item.userContext?.persona_id && (
+                        <span className="px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-medium">
+                          🤖 {item.userContext.persona_id}
+                          {typeof item.userContext.satisfaction === 'number' && ` (${item.userContext.satisfaction.toFixed(1)}/10)`}
+                        </span>
+                      )}
+                      {item.source === 'api' && !item.userContext?.persona_id && (
+                        <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium">
+                          API
+                        </span>
+                      )}
                     </div>
                   </div>
 
