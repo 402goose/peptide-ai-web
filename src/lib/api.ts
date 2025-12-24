@@ -164,6 +164,12 @@ class ApiClient {
     })
   }
 
+  async deleteAllConversations(): Promise<{ deleted: number }> {
+    return this.fetch<{ deleted: number }>(`/api/v1/chat/conversations`, {
+      method: 'DELETE',
+    })
+  }
+
   // Health check
   async healthCheck(): Promise<{ status: string }> {
     return this.fetch<{ status: string }>('/health')

@@ -8,8 +8,11 @@ import {
   BarChart3,
   ArrowUpRight,
   ArrowDownRight,
-  RefreshCw
+  RefreshCw,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface Metrics {
   active_users: number;
@@ -47,8 +50,29 @@ export default function AdminOverview() {
   const [comparison, setComparison] = useState<PersonaComparison | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
+  const [clearResult, setClearResult] = useState<string | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://peptide-ai-api-production.up.railway.app';
+
+  const handleClearAllConversations = async () => {
+    if (!confirm('Are you sure you want to delete ALL conversations? This cannot be undone.')) {
+      return;
+    }
+
+    setClearing(true);
+    setClearResult(null);
+
+    try {
+      const result = await api.deleteAllConversations();
+      setClearResult(`Successfully deleted ${result.deleted} conversations`);
+    } catch (err) {
+      console.error('Failed to clear conversations:', err);
+      setClearResult('Failed to clear conversations. Check console for details.');
+    } finally {
+      setClearing(false);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -294,6 +318,41 @@ export default function AdminOverview() {
             View latest persona test results
           </p>
         </a>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-red-200 dark:border-red-900">
+        <div className="flex items-center gap-2 mb-4">
+          <AlertTriangle className="w-5 h-5 text-red-500" />
+          <h2 className="text-lg font-semibold text-red-600 dark:text-red-400">Danger Zone</h2>
+        </div>
+
+        <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+          <div>
+            <h3 className="font-medium">Clear All Conversations</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Delete all chat conversations from the database. This cannot be undone.
+            </p>
+          </div>
+          <button
+            onClick={handleClearAllConversations}
+            disabled={clearing}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
+            <Trash2 className={`w-4 h-4 ${clearing ? 'animate-pulse' : ''}`} />
+            {clearing ? 'Clearing...' : 'Clear All'}
+          </button>
+        </div>
+
+        {clearResult && (
+          <div className={`mt-4 p-3 rounded-lg text-sm ${
+            clearResult.includes('Successfully')
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+              : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+          }`}>
+            {clearResult}
+          </div>
+        )}
       </div>
     </div>
   );
