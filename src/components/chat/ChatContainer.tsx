@@ -68,6 +68,44 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     trackPageView('chat')
   }, [])
 
+  // Clean up browser history after OAuth redirects to prevent Google 400 errors on back navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Check if we came from an OAuth flow (referrer contains google or clerk)
+      const referrer = document.referrer.toLowerCase()
+      const isFromOAuth = referrer.includes('google') ||
+                          referrer.includes('clerk') ||
+                          referrer.includes('accounts.') ||
+                          referrer.includes('oauth')
+
+      // Also check URL for auth-related params that Clerk might add
+      const urlParams = new URLSearchParams(window.location.search)
+      const hasAuthParams = urlParams.has('__clerk_status') ||
+                            urlParams.has('__clerk_created_session')
+
+      if (isFromOAuth || hasAuthParams) {
+        // Replace history state to prevent back navigation to OAuth URLs
+        window.history.replaceState(null, '', '/chat')
+
+        // Push a new state so the first back goes to our app, not OAuth
+        window.history.pushState(null, '', '/chat')
+      }
+
+      // Handle popstate (back button) - redirect to home instead of OAuth pages
+      const handlePopState = () => {
+        // If somehow navigating back would go to an OAuth URL, redirect to home
+        if (document.referrer.toLowerCase().includes('google') ||
+            document.referrer.toLowerCase().includes('accounts.')) {
+          window.history.pushState(null, '', '/chat')
+          router.replace('/')
+        }
+      }
+
+      window.addEventListener('popstate', handlePopState)
+      return () => window.removeEventListener('popstate', handlePopState)
+    }
+  }, [router])
+
   // Determine initial view state
   const getInitialViewState = (): ViewState => {
     if (conversationId) return 'chatting'

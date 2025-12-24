@@ -33,7 +33,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      afterSignInUrl="/chat"
+      afterSignUpUrl="/chat"
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+    >
       <html lang="en" suppressHydrationWarning>
         <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
           <Providers>

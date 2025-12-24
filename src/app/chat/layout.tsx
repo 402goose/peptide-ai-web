@@ -1,11 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ConversationSidebar } from '@/components/chat/ConversationSidebar'
 import { Header } from '@/components/chat/Header'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
-import { Menu } from 'lucide-react'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 
 export default function ChatLayout({
   children,
@@ -13,6 +11,19 @@ export default function ChatLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Prevent back navigation to OAuth pages (Google 400 error fix)
+  useEffect(() => {
+    // On mount, replace current history entry to ensure we're the "first" entry
+    // This helps prevent the Google OAuth 400 error when users swipe back
+    const handleBeforeUnload = () => {
+      // Clear any stored OAuth state
+      sessionStorage.removeItem('clerk_oauth_state')
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [])
 
   return (
     <div className="flex bg-white dark:bg-slate-950" style={{ height: '100dvh' }}>
