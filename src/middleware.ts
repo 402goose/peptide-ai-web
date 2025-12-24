@@ -6,6 +6,7 @@ const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/chat(.*)',  // Chat is public - let users try before signing up
+  '/share(.*)', // Shared conversations and stacks are public
   '/api/(.*)',  // API routes handle their own auth
 ])
 
