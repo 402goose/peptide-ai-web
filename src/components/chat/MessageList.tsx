@@ -1,12 +1,13 @@
 'use client'
 
 import { useRef, useEffect, useState, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { MessageBubble } from './MessageBubble'
 import { TypingIndicator } from './TypingIndicator'
 import { FollowUpChips } from './FollowUpChips'
 import { ResponseCard } from './ResponseCard'
 import { DisclaimerBanner } from './DisclaimerBanner'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Message, Source } from '@/types'
 
@@ -187,31 +188,33 @@ export function MessageList({
 
         {/* Show interactive elements after the last assistant message */}
         {!isLoading && messages.length > 0 && messages[messages.length - 1].role === 'assistant' && (
-          <div className="mt-4 space-y-3">
+          <motion.div
+            className="mt-6 space-y-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
             {/* Sources Preview - Always visible teaser */}
             {sources.length > 0 && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/50">
-                <div className="flex -space-x-1">
-                  {sources.slice(0, 3).map((_, i) => (
-                    <div key={i} className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[10px] text-white font-bold">
-                      {i + 1}
-                    </div>
-                  ))}
-                  {sources.length > 3 && (
-                    <div className="w-6 h-6 rounded-full bg-slate-400 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[10px] text-white font-bold">
-                      +{sources.length - 3}
-                    </div>
-                  )}
+              <motion.div
+                className="flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200/50 dark:border-blue-800/30 shadow-sm"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 shadow-md shadow-blue-500/20">
+                  <BookOpen className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {sources.length} research sources found
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {sources.length} research source{sources.length !== 1 ? 's' : ''} found
                   </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 ml-2">
-                    Scroll down to explore ↓
-                  </span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Scroll down to explore references
+                  </p>
                 </div>
-              </div>
+                <ChevronDown className="h-5 w-5 text-blue-400 animate-bounce" />
+              </motion.div>
             )}
 
             {/* Follow-up questions - More prominent */}
@@ -221,17 +224,29 @@ export function MessageList({
 
             {/* Disclaimer banner - compact */}
             {disclaimers.length > 0 && (
-              <DisclaimerBanner disclaimers={disclaimers} />
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.15 }}
+              >
+                <DisclaimerBanner disclaimers={disclaimers} />
+              </motion.div>
             )}
 
             {/* Full tabbed response card with sources, experiences, protocol, vendors */}
             {sources.length > 0 && (
-              <ResponseCard
-                sources={sources}
-                showVendors={true}
-              />
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.2 }}
+              >
+                <ResponseCard
+                  sources={sources}
+                  showVendors={true}
+                />
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* Bottom anchor for scroll detection */}
@@ -240,21 +255,28 @@ export function MessageList({
       </div>
 
       {/* "New content" floating button - appears when user scrolls up */}
-      {hasNewContent && (
-        <button
-          onClick={() => scrollToBottom(true)}
-          className={cn(
-            "absolute bottom-24 left-1/2 -translate-x-1/2 z-10",
-            "flex items-center gap-2 px-4 py-2 rounded-full",
-            "bg-blue-600 text-white shadow-lg",
-            "hover:bg-blue-700 transition-all duration-200",
-            "animate-bounce-subtle"
-          )}
-        >
-          <ChevronDown className="h-4 w-4" />
-          <span className="text-sm font-medium">New content</span>
-        </button>
-      )}
+      <AnimatePresence>
+        {hasNewContent && (
+          <motion.button
+            onClick={() => scrollToBottom(true)}
+            className={cn(
+              "absolute bottom-24 left-1/2 -translate-x-1/2 z-10",
+              "flex items-center gap-2 px-5 py-2.5 rounded-full",
+              "bg-gradient-to-r from-blue-500 to-blue-600 text-white",
+              "shadow-lg shadow-blue-500/25",
+              "hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105",
+              "transition-all duration-200"
+            )}
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronDown className="h-4 w-4" />
+            <span className="text-sm font-medium">New content</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
