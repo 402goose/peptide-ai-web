@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { User, Beaker, Target, Sparkles } from 'lucide-react'
+import { User, Beaker, Target, Sparkles, Copy, Check } from 'lucide-react'
 import { MarkdownRenderer } from './MarkdownRenderer'
 import { cn } from '@/lib/utils'
 import type { Message } from '@/types'
@@ -98,9 +99,21 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
   }
 
   // AI messages - clean left-aligned text (ChatGPT style)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
+
   return (
     <motion.div
-      className="mb-6"
+      className="mb-6 group"
       initial={skipAnimation ? "visible" : "hidden"}
       animate="visible"
       variants={messageVariants}
@@ -120,6 +133,26 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
           />
         )}
       </div>
+      {/* Copy button - visible on mobile, hover on desktop */}
+      {!isStreaming && message.content && (
+        <button
+          onClick={handleCopy}
+          className={cn(
+            "mt-2 p-1.5 rounded-md transition-all",
+            "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300",
+            "hover:bg-slate-100 dark:hover:bg-slate-800",
+            // Always visible on mobile, hover to show on desktop
+            "sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+          )}
+          aria-label={copied ? "Copied" : "Copy message"}
+        >
+          {copied ? (
+            <Check className="h-4 w-4 text-green-500" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
+        </button>
+      )}
     </motion.div>
   )
 }

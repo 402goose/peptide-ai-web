@@ -7,7 +7,7 @@ import { TypingIndicator } from './TypingIndicator'
 import { FollowUpChips } from './FollowUpChips'
 import { ResponseCard } from './ResponseCard'
 import { DisclaimerBanner } from './DisclaimerBanner'
-import { ChevronDown } from 'lucide-react'
+import { ArrowDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Message, Source } from '@/types'
 
@@ -23,7 +23,7 @@ interface MessageListProps {
 }
 
 // Threshold for considering user "at bottom"
-const SCROLL_THRESHOLD = 100
+const SCROLL_THRESHOLD = 150
 
 export function MessageList({
   messages,
@@ -37,13 +37,12 @@ export function MessageList({
 }: MessageListProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const bottomAnchorRef = useRef<HTMLDivElement>(null)
+  const lastUserMessageRef = useRef<HTMLDivElement>(null)
 
-  // Track if user is at bottom (should auto-scroll)
+  // Track if user is at bottom
   const [isAtBottom, setIsAtBottom] = useState(true)
-  // Track if there's new content below (show indicator)
-  const [hasNewContent, setHasNewContent] = useState(false)
-  // Track if user manually scrolled (to prevent auto-scroll override)
-  const userScrolledRef = useRef(false)
+  // Track if user manually scrolled up
+  const userScrolledUpRef = useRef(false)
   const lastScrollTopRef = useRef(0)
 
   // Check if scrolled to bottom
@@ -63,11 +62,18 @@ export function MessageList({
       top: container.scrollHeight,
       behavior: smooth ? 'smooth' : 'instant'
     })
-    setHasNewContent(false)
     setIsAtBottom(true)
+    userScrolledUpRef.current = false
   }, [])
 
-  // Handle scroll events to track user intent
+  // Scroll to show user message (not all the way to bottom)
+  const scrollToUserMessage = useCallback(() => {
+    if (lastUserMessageRef.current) {
+      lastUserMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [])
+
+  // Handle scroll events
   useEffect(() => {
     const container = scrollContainerRef.current
     if (!container) return
@@ -76,15 +82,14 @@ export function MessageList({
       const currentScrollTop = container.scrollTop
       const atBottom = checkIsAtBottom()
 
-      // Detect if user scrolled UP (intentionally reviewing history)
-      if (currentScrollTop < lastScrollTopRef.current - 10) {
-        userScrolledRef.current = true
+      // Detect if user scrolled UP
+      if (currentScrollTop < lastScrollTopRef.current - 20) {
+        userScrolledUpRef.current = true
       }
 
-      // If user scrolled to bottom, reset the flag
+      // If user scrolled to bottom, reset flag
       if (atBottom) {
-        userScrolledRef.current = false
-        setHasNewContent(false)
+        userScrolledUpRef.current = false
       }
 
       setIsAtBottom(atBottom)
@@ -95,51 +100,40 @@ export function MessageList({
     return () => container.removeEventListener('scroll', handleScroll)
   }, [checkIsAtBottom])
 
-  // When user sends a message, always scroll to bottom
+  // When user sends a message, scroll to show their message (start of response area)
   const prevMessageCountRef = useRef(messages.length)
   useEffect(() => {
     if (messages.length > prevMessageCountRef.current) {
       const lastMsg = messages[messages.length - 1]
 
-      // User just sent a message - scroll to bottom to see response
+      // User just sent a message - scroll to show it
       if (lastMsg?.role === 'user') {
-        userScrolledRef.current = false
-        scrollToBottom(false) // Instant scroll for user messages
+        userScrolledUpRef.current = false
+        // Small delay to let the message render
+        setTimeout(() => scrollToUserMessage(), 50)
       }
     }
     prevMessageCountRef.current = messages.length
-  }, [messages.length, scrollToBottom])
+  }, [messages.length, scrollToUserMessage])
 
-  // Auto-scroll during streaming (only if user hasn't scrolled up)
+  // During streaming, only auto-scroll if user hasn't scrolled up
   useEffect(() => {
     if (!isStreaming || !streamingContent) return
+    if (userScrolledUpRef.current) return
 
-    // If user scrolled up intentionally, don't auto-scroll but show indicator
-    if (userScrolledRef.current) {
-      setHasNewContent(true)
-      return
-    }
-
-    // If at bottom, keep scrolling
-    if (isAtBottom) {
-      scrollToBottom(false) // Instant for smooth streaming feel
-    }
-  }, [isStreaming, streamingContent, isAtBottom, scrollToBottom])
-
-  // When streaming ends, gentle scroll if user is near bottom
-  const wasStreamingRef = useRef(false)
-  useEffect(() => {
-    if (wasStreamingRef.current && !isStreaming) {
-      // Streaming just ended
-      if (!userScrolledRef.current && isAtBottom) {
-        // Small delay to let final content render
-        setTimeout(() => scrollToBottom(true), 100)
-      } else if (userScrolledRef.current) {
-        setHasNewContent(true)
+    // Gentle scroll during streaming - not aggressive
+    const container = scrollContainerRef.current
+    if (container && isAtBottom) {
+      // Only scroll if content is pushing past viewport
+      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+      if (distanceFromBottom > 50) {
+        container.scrollTo({
+          top: container.scrollHeight - container.clientHeight - 100,
+          behavior: 'instant'
+        })
       }
     }
-    wasStreamingRef.current = isStreaming
-  }, [isStreaming, isAtBottom, scrollToBottom])
+  }, [isStreaming, streamingContent, isAtBottom])
 
   return (
     <div
@@ -159,8 +153,14 @@ export function MessageList({
 
           if (isEmptyStreamingMessage) return null
 
+          const isLastUserMessage = message.role === 'user' &&
+            (index === messages.length - 1 || messages[index + 1]?.role === 'assistant')
+
           return (
-            <div key={`${message.timestamp}-${index}`}>
+            <div
+              key={`${message.timestamp}-${index}`}
+              ref={isLastUserMessage ? lastUserMessageRef : undefined}
+            >
               <MessageBubble
                 message={message}
                 isLast={index === messages.length - 1 && !isLoading}
@@ -225,26 +225,27 @@ export function MessageList({
       </div>
       </div>
 
-      {/* "New content" floating button - appears when user scrolls up */}
+      {/* Scroll to bottom arrow - ChatGPT style */}
       <AnimatePresence>
-        {hasNewContent && (
+        {!isAtBottom && (
           <motion.button
             onClick={() => scrollToBottom(true)}
             className={cn(
-              "absolute bottom-24 left-1/2 -translate-x-1/2 z-10",
-              "flex items-center gap-2 px-5 py-2.5 rounded-full",
-              "bg-gradient-to-r from-blue-500 to-blue-600 text-white",
-              "shadow-lg shadow-blue-500/25",
-              "hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105",
+              "absolute bottom-4 right-4 z-10",
+              "flex items-center justify-center",
+              "h-10 w-10 rounded-full",
+              "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300",
+              "shadow-md",
+              "hover:bg-slate-300 dark:hover:bg-slate-600",
               "transition-all duration-200"
             )}
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.15 }}
+            aria-label="Scroll to bottom"
           >
-            <ChevronDown className="h-4 w-4" />
-            <span className="text-sm font-medium">New content</span>
+            <ArrowDown className="h-5 w-5" />
           </motion.button>
         )}
       </AnimatePresence>
