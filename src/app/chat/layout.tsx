@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { ConversationSidebar } from '@/components/chat/ConversationSidebar'
 import { Header } from '@/components/chat/Header'
@@ -15,9 +15,25 @@ export default function ChatLayout({
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>()
 
   // Extract conversation ID from URL path
-  const conversationId = pathname?.match(/\/chat\/c\/([^\/]+)/)?.[1]
+  const pathnameConversationId = pathname?.match(/\/chat\/c\/([^\/]+)/)?.[1]
+
+  // Use pathname ID or stored active ID
+  const conversationId = pathnameConversationId || activeConversationId
+
+  // Listen for conversation ID updates from ChatContainer
+  useEffect(() => {
+    const handleConversationCreated = (event: CustomEvent<string>) => {
+      setActiveConversationId(event.detail)
+    }
+
+    window.addEventListener('conversationCreated', handleConversationCreated as EventListener)
+    return () => {
+      window.removeEventListener('conversationCreated', handleConversationCreated as EventListener)
+    }
+  }, [])
 
   // Prevent back navigation to OAuth pages (Google 400 error fix)
   useEffect(() => {

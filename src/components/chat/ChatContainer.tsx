@@ -302,6 +302,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 // Use router.replace to trigger usePathname update in layout
                 if (!conversationId) {
                   router.replace(`/chat/c/${data.conversation_id}`, { scroll: false })
+                  // Dispatch event for layout to enable share button immediately
+                  window.dispatchEvent(new CustomEvent('conversationCreated', { detail: data.conversation_id }))
                 }
               } else if (data.type === 'sources' && data.sources) {
                 setCurrentSources(data.sources)
@@ -481,6 +483,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 // Update URL to include conversation ID (enables sharing)
                 // Use router.replace to trigger usePathname update in layout
                 router.replace(`/chat/c/${data.conversation_id}`, { scroll: false })
+                // Dispatch event for layout to enable share button immediately
+                window.dispatchEvent(new CustomEvent('conversationCreated', { detail: data.conversation_id }))
               } else if (data.type === 'sources' && data.sources) {
                 setCurrentSources(data.sources)
               } else if (data.type === 'content' && data.content) {
