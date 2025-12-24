@@ -223,11 +223,11 @@ export default function AdminOverview() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Real Users</span>
-                  <span className="font-medium">{comparison.real_users.avg_chats_per_session.toFixed(1)}</span>
+                  <span className="font-medium">{(comparison.real_users?.avg_chats_per_session ?? 0).toFixed(1)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Persona Tests</span>
-                  <span className="font-medium">{comparison.persona_tests.avg_chats_per_session.toFixed(1)}</span>
+                  <span className="font-medium">{(comparison.persona_tests?.avg_chats_per_session ?? 0).toFixed(1)}</span>
                 </div>
               </div>
             </div>
@@ -237,11 +237,11 @@ export default function AdminOverview() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Real Users</span>
-                  <span className="font-medium">{(comparison.real_users.return_rate * 100).toFixed(0)}%</span>
+                  <span className="font-medium">{((comparison.real_users?.return_rate ?? 0) * 100).toFixed(0)}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Persona Tests</span>
-                  <span className="font-medium">{(comparison.persona_tests.return_rate * 100).toFixed(0)}%</span>
+                  <span className="font-medium">{((comparison.persona_tests?.return_rate ?? 0) * 100).toFixed(0)}%</span>
                 </div>
               </div>
             </div>
@@ -249,7 +249,7 @@ export default function AdminOverview() {
             <div>
               <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">Persona Satisfaction</h3>
               <div className="flex items-center gap-2">
-                <span className="text-3xl font-bold">{comparison.persona_tests.satisfaction.toFixed(1)}</span>
+                <span className="text-3xl font-bold">{(comparison.persona_tests?.satisfaction ?? 0).toFixed(1)}</span>
                 <span className="text-slate-500 dark:text-slate-400">/ 10</span>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Target: 8.0</p>
