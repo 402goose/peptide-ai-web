@@ -692,9 +692,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               placeholder={
                 viewState === 'onboarding'
                   ? "Or type your question here..."
-                  : isAnonymous
-                    ? `Ask about peptide research... (${ANONYMOUS_CHAT_LIMIT - anonChatCount} free ${ANONYMOUS_CHAT_LIMIT - anonChatCount === 1 ? 'chat' : 'chats'} left)`
-                    : "Ask about peptide research..."
+                  : "Ask about peptide research..."
               }
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
