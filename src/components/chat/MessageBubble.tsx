@@ -95,6 +95,8 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
       initial={skipAnimation ? "visible" : "hidden"}
       animate="visible"
       variants={messageVariants}
+      data-testid={isUser ? 'user-message' : 'assistant-message'}
+      data-streaming={isStreaming ? 'true' : undefined}
     >
       {/* Avatar */}
       <div
