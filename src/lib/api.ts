@@ -293,6 +293,32 @@ class ApiClient {
   async getPeptideStats(peptide: string): Promise<unknown> {
     return this.fetch<unknown>(`/api/v1/peptides/${peptide}/stats`)
   }
+
+  // Share endpoints
+  async createShareLink(conversationId: string): Promise<{ share_id: string; share_url: string }> {
+    return this.fetch<{ share_id: string; share_url: string }>(`/api/v1/chat/conversations/${conversationId}/share`, {
+      method: 'POST',
+    })
+  }
+
+  async getSharedConversation(shareId: string): Promise<{
+    share_id: string
+    title: string
+    messages: Array<{ role: string; content: string }>
+    created_at: string
+    shared_at: string
+  }> {
+    // Public endpoint - no auth required
+    if (!API_BASE) {
+      throw new ApiError(503, { error: 'Backend not configured' })
+    }
+    const url = `${API_BASE}/api/v1/share/${shareId}`
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new ApiError(response.status, await response.json().catch(() => ({})))
+    }
+    return response.json()
+  }
 }
 
 // Singleton instance

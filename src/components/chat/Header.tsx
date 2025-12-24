@@ -2,7 +2,7 @@
 
 import { UserButton, useUser } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
-import { Menu, Moon, Sun, Beaker, BookOpen, Shield, Settings } from 'lucide-react'
+import { Menu, Moon, Sun, Beaker, BookOpen, Shield, Settings, Share } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 
@@ -10,9 +10,11 @@ const ADMIN_EMAILS = ['vibetradefox@gmail.com']
 
 interface HeaderProps {
   onMenuClick: () => void
+  onShareClick?: () => void
+  showShare?: boolean
 }
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick, onShareClick, showShare = false }: HeaderProps) {
   const { theme, setTheme } = useTheme()
   const { user } = useUser()
 
@@ -57,6 +59,18 @@ export function Header({ onMenuClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {showShare && onShareClick && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={onShareClick}
+            title="Share chat"
+          >
+            <Share className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            <span className="sr-only">Share</span>
+          </Button>
+        )}
         {isAdmin && (
           <Link href="/admin" className="hidden sm:block">
             <Button variant="ghost" size="icon" title="Admin Dashboard" className="h-9 w-9">
