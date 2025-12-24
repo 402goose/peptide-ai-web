@@ -59,6 +59,7 @@ export default function FeedbackPage() {
     status: '',
     priority: '',
     category: '',
+    source: '', // 'persona' or 'user'
   });
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -109,12 +110,26 @@ export default function FeedbackPage() {
     fetchFeedback();
   }, [filter]);
 
+  // Helper to check if feedback is from a persona
+  const isPersonaFeedback = (f: Feedback) => !!f.user_context?.persona_id;
+
+  // Filter by source (client-side)
+  const filteredFeedback = feedback.filter(f => {
+    if (filter.source === 'persona') return isPersonaFeedback(f);
+    if (filter.source === 'user') return !isPersonaFeedback(f);
+    return true;
+  });
+
   const groupedByStatus = {
-    new: feedback.filter(f => f.status === 'new'),
-    reviewed: feedback.filter(f => f.status === 'reviewed'),
-    implemented: feedback.filter(f => f.status === 'implemented'),
-    dismissed: feedback.filter(f => f.status === 'dismissed'),
+    new: filteredFeedback.filter(f => f.status === 'new'),
+    reviewed: filteredFeedback.filter(f => f.status === 'reviewed'),
+    implemented: filteredFeedback.filter(f => f.status === 'implemented'),
+    dismissed: filteredFeedback.filter(f => f.status === 'dismissed'),
   };
+
+  // Stats by source
+  const personaCount = feedback.filter(isPersonaFeedback).length;
+  const userCount = feedback.filter(f => !isPersonaFeedback(f)).length;
 
   return (
     <div className="space-y-6">
@@ -174,25 +189,37 @@ export default function FeedbackPage() {
           <option value="content">Content</option>
           <option value="other">Other</option>
         </select>
+
+        <select
+          value={filter.source}
+          onChange={(e) => setFilter({ ...filter, source: e.target.value })}
+          className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800"
+        >
+          <option value="">All Sources</option>
+          <option value="persona">🤖 Test Personas</option>
+          <option value="user">👤 Real Users</option>
+        </select>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <StatCard label="New" count={groupedByStatus.new.length} color="blue" />
         <StatCard label="Reviewed" count={groupedByStatus.reviewed.length} color="yellow" />
         <StatCard label="Implemented" count={groupedByStatus.implemented.length} color="green" />
         <StatCard label="Dismissed" count={groupedByStatus.dismissed.length} color="slate" />
+        <StatCard label="🤖 Personas" count={personaCount} color="purple" />
+        <StatCard label="👤 Users" count={userCount} color="teal" />
       </div>
 
       {/* Feedback List */}
       <div className="space-y-4">
-        {feedback.length === 0 ? (
+        {filteredFeedback.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
             <MessageSquare className="w-12 h-12 mx-auto mb-4 text-slate-400" />
             <p className="text-slate-500 dark:text-slate-400">No feedback found</p>
           </div>
         ) : (
-          feedback.map((item) => (
+          filteredFeedback.map((item) => (
             <div
               key={item.id}
               className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
@@ -205,6 +232,16 @@ export default function FeedbackPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
+                      {/* Source badge */}
+                      {isPersonaFeedback(item) ? (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 font-medium">
+                          🤖 Persona
+                        </span>
+                      ) : (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 font-medium">
+                          👤 User
+                        </span>
+                      )}
                       <span className="text-lg">{categoryIcons[item.category] || '💬'}</span>
                       <span className="font-medium truncate">{item.component_name}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${priorityColors[item.priority]}`}>
@@ -322,6 +359,8 @@ function StatCard({ label, count, color }: { label: string; count: number; color
     yellow: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
     green: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
     slate: 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+    purple: 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800',
+    teal: 'bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800',
   };
 
   return (
