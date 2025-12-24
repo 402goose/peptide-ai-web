@@ -64,17 +64,21 @@ Conversation:
 Create a structured JSON response (no markdown, just valid JSON):
 {
   "summary": "Clear 1-2 sentence summary of what the user wants/needs",
-  "productPrompt": "Detailed implementation prompt for a developer. Include:\n- Specific component/file to modify\n- Exact UI/UX changes needed\n- Technical requirements\n- User flow changes\n- Any data model updates\nBe specific enough that a developer could implement this.",
-  "insights": ["Key insight about user need", "Pain point discovered", "Opportunity identified"],
+  "productPrompt": "Write a detailed, actionable prompt that could be given to a developer or AI coding assistant to implement this feedback. Format as:\\n\\n## Task\\n[One sentence description]\\n\\n## Requirements\\n- [Specific requirement 1]\\n- [Specific requirement 2]\\n\\n## Files to Modify\\n- [file path and what to change]\\n\\n## User Story\\nAs a [user type], I want [goal] so that [benefit]\\n\\n## Acceptance Criteria\\n- [ ] [Testable criterion 1]\\n- [ ] [Testable criterion 2]",
+  "insights": ["Key insight about user need", "Pain point discovered", "Opportunity identified", "User persona indicator"],
   "priority": "low|medium|high - based on: bug severity, user impact, alignment with product goals",
-  "category": "bug|feature|ux|content|other"
+  "category": "bug|feature|ux|content|other",
+  "userPersona": "Infer the user type: biohacker|athlete|weight-loss|researcher|new-user|power-user"
 }
+
+IMPORTANT: priority and category must be lowercase exactly as shown (low/medium/high, bug/feature/ux/content/other).
 
 Consider the product context:
 - Stack Builder: goal-based peptide selection, synergy detection, sharing
 - Journey Tracker: dose logging, daily check-ins, progress tracking
 - Chat: research questions with citations
-- Users: biohackers, athletes, weight loss, researchers`
+- Mobile experience is critical - many users on phones
+- Users: biohackers, athletes, weight loss seekers, researchers`
 
 export function FeedbackModal({
   isOpen,
@@ -219,8 +223,14 @@ export function FeedbackModal({
         status: 'new',
         userContext: {
           page: typeof window !== 'undefined' ? window.location.pathname : '',
+          fullUrl: typeof window !== 'undefined' ? window.location.href : '',
           screenSize: typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : '',
+          deviceType: typeof window !== 'undefined' ? (window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1024 ? 'tablet' : 'desktop') : 'unknown',
+          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+          language: typeof navigator !== 'undefined' ? navigator.language : '',
+          timezone: typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
           timestamp: new Date().toISOString(),
+          localTime: new Date().toLocaleString(),
         },
       }
 
