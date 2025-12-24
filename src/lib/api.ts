@@ -164,6 +164,13 @@ class ApiClient {
     })
   }
 
+  async updateConversation(id: string, data: { title?: string }): Promise<void> {
+    await this.fetch(`/api/v1/chat/conversations/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
   async deleteAllConversations(): Promise<{ deleted: number }> {
     return this.fetch<{ deleted: number }>(`/api/v1/chat/conversations`, {
       method: 'DELETE',

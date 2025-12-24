@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, MessageSquare, MoreHorizontal, Trash2, Beaker, FlaskConical } from 'lucide-react'
+import { Plus, MessageSquare, MoreHorizontal, Trash2, Beaker, FlaskConical, Pencil, Check, X } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { ConversationSummary } from '@/types'
 import { cn } from '@/lib/utils'
@@ -27,6 +27,8 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
 
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
 
   useEffect(() => {
     // Only fetch on client side
@@ -67,6 +69,37 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
     } catch (error) {
       console.error('Failed to delete conversation:', error)
     }
+  }
+
+  function handleStartRename(id: string, currentTitle: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    setEditingId(id)
+    setEditTitle(currentTitle)
+  }
+
+  async function handleSaveRename(id: string) {
+    if (!editTitle.trim()) {
+      setEditingId(null)
+      return
+    }
+
+    try {
+      await api.updateConversation(id, { title: editTitle.trim() })
+      setConversations(prev =>
+        prev.map(c =>
+          c.conversation_id === id ? { ...c, title: editTitle.trim() } : c
+        )
+      )
+    } catch (error) {
+      console.error('Failed to rename conversation:', error)
+    } finally {
+      setEditingId(null)
+    }
+  }
+
+  function handleCancelRename() {
+    setEditingId(null)
+    setEditTitle('')
   }
 
   function formatDate(dateStr: string) {
@@ -140,48 +173,94 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
           </div>
         ) : (
           <div className="space-y-1 pb-4">
-            {conversations.map((conversation) => (
-              <div
-                key={conversation.conversation_id}
-                className={cn(
-                  'group flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-slate-200 dark:hover:bg-slate-800',
-                  currentId === conversation.conversation_id &&
-                    'bg-slate-200 dark:bg-slate-800'
-                )}
-                onClick={() => handleSelectConversation(conversation.conversation_id)}
-              >
-                <MessageSquare className="h-4 w-4 shrink-0 text-slate-500" />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium text-slate-900 dark:text-white">
-                    {conversation.title}
+            {conversations.map((conversation) => {
+              const isEditing = editingId === conversation.conversation_id
+
+              return (
+                <div
+                  key={conversation.conversation_id}
+                  className={cn(
+                    'group flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-slate-200 dark:hover:bg-slate-800',
+                    currentId === conversation.conversation_id &&
+                      'bg-slate-200 dark:bg-slate-800'
+                  )}
+                  onClick={() => !isEditing && handleSelectConversation(conversation.conversation_id)}
+                >
+                  <MessageSquare className="h-4 w-4 shrink-0 text-slate-500" />
+                  <div className="min-w-0 flex-1">
+                    {isEditing ? (
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveRename(conversation.conversation_id)
+                            if (e.key === 'Escape') handleCancelRename()
+                          }}
+                          className="flex-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded px-2 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          autoFocus
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0 text-green-600 hover:text-green-700"
+                          onClick={() => handleSaveRename(conversation.conversation_id)}
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0 text-slate-500 hover:text-slate-700"
+                          onClick={handleCancelRename}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="truncate font-medium text-slate-900 dark:text-white">
+                          {conversation.title}
+                        </div>
+                        <div className="truncate text-xs text-slate-500">
+                          {formatDate(conversation.updated_at)}
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <div className="truncate text-xs text-slate-500">
-                    {formatDate(conversation.updated_at)}
-                  </div>
+                  {!isEditing && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={(e) => handleStartRename(conversation.conversation_id, conversation.title, e as unknown as React.MouseEvent)}
+                        >
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={(e) => handleDeleteConversation(conversation.conversation_id, e as unknown as React.MouseEvent)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onClick={(e) => handleDeleteConversation(conversation.conversation_id, e as unknown as React.MouseEvent)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </ScrollArea>
