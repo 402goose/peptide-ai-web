@@ -33,7 +33,7 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="fixed inset-0 bg-slate-50 dark:bg-slate-900 overflow-hidden">
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -106,8 +106,8 @@ export default function AdminLayout({
       )}
 
       {/* Main content */}
-      <main className="lg:pl-64">
-        <div className="p-6 lg:p-8">
+      <main className="lg:pl-64 h-full overflow-y-auto">
+        <div className="p-6 lg:p-8 pt-16 lg:pt-8">
           {children}
         </div>
       </main>
