@@ -139,7 +139,31 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     setIsLoading(true)
     try {
       const conversation = await api.getConversation(id)
-      setMessages(conversation.messages)
+
+      // Convert API messages to our format (handle snake_case from backend)
+      const messages: Message[] = (conversation.messages || []).map((msg: any) => ({
+        role: msg.role,
+        content: msg.content || '',
+        timestamp: msg.timestamp || msg.created_at || new Date().toISOString(),
+        sources: msg.sources,
+        disclaimers: msg.disclaimers,
+        followUps: msg.follow_ups || msg.followUps,
+        metadata: msg.metadata,
+      })).filter((msg: Message) => msg.content) // Filter out empty messages
+
+      if (messages.length === 0) {
+        // No valid messages - redirect to fresh chat
+        console.log('Conversation has no messages, starting fresh')
+        setMessages([])
+        setActiveConversationId(undefined)
+        setViewState('ready')
+        if (typeof window !== 'undefined') {
+          window.history.replaceState(null, '', '/chat')
+        }
+        return
+      }
+
+      setMessages(messages)
       setActiveConversationId(conversation.conversation_id)
       setViewState('chatting')
 

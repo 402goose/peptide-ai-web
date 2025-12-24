@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, MessageSquare, MoreHorizontal, Trash2, Beaker, FlaskConical, MessageSquarePlus } from 'lucide-react'
+import { Plus, MessageSquare, MoreHorizontal, Trash2, Beaker, FlaskConical } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { ConversationSummary } from '@/types'
 import { cn } from '@/lib/utils'
@@ -121,14 +121,6 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
             <path d="M17.5 14v7M14 17.5h7" />
           </svg>
           Stack Builder
-        </Button>
-        <Button
-          onClick={() => router.push('/admin/feedback')}
-          className="w-full justify-start gap-2"
-          variant="ghost"
-        >
-          <MessageSquarePlus className="h-4 w-4 text-amber-500" />
-          Review Feedback
         </Button>
       </div>
 
