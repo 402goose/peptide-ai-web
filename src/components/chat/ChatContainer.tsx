@@ -9,6 +9,7 @@ import { OnboardingFlow, type OnboardingContext } from './OnboardingFlow'
 import type { Message, Source } from '@/types'
 import { Beaker, Sparkles, ArrowRight } from 'lucide-react'
 import { trackSessionStart, trackPageView, trackChatSent, trackSourceClicked } from '@/lib/analytics'
+import { api } from '@/lib/api'
 
 // Common peptide names for tracking
 const PEPTIDE_NAMES = [
@@ -135,13 +136,29 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   }, [inputFocused, viewState])
 
   async function loadConversation(id: string) {
-    // Without a backend, we can't load saved conversations
-    // Just redirect to fresh chat
-    setMessages([])
-    setActiveConversationId(undefined)
-    setViewState('ready')
-    if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', '/chat')
+    setIsLoading(true)
+    try {
+      const conversation = await api.getConversation(id)
+      setMessages(conversation.messages)
+      setActiveConversationId(conversation.conversation_id)
+      setViewState('chatting')
+
+      // Mark that user has started chatting
+      hasStartedChatting.current = true
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('peptide-ai-chatting', 'true')
+      }
+    } catch (error) {
+      console.error('Failed to load conversation:', error)
+      // Fallback to fresh chat if conversation not found
+      setMessages([])
+      setActiveConversationId(undefined)
+      setViewState('ready')
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', '/chat')
+      }
+    } finally {
+      setIsLoading(false)
     }
   }
 
