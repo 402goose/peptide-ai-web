@@ -27,8 +27,15 @@ export async function POST(request: Request) {
     if (!response.ok) {
       const errorText = await response.text()
       console.error('Backend feedback error:', response.status, errorText)
+      let errorMessage = 'Failed to save feedback'
+      try {
+        const errorJson = JSON.parse(errorText)
+        errorMessage = errorJson.detail || errorJson.error || errorMessage
+      } catch {
+        if (errorText) errorMessage = errorText.slice(0, 200)
+      }
       return NextResponse.json(
-        { error: 'Failed to save feedback' },
+        { error: errorMessage },
         { status: response.status }
       )
     }

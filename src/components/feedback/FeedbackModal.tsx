@@ -175,8 +175,8 @@ export function FeedbackModal({
         summary: 'User feedback collected',
         productPrompt: conversationText,
         insights: ['Feedback collected'],
-        priority: 'medium' as const,
-        category: 'other' as const,
+        priority: 'medium',
+        category: 'other',
       }
 
       if (response.ok) {
@@ -189,17 +189,29 @@ export function FeedbackModal({
         }
       }
 
+      // Normalize priority and category to lowercase and valid values
+      const validPriorities = ['low', 'medium', 'high']
+      const validCategories = ['bug', 'feature', 'ux', 'content', 'other']
+
+      const normalizedPriority = validPriorities.includes(summary.priority?.toLowerCase())
+        ? summary.priority.toLowerCase() as 'low' | 'medium' | 'high'
+        : 'medium'
+
+      const normalizedCategory = validCategories.includes(summary.category?.toLowerCase())
+        ? summary.category.toLowerCase() as 'bug' | 'feature' | 'ux' | 'content' | 'other'
+        : 'other'
+
       const feedbackItem: FeedbackItem = {
         id: `feedback-${Date.now()}`,
         componentName,
         componentPath,
         timestamp: new Date().toISOString(),
         conversation: messages,
-        summary: summary.summary,
-        productPrompt: summary.productPrompt,
-        insights: summary.insights,
-        priority: summary.priority,
-        category: summary.category,
+        summary: summary.summary || 'User feedback collected',
+        productPrompt: summary.productPrompt || conversationText,
+        insights: Array.isArray(summary.insights) ? summary.insights : ['Feedback collected'],
+        priority: normalizedPriority,
+        category: normalizedCategory,
         status: 'new',
         userContext: {
           page: typeof window !== 'undefined' ? window.location.pathname : '',
