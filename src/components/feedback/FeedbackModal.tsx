@@ -209,15 +209,25 @@ export function FeedbackModal({
         ? categoryStr as 'bug' | 'feature' | 'ux' | 'content' | 'other'
         : 'other'
 
+      // Ensure productPrompt is always a string
+      const productPromptValue = typeof summary.productPrompt === 'string'
+        ? summary.productPrompt
+        : conversationText
+
       const feedbackItem: FeedbackItem = {
         id: `feedback-${Date.now()}`,
         componentName,
         componentPath,
         timestamp: new Date().toISOString(),
         conversation: messages,
-        summary: summary.summary || 'User feedback collected',
-        productPrompt: summary.productPrompt || conversationText,
-        insights: Array.isArray(summary.insights) ? summary.insights : ['Feedback collected'],
+        summary: typeof summary.summary === 'string' ? summary.summary : 'User feedback collected',
+        productPrompt: productPromptValue,
+        insights: (() => {
+          const filtered = Array.isArray(summary.insights)
+            ? summary.insights.filter((i): i is string => typeof i === 'string')
+            : []
+          return filtered.length > 0 ? filtered : ['Feedback collected']
+        })(),
         priority: normalizedPriority,
         category: normalizedCategory,
         status: 'new',

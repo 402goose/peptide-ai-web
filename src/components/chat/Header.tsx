@@ -20,22 +20,22 @@ export function Header({ onMenuClick }: HeaderProps) {
     ADMIN_EMAILS.includes(user.primaryEmailAddress.emailAddress)
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-4 dark:border-slate-800 dark:bg-slate-950 shrink-0">
-      <div className="flex items-center gap-2 sm:gap-3">
+    <header className="w-full flex h-14 items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-4 dark:border-slate-800 dark:bg-slate-950 shrink-0 z-40">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden h-9 w-9 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
+          className="md:hidden h-10 w-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0"
           onClick={onMenuClick}
         >
           <Menu className="h-5 w-5 text-slate-700 dark:text-slate-300" />
         </Button>
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm shrink-0">
             <Beaker className="h-4 w-4 text-white" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
+          <div className="flex flex-col min-w-0">
+            <span className="text-sm font-semibold text-slate-900 dark:text-white leading-tight truncate">
               Peptide AI
             </span>
             <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-none hidden sm:block">
@@ -56,10 +56,10 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {isAdmin && (
           <Link href="/admin">
-            <Button variant="ghost" size="icon" title="Admin Dashboard">
+            <Button variant="ghost" size="icon" title="Admin Dashboard" className="h-9 w-9">
               <Settings className="h-5 w-5 text-slate-600 dark:text-slate-400" />
               <span className="sr-only">Admin</span>
             </Button>
@@ -68,6 +68,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         <Button
           variant="ghost"
           size="icon"
+          className="h-9 w-9"
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         >
           <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />

@@ -207,9 +207,9 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
   })
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-start px-4 py-4 sm:py-8 overflow-y-auto">
-      {/* Header */}
-      <div className="mb-4 sm:mb-8 text-center">
+    <div className="flex flex-1 flex-col h-full overflow-hidden">
+      {/* Header - Fixed at top */}
+      <div className="shrink-0 px-4 pt-4 sm:pt-8 pb-2 sm:pb-4 text-center">
         <div className="mb-2 sm:mb-4 flex justify-center">
           <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
             <Beaker className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
@@ -220,7 +220,7 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
           {step === 'conditions' && "Tell us more about your needs"}
           {step === 'experience' && "What's your experience level?"}
         </h1>
-        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-md">
+        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-md mx-auto">
           {step === 'goals' && "Select one or more goals (scroll to see all)"}
           {step === 'conditions' && "Select any that apply to get personalized recommendations"}
           {step === 'experience' && "This helps us tailor the information to your knowledge level"}
@@ -228,7 +228,7 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
       </div>
 
       {/* Progress Indicator with Labels */}
-      <div className="flex items-center justify-center gap-0.5 sm:gap-1 mb-4 sm:mb-8">
+      <div className="shrink-0 flex items-center justify-center gap-0.5 sm:gap-1 mb-2 sm:mb-4 px-4">
         {[
           { id: 'goals', label: 'Goals', num: 1 },
           { id: 'conditions', label: 'Details', num: 2 },
@@ -272,191 +272,205 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
         })}
       </div>
 
-      {/* Step Content */}
-      {step === 'goals' && (
-        <div className="w-full max-w-3xl px-2">
-          {/* Scrollable goals grid */}
-          <div className="grid gap-2 grid-cols-2 lg:grid-cols-3 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto pb-20">
-            {GOALS.map((goal) => {
-              const isSelected = selectedGoals.includes(goal.id)
-              return (
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto px-4">
+        {/* Step Content */}
+        {step === 'goals' && (
+          <div className="w-full max-w-3xl mx-auto pb-4">
+            {/* Goals grid */}
+            <div className="grid gap-2 grid-cols-2 lg:grid-cols-3">
+              {GOALS.map((goal) => {
+                const isSelected = selectedGoals.includes(goal.id)
+                return (
+                  <button
+                    key={goal.id}
+                    onClick={() => handleGoalToggle(goal.id)}
+                    className={cn(
+                      "group flex flex-col items-start gap-2 rounded-xl border-2 p-3 text-left transition-all relative",
+                      isSelected
+                        ? `${goal.bgColor} ${goal.borderColor} ring-2 ring-blue-500 ring-offset-2`
+                        : `${goal.bgColor} ${goal.borderColor} hover:shadow-md hover:scale-[1.02]`
+                    )}
+                  >
+                    {/* Selection indicator */}
+                    {isSelected && (
+                      <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
+                        <Check className="h-3 w-3 text-white" />
+                      </div>
+                    )}
+                    <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", goal.bgColor)}>
+                      <goal.icon className={cn("h-4 w-4", goal.color)} />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1 text-sm sm:text-base pr-6">
+                        {goal.label}
+                      </div>
+                      <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">
+                        {goal.description}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-auto">
+                      {goal.peptides.slice(0, 2).map(p => (
+                        <span key={p} className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-600 dark:text-slate-300">
+                          {p}
+                        </span>
+                      ))}
+                      {goal.peptides.length > 2 && (
+                        <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-500 dark:text-slate-400">
+                          +{goal.peptides.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {step === 'conditions' && (
+          <div className="w-full max-w-2xl mx-auto pb-4">
+            {/* Show selected goals */}
+            <div className="flex flex-wrap gap-2 mb-3 justify-center">
+              {selectedGoals.map(goalId => {
+                const goal = GOALS.find(g => g.id === goalId)
+                if (!goal) return null
+                return (
+                  <span key={goalId} className={cn("text-xs px-3 py-1 rounded-full", goal.bgColor, goal.color)}>
+                    {goal.label}
+                  </span>
+                )
+              })}
+            </div>
+
+            {/* Conditions list */}
+            <div className="grid gap-2 sm:grid-cols-2">
+              {currentConditions.map((condition) => {
+                const goalData = GOALS.find(g => g.id === condition.goalId)
+                return (
+                  <button
+                    key={`${condition.goalId}-${condition.id}`}
+                    onClick={() => handleConditionToggle(condition.id)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all",
+                      selectedConditions.includes(condition.id)
+                        ? `${goalData?.bgColor} ${goalData?.borderColor}`
+                        : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                    )}
+                  >
+                    <div className={cn(
+                      "flex h-7 w-7 items-center justify-center rounded-lg transition-colors shrink-0",
+                      selectedConditions.includes(condition.id)
+                        ? goalData?.bgColor
+                        : "bg-slate-100 dark:bg-slate-800"
+                    )}>
+                      {selectedConditions.includes(condition.id) ? (
+                        <Check className={cn("h-4 w-4", goalData?.color)} />
+                      ) : (
+                        <condition.icon className="h-4 w-4 text-slate-400" />
+                      )}
+                    </div>
+                    <span className={cn(
+                      "text-sm font-medium",
+                      selectedConditions.includes(condition.id)
+                        ? "text-slate-900 dark:text-white"
+                        : "text-slate-600 dark:text-slate-300"
+                    )}>
+                      {condition.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {step === 'experience' && (
+          <div className="w-full max-w-lg mx-auto pb-4">
+            <div className="grid gap-3">
+              {EXPERIENCE_LEVELS.map((level) => (
                 <button
-                  key={goal.id}
-                  onClick={() => handleGoalToggle(goal.id)}
+                  key={level.id}
+                  onClick={() => handleExperienceSelect(level.id)}
                   className={cn(
-                    "group flex flex-col items-start gap-2 rounded-xl border-2 p-3 text-left transition-all relative",
-                    isSelected
-                      ? `${goal.bgColor} ${goal.borderColor} ring-2 ring-blue-500 ring-offset-2`
-                      : `${goal.bgColor} ${goal.borderColor} hover:shadow-md hover:scale-[1.02]`
+                    "flex items-center justify-between rounded-xl border-2 p-4 text-left transition-all hover:scale-[1.01]",
+                    "border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
                   )}
                 >
-                  {/* Selection indicator */}
-                  {isSelected && (
-                    <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
-                      <Check className="h-3 w-3 text-white" />
-                    </div>
-                  )}
-                  <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", goal.bgColor)}>
-                    <goal.icon className={cn("h-4 w-4", goal.color)} />
-                  </div>
                   <div>
-                    <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-1 text-sm sm:text-base pr-6">
-                      {goal.label}
+                    <div className="font-semibold text-slate-900 dark:text-white">
+                      {level.label}
                     </div>
-                    <div className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">
-                      {goal.description}
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                      {level.description}
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-1 mt-auto">
-                    {goal.peptides.slice(0, 2).map(p => (
-                      <span key={p} className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-600 dark:text-slate-300">
-                        {p}
-                      </span>
-                    ))}
-                    {goal.peptides.length > 2 && (
-                      <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-black/20 text-slate-500 dark:text-slate-400">
-                        +{goal.peptides.length - 2}
-                      </span>
-                    )}
-                  </div>
+                  <ArrowRight className="h-5 w-5 text-slate-400" />
                 </button>
-              )
-            })}
+              ))}
+            </div>
           </div>
+        )}
+      </div>
 
-          {/* Floating Continue button - always visible when goals selected */}
-          {selectedGoals.length > 0 && (
-            <motion.div
-              className="fixed bottom-24 left-1/2 -translate-x-1/2 z-20"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
+      {/* Footer Navigation - Always visible at bottom */}
+      <div className="shrink-0 px-4 py-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="max-w-3xl mx-auto flex items-center justify-center gap-3">
+          {step === 'goals' && selectedGoals.length === 0 && (
+            <button
+              onClick={onSkip}
+              className="group flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-sm text-slate-600 dark:text-slate-400"
             >
+              <MessageSquare className="h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
+              <span>Skip and ask directly</span>
+            </button>
+          )}
+
+          {step === 'goals' && selectedGoals.length > 0 && (
+            <Button
+              onClick={handleGoalsNext}
+              className="gap-2 shadow-lg shadow-blue-500/20 px-6 bg-blue-500 hover:bg-blue-600"
+              size="lg"
+            >
+              Continue with {selectedGoals.length} goal{selectedGoals.length !== 1 ? 's' : ''}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          )}
+
+          {step === 'conditions' && (
+            <>
               <Button
-                onClick={handleGoalsNext}
-                className="gap-2 shadow-lg shadow-blue-500/25 px-6"
-                size="lg"
+                variant="outline"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setStep('goals')
+                }}
+                className="bg-white dark:bg-slate-800"
               >
-                Continue with {selectedGoals.length} goal{selectedGoals.length !== 1 ? 's' : ''}
-                <ArrowRight className="h-4 w-4" />
+                Back
               </Button>
-            </motion.div>
+              <Button
+                onClick={handleConditionsNext}
+                className="gap-2 shadow-lg shadow-blue-500/20 bg-blue-500 hover:bg-blue-600"
+              >
+                Continue <ArrowRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+
+          {step === 'experience' && (
+            <Button
+              variant="outline"
+              onClick={(e) => {
+                e.preventDefault()
+                setStep('conditions')
+              }}
+              className="bg-white dark:bg-slate-800"
+            >
+              Back
+            </Button>
           )}
         </div>
-      )}
-
-      {step === 'conditions' && (
-        <div className="w-full max-w-2xl px-2">
-          {/* Show selected goals */}
-          <div className="flex flex-wrap gap-2 mb-4 justify-center">
-            {selectedGoals.map(goalId => {
-              const goal = GOALS.find(g => g.id === goalId)
-              if (!goal) return null
-              return (
-                <span key={goalId} className={cn("text-xs px-3 py-1 rounded-full", goal.bgColor, goal.color)}>
-                  {goal.label}
-                </span>
-              )
-            })}
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-2">
-            {currentConditions.map((condition) => {
-              const goalData = GOALS.find(g => g.id === condition.goalId)
-              return (
-                <button
-                  key={`${condition.goalId}-${condition.id}`}
-                  onClick={() => handleConditionToggle(condition.id)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all",
-                    selectedConditions.includes(condition.id)
-                      ? `${goalData?.bgColor} ${goalData?.borderColor}`
-                      : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
-                  )}
-                >
-                  <div className={cn(
-                    "flex h-7 w-7 items-center justify-center rounded-lg transition-colors shrink-0",
-                    selectedConditions.includes(condition.id)
-                      ? goalData?.bgColor
-                      : "bg-slate-100 dark:bg-slate-800"
-                  )}>
-                    {selectedConditions.includes(condition.id) ? (
-                      <Check className={cn("h-4 w-4", goalData?.color)} />
-                    ) : (
-                      <condition.icon className="h-4 w-4 text-slate-400" />
-                    )}
-                  </div>
-                  <span className={cn(
-                    "text-sm font-medium",
-                    selectedConditions.includes(condition.id)
-                      ? "text-slate-900 dark:text-white"
-                      : "text-slate-600 dark:text-slate-300"
-                  )}>
-                    {condition.label}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="flex justify-between mt-4">
-            <Button variant="ghost" onClick={() => setStep('goals')}>
-              Back
-            </Button>
-            <Button onClick={handleConditionsNext} className="gap-2">
-              Continue <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {step === 'experience' && (
-        <div className="w-full max-w-lg">
-          <div className="grid gap-3">
-            {EXPERIENCE_LEVELS.map((level) => (
-              <button
-                key={level.id}
-                onClick={() => handleExperienceSelect(level.id)}
-                className={cn(
-                  "flex items-center justify-between rounded-xl border-2 p-4 text-left transition-all hover:scale-[1.01]",
-                  "border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
-                )}
-              >
-                <div>
-                  <div className="font-semibold text-slate-900 dark:text-white">
-                    {level.label}
-                  </div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
-                    {level.description}
-                  </div>
-                </div>
-                <ArrowRight className="h-5 w-5 text-slate-400" />
-              </button>
-            ))}
-          </div>
-
-          <div className="flex justify-start mt-6">
-            <Button variant="ghost" onClick={() => setStep('conditions')}>
-              Back
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Skip Option - More Prominent */}
-      <div className="mt-4 sm:mt-8 flex flex-col items-center gap-2 sm:gap-3 pb-4">
-        <div className="h-px w-24 sm:w-32 bg-slate-200 dark:bg-slate-700" />
-        <button
-          onClick={onSkip}
-          className="group flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-xs sm:text-sm text-slate-600 dark:text-slate-400"
-        >
-          <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
-          <span>Skip and ask directly</span>
-          <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
-        </button>
-        <p className="text-[10px] sm:text-xs text-slate-400">
-          You can always go through guided setup later
-        </p>
       </div>
     </div>
   )

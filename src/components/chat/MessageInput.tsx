@@ -97,15 +97,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
           </Button>
         </form>
 
-        {/* Skip hint for onboarding */}
-        {showSkipHint && (
-          <div className="absolute -top-8 left-0 right-0 flex justify-center">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 bg-white dark:bg-slate-900 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
-              <Sparkles className="h-3 w-3" />
-              <span>Skip setup and ask directly</span>
-            </div>
-          </div>
-        )}
+{/* Skip hint removed - now handled in OnboardingFlow */}
 
         <p className="mt-2 text-center text-xs text-slate-400">
           Research platform · Not medical advice

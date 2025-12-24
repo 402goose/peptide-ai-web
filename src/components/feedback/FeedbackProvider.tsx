@@ -17,8 +17,14 @@ interface FeedbackItem {
   status: 'new' | 'reviewed' | 'implemented' | 'dismissed'
   userContext: {
     page: string
+    fullUrl: string
     screenSize: string
+    deviceType: string
+    userAgent: string
+    language: string
+    timezone: string
     timestamp: string
+    localTime: string
   }
 }
 
