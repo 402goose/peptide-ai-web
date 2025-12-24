@@ -304,7 +304,7 @@ class ApiClient {
   async getSharedConversation(shareId: string): Promise<{
     share_id: string
     title: string
-    messages: Array<{ role: string; content: string }>
+    messages: { role: string; content: string }[]
     created_at: string
     shared_at: string
   }> {
