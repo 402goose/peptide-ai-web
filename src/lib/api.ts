@@ -148,27 +148,39 @@ class ApiClient {
     }
   }
 
+  // Conversation methods use local Next.js API routes for proper user isolation
   async getConversations(limit = 20, offset = 0): Promise<ConversationSummary[]> {
-    return this.fetch<ConversationSummary[]>(
-      `/api/v1/chat/conversations?limit=${limit}&offset=${offset}`
-    )
+    const response = await fetch(`/api/conversations?limit=${limit}&offset=${offset}`)
+    if (!response.ok) {
+      throw new ApiError(response.status, await response.json().catch(() => ({})))
+    }
+    return response.json()
   }
 
   async getConversation(id: string): Promise<Conversation> {
-    return this.fetch<Conversation>(`/api/v1/chat/conversations/${id}`)
+    const response = await fetch(`/api/conversations/${id}`)
+    if (!response.ok) {
+      throw new ApiError(response.status, await response.json().catch(() => ({})))
+    }
+    return response.json()
   }
 
   async deleteConversation(id: string): Promise<void> {
-    await this.fetch(`/api/v1/chat/conversations/${id}`, {
-      method: 'DELETE',
-    })
+    const response = await fetch(`/api/conversations/${id}`, { method: 'DELETE' })
+    if (!response.ok) {
+      throw new ApiError(response.status, await response.json().catch(() => ({})))
+    }
   }
 
   async updateConversation(id: string, data: { title?: string }): Promise<void> {
-    await this.fetch(`/api/v1/chat/conversations/${id}`, {
+    const response = await fetch(`/api/conversations/${id}`, {
       method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
+    if (!response.ok) {
+      throw new ApiError(response.status, await response.json().catch(() => ({})))
+    }
   }
 
   async deleteAllConversations(): Promise<{ deleted: number }> {

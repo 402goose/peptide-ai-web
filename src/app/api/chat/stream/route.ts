@@ -1,10 +1,15 @@
 import { NextRequest } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 const API_KEY = process.env.PEPTIDE_AI_MASTER_KEY
 
 export async function POST(request: NextRequest) {
   const { message, messages: history = [], conversation_id } = await request.json()
+
+  // Get Clerk user ID for per-user conversation isolation
+  const { userId } = await auth()
+  const clerkUserId = userId || `anon_${request.headers.get('x-forwarded-for') || 'unknown'}`
 
   if (!message) {
     return new Response(JSON.stringify({ error: 'Message is required' }), {
@@ -26,6 +31,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': API_KEY,
+        'X-Clerk-User-Id': clerkUserId, // Pass Clerk user ID for per-user isolation
       },
       body: JSON.stringify({
         message,

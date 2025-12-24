@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import OpenAI from 'openai'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -10,6 +11,10 @@ const FALLBACK_SYSTEM_PROMPT = `You are a friendly, knowledgeable peptide resear
 export async function POST(request: Request) {
   try {
     const { message, messages: history = [], conversation_id } = await request.json()
+
+    // Get Clerk user ID for per-user conversation isolation
+    const { userId } = await auth()
+    const clerkUserId = userId || `anon_${request.headers.get('x-forwarded-for') || 'unknown'}`
 
     if (!message) {
       return NextResponse.json(
@@ -26,6 +31,7 @@ export async function POST(request: Request) {
           headers: {
             'Content-Type': 'application/json',
             'X-API-Key': API_KEY,
+            'X-Clerk-User-Id': clerkUserId, // Pass Clerk user ID for per-user isolation
           },
           body: JSON.stringify({
             message,
