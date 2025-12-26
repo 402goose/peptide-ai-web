@@ -320,9 +320,14 @@ class ApiClient {
   }
 
   async createShareLink(conversationId: string): Promise<{ share_id: string; share_url: string }> {
-    return this.fetch<{ share_id: string; share_url: string }>(`/api/v1/chat/conversations/${conversationId}/share`, {
+    // Use local API route for proper Clerk user ID handling
+    const response = await fetch(`/api/conversations/${conversationId}/share`, {
       method: 'POST',
     })
+    if (!response.ok) {
+      throw new ApiError(response.status, await response.json().catch(() => ({})))
+    }
+    return response.json()
   }
 
   async getSharedConversation(shareId: string): Promise<{
