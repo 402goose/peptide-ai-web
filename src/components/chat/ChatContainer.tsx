@@ -145,12 +145,28 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
 
   // Load existing conversation when navigating to a conversation URL
   useEffect(() => {
-    if (conversationId && !activeConversationId && !isStreaming && !isLoading) {
-      // Only load if we don't already have this conversation active
-      // (prevents reloading when we just created it)
-      // Also skip if we're currently streaming/loading (race condition with URL update)
+    // Load if conversationId is set AND it's different from what we have loaded
+    // This handles: initial load, switching between conversations, and navigation
+    const shouldLoad = conversationId && conversationId !== activeConversationId && !isStreaming && !isLoading
+
+    console.log('[ChatContainer] useEffect check:', {
+      conversationId,
+      activeConversationId,
+      isStreaming,
+      isLoading,
+      shouldLoad
+    })
+
+    if (shouldLoad) {
+      console.log('[ChatContainer] Loading conversation:', conversationId)
       loadConversation(conversationId)
       setViewState('chatting')
+    } else if (!conversationId && activeConversationId && !isStreaming && !isLoading) {
+      // User navigated to /chat (no conversationId) - reset to fresh state
+      console.log('[ChatContainer] Resetting to fresh chat')
+      setMessages([])
+      setActiveConversationId(undefined)
+      setViewState('ready')
     }
   }, [conversationId, activeConversationId, isStreaming, isLoading])
 
@@ -162,9 +178,11 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   }, [inputFocused, viewState])
 
   async function loadConversation(id: string) {
+    console.log('[loadConversation] Starting load for:', id)
     setIsLoading(true)
     try {
       const conversation = await api.getConversation(id)
+      console.log('[loadConversation] API response:', conversation)
 
       // Convert API messages to our format (handle snake_case from backend)
       const messages: Message[] = (conversation.messages || []).map((msg: any) => ({
