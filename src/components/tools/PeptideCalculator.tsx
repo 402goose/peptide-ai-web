@@ -3,67 +3,33 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
+import Image from 'next/image'
 
-// Inline SVG syringe component for visual representation
-function SyringeSVG({ size, isSelected }: { size: 0.3 | 0.5 | 1.0; isSelected: boolean }) {
-  const widths = { 0.3: 80, 0.5: 100, 1.0: 120 }
-  const width = widths[size]
-  const color = isSelected ? '#7c3aed' : '#64748b'
-
-  return (
-    <svg width={width} height="28" viewBox="0 0 120 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Plunger handle */}
-      <rect x="2" y="10" width="12" height="8" rx="1" fill={color} opacity="0.6" />
-      {/* Plunger rod */}
-      <rect x="14" y="12" width="20" height="4" fill={color} opacity="0.4" />
-      {/* Syringe barrel */}
-      <rect x="34" y="8" width="70" height="12" rx="2" fill={color} opacity="0.2" stroke={color} strokeWidth="1.5" />
-      {/* Graduation marks */}
-      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-        <line key={i} x1={40 + i * 8} y1="8" x2={40 + i * 8} y2={i % 2 === 0 ? "12" : "10"} stroke={color} strokeWidth="1" opacity="0.5" />
-      ))}
-      {/* Needle hub */}
-      <rect x="104" y="11" width="8" height="6" rx="1" fill={color} opacity="0.5" />
-      {/* Needle */}
-      <line x1="112" y1="14" x2="118" y2="14" stroke={color} strokeWidth="1" />
-    </svg>
-  )
+const SYRINGE_IMAGES: Record<number, string> = {
+  0.3: '/images/syringe-30u.png',
+  0.5: '/images/syringe-50u.png',
+  1.0: '/images/syringe-100u.png',
 }
 
-// Inline SVG vial component
+// Simple vial icon
 function VialSVG() {
   return (
-    <svg width="48" height="64" viewBox="0 0 48 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Cap */}
-      <rect x="14" y="2" width="20" height="8" rx="2" fill="#7c3aed" />
-      {/* Neck */}
-      <rect x="18" y="10" width="12" height="6" fill="#94a3b8" />
-      {/* Body */}
-      <rect x="8" y="16" width="32" height="42" rx="4" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="2" />
-      {/* Liquid */}
-      <rect x="10" y="28" width="28" height="28" rx="2" fill="#7c3aed" opacity="0.2" />
-      {/* Label */}
-      <rect x="12" y="32" width="24" height="12" rx="1" fill="white" opacity="0.8" />
-      <line x1="14" y1="36" x2="34" y2="36" stroke="#94a3b8" strokeWidth="1" />
-      <line x1="14" y1="40" x2="28" y2="40" stroke="#94a3b8" strokeWidth="1" />
+    <svg width="40" height="56" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="12" y="2" width="16" height="6" rx="2" fill="#7c3aed" />
+      <rect x="15" y="8" width="10" height="4" fill="#94a3b8" />
+      <rect x="8" y="12" width="24" height="38" rx="3" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1.5" />
+      <rect x="10" y="22" width="20" height="26" rx="2" fill="#7c3aed" opacity="0.15" />
     </svg>
   )
 }
 
-// Inline SVG bacteriostatic water bottle
+// Simple bac water icon
 function BacWaterSVG() {
   return (
-    <svg width="48" height="64" viewBox="0 0 48 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Cap */}
-      <rect x="16" y="2" width="16" height="6" rx="2" fill="#0ea5e9" />
-      {/* Neck */}
-      <path d="M18 8 L18 14 L12 22 L12 58 C12 60 14 62 16 62 L32 62 C34 62 36 60 36 58 L36 22 L30 14 L30 8 Z" fill="#e0f2fe" stroke="#7dd3fc" strokeWidth="2" />
-      {/* Water level */}
-      <path d="M14 30 L14 56 C14 58 16 60 18 60 L30 60 C32 60 34 58 34 56 L34 30 Z" fill="#0ea5e9" opacity="0.3" />
-      {/* Label */}
-      <rect x="14" y="36" width="20" height="14" rx="1" fill="white" opacity="0.9" />
-      <text x="24" y="45" textAnchor="middle" fontSize="6" fill="#0369a1" fontWeight="bold">BAC</text>
-      <text x="24" y="48" textAnchor="middle" fontSize="4" fill="#64748b">WATER</text>
+    <svg width="40" height="56" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="14" y="2" width="12" height="5" rx="2" fill="#0ea5e9" />
+      <path d="M16 7 L16 12 L10 18 L10 50 C10 52 12 54 14 54 L26 54 C28 54 30 52 30 50 L30 18 L24 12 L24 7 Z" fill="#e0f2fe" stroke="#7dd3fc" strokeWidth="1.5" />
+      <path d="M12 26 L12 48 C12 50 14 52 16 52 L24 52 C26 52 28 50 28 48 L28 26 Z" fill="#0ea5e9" opacity="0.25" />
     </svg>
   )
 }
@@ -139,8 +105,14 @@ export function PeptideCalculator() {
                   }`}>
                     {syringe.label}
                   </span>
-                  <div className="flex-1 flex items-center">
-                    <SyringeSVG size={syringe.value as 0.3 | 0.5 | 1.0} isSelected={syringeSize === syringe.value} />
+                  <div className="flex-1 h-10 relative">
+                    <Image
+                      src={SYRINGE_IMAGES[syringe.value]}
+                      alt={`${syringe.label} insulin syringe (${syringe.units} units)`}
+                      fill
+                      className="object-contain object-left"
+                      unoptimized
+                    />
                   </div>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     {syringe.units}u
