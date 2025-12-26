@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Syringe, Clock, MapPin } from 'lucide-react'
+import { MiniCalculator } from '@/components/tools/MiniCalculator'
 import type { LogDoseRequest, AdministrationRoute } from '@/types/journey'
 
 interface DoseLogFormProps {
@@ -63,12 +64,22 @@ export function DoseLogForm({ peptide, onSubmit, onCancel, loading }: DoseLogFor
     })
   }
 
+  const handleDoseFromCalculator = (dose: number, units: number) => {
+    setFormData({ ...formData, dose_amount: dose, dose_unit: 'mcg' })
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <Syringe className="h-5 w-5 text-blue-500" />
         <h3 className="font-semibold text-slate-900 dark:text-white">Log Dose</h3>
       </div>
+
+      {/* Mini Calculator */}
+      <MiniCalculator
+        peptideName={peptide}
+        onDoseCalculated={handleDoseFromCalculator}
+      />
 
       {/* Dose amount and unit */}
       <div className="grid grid-cols-2 gap-3">

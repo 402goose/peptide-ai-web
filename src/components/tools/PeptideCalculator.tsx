@@ -2,21 +2,19 @@
 
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Calculator, Droplets, Syringe, FlaskConical, Info } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { AlertTriangle } from 'lucide-react'
 
 interface PeptideCalculatorProps {
   initialVialSize?: number
   initialBacWater?: number
   initialDose?: number
   onClose?: () => void
-  compact?: boolean
 }
 
 const SYRINGE_SIZES = [
-  { value: 0.3, label: '0.3 ml', units: 30, description: 'U-30 (30 units)' },
-  { value: 0.5, label: '0.5 ml', units: 50, description: 'U-50 (50 units)' },
-  { value: 1.0, label: '1.0 ml', units: 100, description: 'U-100 (100 units)' },
+  { value: 0.3, label: '0.3 ml', units: 30 },
+  { value: 0.5, label: '0.5 ml', units: 50 },
+  { value: 1.0, label: '1.0 ml', units: 100 },
 ]
 
 const VIAL_SIZES = [
@@ -43,8 +41,6 @@ export function PeptideCalculator({
   initialVialSize = 10,
   initialBacWater = 2,
   initialDose = 250,
-  onClose,
-  compact = false,
 }: PeptideCalculatorProps) {
   const [syringeSize, setSyringeSize] = useState(1.0)
   const [vialSize, setVialSize] = useState(initialVialSize)
@@ -54,292 +50,309 @@ export function PeptideCalculator({
   const [customBacWater, setCustomBacWater] = useState('')
   const [customDose, setCustomDose] = useState('')
 
-  // Calculate the concentration and units to draw
   const calculation = useMemo(() => {
     const actualVial = customVial ? parseFloat(customVial) : vialSize
     const actualBac = customBacWater ? parseFloat(customBacWater) : bacWater
     const actualDose = customDose ? parseFloat(customDose) : desiredDose
 
-    if (!actualVial || !actualBac || !actualDose) {
-      return null
-    }
+    if (!actualVial || !actualBac || !actualDose) return null
 
-    // Concentration in mcg/ml
     const concentrationMcgPerMl = (actualVial * 1000) / actualBac
-    // Volume needed in ml
     const volumeNeededMl = actualDose / concentrationMcgPerMl
-    // Units to draw (100 units = 1ml)
     const unitsToDraw = volumeNeededMl * 100
-    // How many doses per vial
-    const dosesPerVial = Math.floor((actualVial * 1000) / actualDose)
 
     const selectedSyringe = SYRINGE_SIZES.find(s => s.value === syringeSize)
     const maxUnits = selectedSyringe?.units || 100
+    const exceedsSyringe = unitsToDraw > maxUnits
 
     return {
-      concentrationMcgPerMl,
-      concentrationMgPerMl: actualVial / actualBac,
-      volumeNeededMl,
       unitsToDraw: Math.round(unitsToDraw * 10) / 10,
-      dosesPerVial,
-      exceedsSyringe: unitsToDraw > maxUnits,
+      exceedsSyringe,
       maxUnits,
-      vialMg: actualVial,
-      bacWaterMl: actualBac,
       doseMcg: actualDose,
     }
   }, [vialSize, bacWater, desiredDose, syringeSize, customVial, customBacWater, customDose])
 
-  const syringeInfo = SYRINGE_SIZES.find(s => s.value === syringeSize)
+  const selectedSyringe = SYRINGE_SIZES.find(s => s.value === syringeSize)
 
   return (
-    <div className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 ${compact ? 'p-4' : 'p-6'}`}>
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-            <Calculator className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Peptide Calculator</h3>
-        </div>
-        {onClose && (
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Close
-          </Button>
-        )}
+      <div className="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-900 dark:to-black px-6 py-4">
+        <h2 className="text-xl font-bold text-white text-center">PEPTIDE CALCULATOR</h2>
+        <div className="w-12 h-0.5 bg-slate-600 mx-auto mt-2" />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Left Column - Inputs */}
-        <div className="space-y-5">
-          {/* Syringe Size */}
+      <div className="p-6 space-y-8">
+        {/* Main inputs grid */}
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Left: Syringe Selection */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              <Syringe className="w-4 h-4 inline mr-1" />
-              Syringe Size
-            </label>
-            <div className="flex gap-2">
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
+              What is the total volume of your syringe?
+            </h3>
+            <div className="space-y-3">
               {SYRINGE_SIZES.map((size) => (
                 <button
                   key={size.value}
                   onClick={() => setSyringeSize(size.value)}
-                  className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                  className={`w-full flex items-center gap-4 p-3 rounded-xl border-2 transition-all ${
                     syringeSize === size.value
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
                   }`}
                 >
-                  {size.label}
+                  {/* Syringe visual */}
+                  <div className="flex-shrink-0 w-32 h-8 relative">
+                    <SyringeIcon size={size.value} selected={syringeSize === size.value} />
+                  </div>
+                  <span className={`font-semibold ${
+                    syringeSize === size.value
+                      ? 'text-purple-700 dark:text-purple-300'
+                      : 'text-slate-700 dark:text-slate-300'
+                  }`}>
+                    {size.label}
+                  </span>
                 </button>
               ))}
             </div>
-            <p className="text-xs text-slate-500 mt-1">{syringeInfo?.description}</p>
           </div>
 
-          {/* Vial Size */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              <FlaskConical className="w-4 h-4 inline mr-1" />
-              Peptide Vial Quantity
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {VIAL_SIZES.map((size) => (
-                <button
-                  key={size.value}
-                  onClick={() => { setVialSize(size.value); setCustomVial('') }}
-                  className={`py-2 px-4 rounded-lg border-2 text-sm font-medium transition-all ${
-                    vialSize === size.value && !customVial
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                  }`}
-                >
-                  {size.label}
-                </button>
-              ))}
-              <input
-                type="number"
-                placeholder="Other"
-                value={customVial}
-                onChange={(e) => setCustomVial(e.target.value)}
-                className="w-20 py-2 px-3 rounded-lg border-2 border-slate-200 dark:border-slate-700 text-sm bg-transparent focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Bac Water */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              <Droplets className="w-4 h-4 inline mr-1" />
-              Bacteriostatic Water
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {BAC_WATER_AMOUNTS.map((amount) => (
-                <button
-                  key={amount.value}
-                  onClick={() => { setBacWater(amount.value); setCustomBacWater('') }}
-                  className={`py-2 px-4 rounded-lg border-2 text-sm font-medium transition-all ${
-                    bacWater === amount.value && !customBacWater
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                  }`}
-                >
-                  {amount.label}
-                </button>
-              ))}
-              <input
-                type="number"
-                placeholder="Other"
-                value={customBacWater}
-                onChange={(e) => setCustomBacWater(e.target.value)}
-                className="w-20 py-2 px-3 rounded-lg border-2 border-slate-200 dark:border-slate-700 text-sm bg-transparent focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Desired Dose */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Desired Dose (per injection)
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {DOSE_OPTIONS.map((dose) => (
-                <button
-                  key={dose.value}
-                  onClick={() => { setDesiredDose(dose.value); setCustomDose('') }}
-                  className={`py-2 px-4 rounded-lg border-2 text-sm font-medium transition-all ${
-                    desiredDose === dose.value && !customDose
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                  }`}
-                >
-                  {dose.label}
-                </button>
-              ))}
-              <input
-                type="number"
-                placeholder="Other"
-                value={customDose}
-                onChange={(e) => setCustomDose(e.target.value)}
-                className="w-20 py-2 px-3 rounded-lg border-2 border-slate-200 dark:border-slate-700 text-sm bg-transparent focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Results */}
-        <div className="space-y-4">
-          {calculation && (
-            <>
-              {/* Main Result */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-5 border border-blue-200 dark:border-blue-800"
-              >
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
-                  To get a dose of <span className="font-semibold text-slate-900 dark:text-white">{calculation.doseMcg} mcg</span>
-                </p>
-                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                  Draw to {calculation.unitsToDraw} units
-                </p>
-                {calculation.exceedsSyringe && (
-                  <p className="text-sm text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1">
-                    <Info className="w-4 h-4" />
-                    Exceeds syringe capacity ({calculation.maxUnits} units). Use larger syringe or split dose.
-                  </p>
-                )}
-              </motion.div>
-
-              {/* Visual Syringe */}
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                  Visual Guide ({syringeInfo?.label} syringe)
-                </p>
-                <SyringeVisual
-                  maxUnits={calculation.maxUnits}
-                  fillUnits={Math.min(calculation.unitsToDraw, calculation.maxUnits)}
+          {/* Right: Vial, Water, Dose */}
+          <div className="space-y-6">
+            {/* Vial size */}
+            <div>
+              <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                Select Peptide Vial Quantity
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {VIAL_SIZES.map((size) => (
+                  <OptionButton
+                    key={size.value}
+                    selected={vialSize === size.value && !customVial}
+                    onClick={() => { setVialSize(size.value); setCustomVial('') }}
+                  >
+                    {size.label}
+                  </OptionButton>
+                ))}
+                <input
+                  type="number"
+                  placeholder="Other"
+                  value={customVial}
+                  onChange={(e) => setCustomVial(e.target.value)}
+                  className="w-20 px-3 py-2 text-sm rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-transparent focus:border-purple-500 focus:outline-none"
                 />
               </div>
+            </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Concentration</p>
-                  <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {calculation.concentrationMgPerMl.toFixed(1)} mg/ml
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    ({calculation.concentrationMcgPerMl.toFixed(0)} mcg/ml)
-                  </p>
-                </div>
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Vial Lasts</p>
-                  <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {calculation.dosesPerVial} doses
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    at {calculation.doseMcg} mcg each
-                  </p>
-                </div>
+            {/* Bac water */}
+            <div>
+              <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                How much bacteriostatic water are you adding?
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {BAC_WATER_AMOUNTS.map((amount) => (
+                  <OptionButton
+                    key={amount.value}
+                    selected={bacWater === amount.value && !customBacWater}
+                    onClick={() => { setBacWater(amount.value); setCustomBacWater('') }}
+                  >
+                    {amount.label}
+                  </OptionButton>
+                ))}
+                <input
+                  type="number"
+                  placeholder="Other"
+                  value={customBacWater}
+                  onChange={(e) => setCustomBacWater(e.target.value)}
+                  className="w-20 px-3 py-2 text-sm rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-transparent focus:border-purple-500 focus:outline-none"
+                />
               </div>
+            </div>
 
-              {/* Summary */}
-              <div className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
-                <p className="font-medium text-slate-700 dark:text-slate-300 mb-1">Summary:</p>
-                <p>
-                  Add <strong>{calculation.bacWaterMl} ml</strong> bac water to your{' '}
-                  <strong>{calculation.vialMg} mg</strong> vial.
-                  For <strong>{calculation.doseMcg} mcg</strong>, draw to{' '}
-                  <strong>{calculation.unitsToDraw} units</strong> on your syringe.
+            {/* Desired dose */}
+            <div>
+              <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                How much of the Peptide do you want in each dose?
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {DOSE_OPTIONS.map((dose) => (
+                  <OptionButton
+                    key={dose.value}
+                    selected={desiredDose === dose.value && !customDose}
+                    onClick={() => { setDesiredDose(dose.value); setCustomDose('') }}
+                  >
+                    {dose.label}
+                  </OptionButton>
+                ))}
+                <input
+                  type="number"
+                  placeholder="Other"
+                  value={customDose}
+                  onChange={(e) => setCustomDose(e.target.value)}
+                  className="w-20 px-3 py-2 text-sm rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-transparent focus:border-purple-500 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Result */}
+        {calculation && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-700"
+          >
+            {calculation.exceedsSyringe ? (
+              <div className="flex items-center gap-3 text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+                <p className="font-medium">
+                  Syringe volume is not sufficient for specified dosage.
+                  Use a larger syringe or reduce the dose.
                 </p>
               </div>
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <p className="text-lg text-slate-700 dark:text-slate-300 mb-4">
+                  To have a dose of <span className="font-bold text-slate-900 dark:text-white">{calculation.doseMcg} mcg</span> pull the syringe to{' '}
+                  <span className="font-bold text-2xl text-purple-600 dark:text-purple-400">{calculation.unitsToDraw}</span>
+                </p>
+
+                {/* Visual Syringe */}
+                <VisualSyringe
+                  maxUnits={selectedSyringe?.units || 100}
+                  fillUnits={calculation.unitsToDraw}
+                  syringeSize={syringeSize}
+                />
+              </>
+            )}
+          </motion.div>
+        )}
       </div>
     </div>
   )
 }
 
-// Visual syringe component
-function SyringeVisual({ maxUnits, fillUnits }: { maxUnits: number; fillUnits: number }) {
-  const fillPercentage = (fillUnits / maxUnits) * 100
+function OptionButton({
+  children,
+  selected,
+  onClick
+}: {
+  children: React.ReactNode
+  selected: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2 text-sm font-medium rounded-lg border-2 transition-all ${
+        selected
+          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
+          : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
 
-  // Generate tick marks
-  const majorTicks = maxUnits === 30 ? [0, 5, 10, 15, 20, 25, 30] :
-                     maxUnits === 50 ? [0, 10, 20, 30, 40, 50] :
-                     [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+function SyringeIcon({ size, selected }: { size: number; selected: boolean }) {
+  // Visual representation of different syringe sizes
+  const width = size === 0.3 ? 'w-16' : size === 0.5 ? 'w-24' : 'w-32'
+  const color = selected ? 'text-purple-500' : 'text-orange-400'
 
   return (
-    <div className="relative">
-      {/* Syringe body */}
-      <div className="relative h-10 bg-white dark:bg-slate-700 rounded-full border-2 border-slate-300 dark:border-slate-600 overflow-hidden">
-        {/* Fill */}
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${fillPercentage}%` }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-blue-400 to-blue-500 dark:from-blue-500 dark:to-blue-600"
-        />
+    <svg viewBox="0 0 120 24" className={`${width} h-6 ${color}`}>
+      {/* Plunger */}
+      <rect x="0" y="8" width="20" height="8" fill="currentColor" rx="1" />
+      <rect x="15" y="6" width="4" height="12" fill="currentColor" rx="1" />
 
-        {/* Tick marks */}
-        <div className="absolute inset-0 flex justify-between px-1">
-          {majorTicks.map((tick) => (
-            <div key={tick} className="relative">
-              <div className="absolute top-0 w-px h-3 bg-slate-400 dark:bg-slate-500" />
-            </div>
-          ))}
+      {/* Barrel */}
+      <rect x="19" y="4" width={size === 0.3 ? 50 : size === 0.5 ? 70 : 90} height="16"
+            fill="none" stroke="currentColor" strokeWidth="2" rx="2" />
+
+      {/* Tick marks */}
+      {[...Array(size === 0.3 ? 6 : size === 0.5 ? 10 : 10)].map((_, i) => (
+        <line
+          key={i}
+          x1={25 + i * (size === 0.3 ? 7 : size === 0.5 ? 6 : 8)}
+          y1="6"
+          x2={25 + i * (size === 0.3 ? 7 : size === 0.5 ? 6 : 8)}
+          y2="10"
+          stroke="currentColor"
+          strokeWidth="1"
+        />
+      ))}
+
+      {/* Needle hub */}
+      <rect x={size === 0.3 ? 69 : size === 0.5 ? 89 : 109} y="9" width="8" height="6" fill="currentColor" rx="1" />
+
+      {/* Needle */}
+      <line x1={size === 0.3 ? 77 : size === 0.5 ? 97 : 117} y1="12"
+            x2={size === 0.3 ? 90 : size === 0.5 ? 110 : 120} y2="12"
+            stroke="currentColor" strokeWidth="1" />
+    </svg>
+  )
+}
+
+function VisualSyringe({ maxUnits, fillUnits, syringeSize }: { maxUnits: number; fillUnits: number; syringeSize: number }) {
+  const fillPercentage = Math.min((fillUnits / maxUnits) * 100, 100)
+
+  // Generate tick marks based on syringe size
+  const ticks = maxUnits === 30
+    ? [0, 5, 10, 15, 20, 25, 30]
+    : maxUnits === 50
+    ? [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+    : [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+
+  return (
+    <div className="space-y-2">
+      {/* Syringe body */}
+      <div className="relative">
+        <div className="h-12 bg-white dark:bg-slate-700 rounded-lg border-2 border-slate-300 dark:border-slate-500 overflow-hidden relative">
+          {/* Fill */}
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${fillPercentage}%` }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-blue-400 to-blue-500"
+          />
+
+          {/* Tick marks inside */}
+          <div className="absolute inset-0 flex">
+            {ticks.map((tick, i) => (
+              <div
+                key={tick}
+                className="flex-1 border-r border-slate-300/50 dark:border-slate-500/50 last:border-r-0"
+              />
+            ))}
+          </div>
         </div>
+
+        {/* Arrow indicator */}
+        <motion.div
+          initial={{ left: 0 }}
+          animate={{ left: `${fillPercentage}%` }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="absolute -top-8 transform -translate-x-1/2"
+          style={{ left: `${fillPercentage}%` }}
+        >
+          <div className="bg-purple-600 text-white text-sm font-bold px-2 py-1 rounded shadow-lg">
+            {fillUnits}
+          </div>
+          <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-purple-600 mx-auto" />
+        </motion.div>
       </div>
 
       {/* Labels */}
-      <div className="flex justify-between mt-1 px-1">
-        {majorTicks.map((tick) => (
+      <div className="flex justify-between px-0.5">
+        {ticks.map((tick) => (
           <span
             key={tick}
             className={`text-xs ${
-              tick === Math.round(fillUnits)
-                ? 'font-bold text-blue-600 dark:text-blue-400'
+              Math.abs(tick - fillUnits) < 3
+                ? 'font-bold text-purple-600 dark:text-purple-400'
                 : 'text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -347,20 +360,6 @@ function SyringeVisual({ maxUnits, fillUnits }: { maxUnits: number; fillUnits: n
           </span>
         ))}
       </div>
-
-      {/* Arrow indicator */}
-      <motion.div
-        initial={{ left: 0 }}
-        animate={{ left: `${fillPercentage}%` }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="absolute -top-6 transform -translate-x-1/2"
-        style={{ left: `${fillPercentage}%` }}
-      >
-        <div className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
-          {fillUnits}
-        </div>
-        <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-600 mx-auto" />
-      </motion.div>
     </div>
   )
 }
