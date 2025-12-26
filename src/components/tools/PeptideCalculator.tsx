@@ -89,14 +89,14 @@ export function PeptideCalculator() {
             </h3>
             <div className="space-y-2">
               {[
-                { value: 0.3, label: '0.3 ml' },
-                { value: 0.5, label: '0.5 ml' },
-                { value: 1.0, label: '1.0 ml' },
+                { value: 0.3, label: '0.3 ml', height: 'h-6' },
+                { value: 0.5, label: '0.5 ml', height: 'h-7' },
+                { value: 1.0, label: '1.0 ml', height: 'h-8' },
               ].map((syringe) => (
                 <button
                   key={syringe.value}
                   onClick={() => setSyringeSize(syringe.value)}
-                  className={`w-full flex items-center gap-3 p-2.5 rounded-lg border transition-all ${
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
                     syringeSize === syringe.value
                       ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
                       : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 bg-white dark:bg-slate-800'
@@ -109,7 +109,7 @@ export function PeptideCalculator() {
                   }`}>
                     {syringe.label}
                   </span>
-                  <div className="flex-1 h-7 relative">
+                  <div className={`flex-1 ${syringe.height} relative`}>
                     <Image
                       src={SYRINGE_IMAGES[syringe.value]}
                       alt={`${syringe.label} insulin syringe`}
