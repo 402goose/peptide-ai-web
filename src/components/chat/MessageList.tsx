@@ -7,6 +7,7 @@ import { TypingIndicator } from './TypingIndicator'
 import { FollowUpChips } from './FollowUpChips'
 import { ResponseCard } from './ResponseCard'
 import { DisclaimerBanner } from './DisclaimerBanner'
+import { ResponseActions } from './ResponseActions'
 import { ArrowDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Message, Source } from '@/types'
@@ -20,6 +21,9 @@ interface MessageListProps {
   disclaimers: string[]
   followUps: string[]
   onFollowUpClick: (question: string) => void
+  detectedMode?: string
+  mentionedPeptides?: string[]
+  conversationId?: string
 }
 
 // Threshold for considering user "at bottom"
@@ -34,6 +38,9 @@ export function MessageList({
   disclaimers,
   followUps,
   onFollowUpClick,
+  detectedMode = 'balanced',
+  mentionedPeptides = [],
+  conversationId,
 }: MessageListProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const bottomAnchorRef = useRef<HTMLDivElement>(null)
@@ -202,6 +209,13 @@ export function MessageList({
             {disclaimers.length > 0 && (
               <DisclaimerBanner disclaimers={disclaimers} />
             )}
+
+            {/* Feature suggestion CTAs for coach mode or when peptides mentioned */}
+            <ResponseActions
+              mode={detectedMode}
+              peptides={mentionedPeptides}
+              conversationId={conversationId}
+            />
           </motion.div>
         )}
 

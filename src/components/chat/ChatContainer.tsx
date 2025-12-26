@@ -48,6 +48,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   const [currentDisclaimers, setCurrentDisclaimers] = useState<string[]>([])
   const [currentFollowUps, setCurrentFollowUps] = useState<string[]>([])
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>(conversationId)
+  const [detectedMode, setDetectedMode] = useState<string>('balanced')
+  const [mentionedPeptides, setMentionedPeptides] = useState<string[]>([])
   const [userContext, setUserContext] = useState<OnboardingContext | null>(null)
   const [inputFocused, setInputFocused] = useState(false)
   const [anonChatCount, setAnonChatCount] = useState(0)
@@ -308,6 +310,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 }
               } else if (data.type === 'sources' && data.sources) {
                 setCurrentSources(data.sources)
+              } else if (data.type === 'mode' && data.mode) {
+                setDetectedMode(data.mode)
               } else if (data.type === 'content' && data.content) {
                 fullContent += data.content
                 setStreamingContent(fullContent)
@@ -324,12 +328,24 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         }
       }
 
-      // Add final message
+      // Extract peptide names mentioned for feature suggestions
+      const extractedPeptides = PEPTIDE_NAMES.filter(p =>
+        fullContent.toLowerCase().includes(p.toLowerCase())
+      )
+      if (extractedPeptides.length > 0) {
+        setMentionedPeptides(extractedPeptides)
+      }
+
+      // Add final message with metadata
       if (fullContent) {
         const assistantMessage: Message = {
           role: 'assistant',
           content: fullContent,
           timestamp: new Date().toISOString(),
+          metadata: {
+            mode: detectedMode,
+            peptides: extractedPeptides,
+          }
         }
         setMessages(prev => [...prev, assistantMessage])
       }
@@ -669,6 +685,9 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                   disclaimers={currentDisclaimers}
                   followUps={currentFollowUps}
                   onFollowUpClick={handleFollowUpClick}
+                  detectedMode={detectedMode}
+                  mentionedPeptides={mentionedPeptides}
+                  conversationId={activeConversationId}
                 />
               )}
             </motion.div>

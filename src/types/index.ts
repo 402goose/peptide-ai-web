@@ -32,6 +32,8 @@ export interface MessageMetadata {
   goal?: string
   conditions?: string[]
   experience?: string
+  mode?: string
+  peptides?: string[]
 }
 
 export interface Message {
