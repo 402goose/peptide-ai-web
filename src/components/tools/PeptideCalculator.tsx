@@ -11,10 +11,10 @@ const SYRINGE_IMAGES: Record<number, string> = {
   1.0: '/images/syringe-100u.png',
 }
 
-// Simple vial icon
+// Simple vial icon (compact)
 function VialSVG() {
   return (
-    <svg width="40" height="56" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="32" height="48" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="12" y="2" width="16" height="6" rx="2" fill="#7c3aed" />
       <rect x="15" y="8" width="10" height="4" fill="#94a3b8" />
       <rect x="8" y="12" width="24" height="38" rx="3" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1.5" />
@@ -23,10 +23,10 @@ function VialSVG() {
   )
 }
 
-// Simple bac water icon
+// Simple bac water icon (compact)
 function BacWaterSVG() {
   return (
-    <svg width="40" height="56" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="32" height="48" viewBox="0 0 40 56" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="14" y="2" width="12" height="5" rx="2" fill="#0ea5e9" />
       <path d="M16 7 L16 12 L10 18 L10 50 C10 52 12 54 14 54 L26 54 C28 54 30 52 30 50 L30 18 L24 12 L24 7 Z" fill="#e0f2fe" stroke="#7dd3fc" strokeWidth="1.5" />
       <path d="M12 26 L12 48 C12 50 14 52 16 52 L24 52 C26 52 28 50 28 48 L28 26 Z" fill="#0ea5e9" opacity="0.25" />
@@ -76,14 +76,14 @@ export function PeptideCalculator() {
         <div className="w-16 h-1 bg-slate-600 mx-auto mt-3" />
       </div>
 
-      <div className="p-6 md:p-8">
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+      <div className="p-4 md:p-6">
+        <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
           {/* Left Column - Syringe Selection */}
           <div>
-            <h3 className="text-base font-medium text-slate-800 dark:text-slate-200 mb-4">
+            <h3 className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-3">
               What is the total volume of your syringe?
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[
                 { value: 0.3, label: '0.3 ml', units: 30 },
                 { value: 0.5, label: '0.5 ml', units: 50 },
@@ -92,20 +92,20 @@ export function PeptideCalculator() {
                 <button
                   key={syringe.value}
                   onClick={() => setSyringeSize(syringe.value)}
-                  className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
                     syringeSize === syringe.value
                       ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
                       : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 bg-white dark:bg-slate-800'
                   }`}
                 >
-                  <span className={`text-base font-medium min-w-[50px] ${
+                  <span className={`text-sm font-medium min-w-[45px] ${
                     syringeSize === syringe.value
                       ? 'text-purple-700 dark:text-purple-300'
                       : 'text-slate-700 dark:text-slate-300'
                   }`}>
                     {syringe.label}
                   </span>
-                  <div className="flex-1 h-10 relative">
+                  <div className="flex-1 h-8 relative">
                     <Image
                       src={SYRINGE_IMAGES[syringe.value]}
                       alt={`${syringe.label} insulin syringe (${syringe.units} units)`}
@@ -114,31 +114,28 @@ export function PeptideCalculator() {
                       unoptimized
                     />
                   </div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {syringe.units}u
-                  </span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Right Column - Vial, Water, Dose */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Vial Size */}
-            <div className="flex gap-4">
-              <div className="w-16 h-20 flex-shrink-0 flex items-center justify-center">
+            <div className="flex items-start gap-3">
+              <div className="w-12 flex-shrink-0">
                 <VialSVG />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-medium text-slate-800 dark:text-slate-200 mb-3">
+                <h3 className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-2">
                   Select Peptide Vial Quantity
                 </h3>
-                <div className="flex flex-wrap gap-2 mb-2">
+                <div className="flex flex-wrap gap-1.5 mb-1.5">
                   {[5, 10, 15].map((size) => (
                     <button
                       key={size}
                       onClick={() => { setVialSize(size); setUseCustomVial(false) }}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${
+                      className={`px-3 py-1 text-sm rounded border transition-all ${
                         vialSize === size && !useCustomVial
                           ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
                           : 'border-slate-300 dark:border-slate-600 hover:border-slate-400 bg-white dark:bg-slate-800'
@@ -149,7 +146,7 @@ export function PeptideCalculator() {
                   ))}
                   <button
                     onClick={() => setUseCustomVial(true)}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${
+                    className={`px-3 py-1 text-sm rounded border transition-all ${
                       useCustomVial
                         ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
                         : 'border-slate-300 dark:border-slate-600 hover:border-slate-400 bg-white dark:bg-slate-800'
@@ -158,33 +155,31 @@ export function PeptideCalculator() {
                     Other
                   </button>
                 </div>
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400">Enter vial quantity</label>
-                  <input
-                    type="number"
-                    value={customVial}
-                    onChange={(e) => { setCustomVial(e.target.value); setUseCustomVial(true) }}
-                    className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:border-purple-500 focus:outline-none"
-                  />
-                </div>
+                <label className="text-xs text-slate-500 dark:text-slate-400">Enter vial quantity</label>
+                <input
+                  type="number"
+                  value={customVial}
+                  onChange={(e) => { setCustomVial(e.target.value); setUseCustomVial(true) }}
+                  className="w-full max-w-[160px] mt-0.5 px-2 py-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:border-purple-500 focus:outline-none"
+                />
               </div>
             </div>
 
             {/* Bac Water */}
-            <div className="flex gap-4">
-              <div className="w-16 h-20 flex-shrink-0 flex items-center justify-center">
+            <div className="flex items-start gap-3">
+              <div className="w-12 flex-shrink-0">
                 <BacWaterSVG />
               </div>
               <div className="flex-1">
-                <h3 className="text-base font-medium text-slate-800 dark:text-slate-200 mb-3">
+                <h3 className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-2">
                   How much bacteriostatic water are you adding?
                 </h3>
-                <div className="flex flex-wrap gap-2 mb-2">
+                <div className="flex flex-wrap gap-1.5 mb-1.5">
                   {[1, 2, 3, 5].map((ml) => (
                     <button
                       key={ml}
                       onClick={() => { setBacWater(ml); setUseCustomBacWater(false) }}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${
+                      className={`px-3 py-1 text-sm rounded border transition-all ${
                         bacWater === ml && !useCustomBacWater
                           ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
                           : 'border-slate-300 dark:border-slate-600 hover:border-slate-400 bg-white dark:bg-slate-800'
@@ -195,7 +190,7 @@ export function PeptideCalculator() {
                   ))}
                   <button
                     onClick={() => setUseCustomBacWater(true)}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${
+                    className={`px-3 py-1 text-sm rounded border transition-all ${
                       useCustomBacWater
                         ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
                         : 'border-slate-300 dark:border-slate-600 hover:border-slate-400 bg-white dark:bg-slate-800'
@@ -204,29 +199,27 @@ export function PeptideCalculator() {
                     Other
                   </button>
                 </div>
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400">Enter bacteriostatic water amount</label>
-                  <input
-                    type="number"
-                    value={customBacWater}
-                    onChange={(e) => { setCustomBacWater(e.target.value); setUseCustomBacWater(true) }}
-                    className="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:border-purple-500 focus:outline-none"
-                  />
-                </div>
+                <label className="text-xs text-slate-500 dark:text-slate-400">Enter bacteriostatic water amount</label>
+                <input
+                  type="number"
+                  value={customBacWater}
+                  onChange={(e) => { setCustomBacWater(e.target.value); setUseCustomBacWater(true) }}
+                  className="w-full max-w-[160px] mt-0.5 px-2 py-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:border-purple-500 focus:outline-none"
+                />
               </div>
             </div>
 
             {/* Dose */}
-            <div>
-              <h3 className="text-base font-medium text-slate-800 dark:text-slate-200 mb-3">
+            <div className="pt-2">
+              <h3 className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-2">
                 How much of the Peptide do you want in each dose?
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {[50, 100, 250, 500].map((dose) => (
                   <button
                     key={dose}
                     onClick={() => { setDesiredDose(dose); setUseCustomDose(false) }}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${
+                    className={`px-3 py-1 text-sm rounded border transition-all ${
                       desiredDose === dose && !useCustomDose
                         ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
                         : 'border-slate-300 dark:border-slate-600 hover:border-slate-400 bg-white dark:bg-slate-800'
@@ -240,7 +233,7 @@ export function PeptideCalculator() {
                   placeholder="Other"
                   value={customDose}
                   onChange={(e) => { setCustomDose(e.target.value); setUseCustomDose(true) }}
-                  className="w-20 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:border-purple-500 focus:outline-none placeholder:text-slate-400"
+                  className="w-16 px-2 py-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:border-purple-500 focus:outline-none placeholder:text-slate-400"
                 />
               </div>
             </div>
@@ -274,7 +267,7 @@ export function PeptideCalculator() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 function SyringeRuler({ maxUnits, fillUnits }: { maxUnits: number; fillUnits: number }) {
