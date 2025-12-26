@@ -3,6 +3,14 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
+import Image from 'next/image'
+
+// Syringe image paths
+const SYRINGE_IMAGES: Record<number, string> = {
+  0.3: '/images/syringe-30-units.png',
+  0.5: '/images/syringe-50-units.png',
+  1.0: '/images/syringe-100-units.png',
+}
 
 // Vial icon (brown bottle like Particle Peptides)
 function VialIcon() {
@@ -25,28 +33,6 @@ function BacWaterIcon() {
       <rect x="16" y="2" width="12" height="6" rx="2" fill="#FFD700" />
       <path d="M18 8 L18 12 L12 18 L12 56 C12 58 14 60 16 60 L28 60 C30 60 32 58 32 56 L32 18 L26 12 L26 8 Z" fill="#E8F4F8" stroke="#B0C4DE" strokeWidth="1.5" />
       <path d="M14 28 L14 54 C14 56 16 58 18 58 L26 58 C28 58 30 56 30 54 L30 28 Z" fill="#87CEEB" opacity="0.4" />
-    </svg>
-  )
-}
-
-// Simple syringe representation (orange plunger style)
-function SyringeIcon({ size }: { size: number }) {
-  const width = size === 0.3 ? 140 : size === 0.5 ? 180 : 220
-  return (
-    <svg width={width} height="28" viewBox={`0 0 ${width} 28`} fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Orange plunger */}
-      <rect x="2" y="8" width="16" height="12" rx="2" fill="#FF6B35" />
-      <rect x="18" y="11" width="12" height="6" fill="#FF6B35" opacity="0.8" />
-      {/* Barrel */}
-      <rect x="30" y="9" width={width - 50} height="10" rx="1" fill="#F5F5F5" stroke="#DDD" strokeWidth="1" />
-      {/* Graduation marks */}
-      {Array.from({ length: Math.floor((width - 50) / 12) }).map((_, i) => (
-        <line key={i} x1={35 + i * 12} y1="9" x2={35 + i * 12} y2={i % 2 === 0 ? "13" : "11"} stroke="#333" strokeWidth="0.5" />
-      ))}
-      {/* Needle hub */}
-      <rect x={width - 18} y="11" width="10" height="6" rx="1" fill="#333" />
-      {/* Needle */}
-      <line x1={width - 8} y1="14" x2={width - 2} y2="14" stroke="#666" strokeWidth="1" />
     </svg>
   )
 }
@@ -123,7 +109,15 @@ export function PeptideCalculator() {
                   }`}>
                     {syringe.label}
                   </span>
-                  <SyringeIcon size={syringe.value} />
+                  <div className="flex-1 h-7 relative">
+                    <Image
+                      src={SYRINGE_IMAGES[syringe.value]}
+                      alt={`${syringe.label} insulin syringe`}
+                      fill
+                      className="object-contain object-left"
+                      unoptimized
+                    />
+                  </div>
                 </button>
               ))}
             </div>
