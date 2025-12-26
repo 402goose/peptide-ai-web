@@ -143,13 +143,14 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
 
   // Load existing conversation when navigating to a conversation URL
   useEffect(() => {
-    if (conversationId && !activeConversationId) {
+    if (conversationId && !activeConversationId && !isStreaming && !isLoading) {
       // Only load if we don't already have this conversation active
       // (prevents reloading when we just created it)
+      // Also skip if we're currently streaming/loading (race condition with URL update)
       loadConversation(conversationId)
       setViewState('chatting')
     }
-  }, [conversationId, activeConversationId])
+  }, [conversationId, activeConversationId, isStreaming, isLoading])
 
   // Transition to ready state when input is focused during onboarding
   useEffect(() => {
