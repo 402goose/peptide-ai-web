@@ -143,6 +143,9 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   }
   const [viewState, setViewState] = useState<ViewState>(getInitialViewState)
 
+  // Track if we're in the middle of creating a new conversation (prevents reset race condition)
+  const isCreatingConversation = useRef(false)
+
   // Load existing conversation when navigating to a conversation URL
   useEffect(() => {
     // Load if conversationId is set AND it's different from what we have loaded
@@ -154,6 +157,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       activeConversationId,
       isStreaming,
       isLoading,
+      isCreatingConversation: isCreatingConversation.current,
       shouldLoad
     })
 
@@ -161,13 +165,9 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       console.log('[ChatContainer] Loading conversation:', conversationId)
       loadConversation(conversationId)
       setViewState('chatting')
-    } else if (!conversationId && activeConversationId && !isStreaming && !isLoading) {
-      // User navigated to /chat (no conversationId) - reset to fresh state
-      console.log('[ChatContainer] Resetting to fresh chat')
-      setMessages([])
-      setActiveConversationId(undefined)
-      setViewState('ready')
     }
+    // Note: We don't auto-reset here anymore - reset only happens via explicit user action
+    // (handleBackToOnboarding or clicking New Chat in sidebar)
   }, [conversationId, activeConversationId, isStreaming, isLoading])
 
   // Transition to ready state when input is focused during onboarding
