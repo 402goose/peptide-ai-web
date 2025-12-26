@@ -47,7 +47,9 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   const [currentSources, setCurrentSources] = useState<Source[]>([])
   const [currentDisclaimers, setCurrentDisclaimers] = useState<string[]>([])
   const [currentFollowUps, setCurrentFollowUps] = useState<string[]>([])
-  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(conversationId)
+  // Don't initialize to conversationId - let the useEffect load it
+  // This ensures the loading logic actually runs on first render
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(undefined)
   const [detectedMode, setDetectedMode] = useState<string>('balanced')
   const [mentionedPeptides, setMentionedPeptides] = useState<string[]>([])
   const [userContext, setUserContext] = useState<OnboardingContext | null>(null)
