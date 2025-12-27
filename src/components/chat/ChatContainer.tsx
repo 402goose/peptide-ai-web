@@ -213,6 +213,14 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       setActiveConversationId(conversation.conversation_id)
       setViewState('chatting')
 
+      // Extract sources, disclaimers, follow-ups from last assistant message
+      const lastAssistantMsg = [...messages].reverse().find(m => m.role === 'assistant')
+      if (lastAssistantMsg) {
+        if (lastAssistantMsg.sources) setCurrentSources(lastAssistantMsg.sources)
+        if (lastAssistantMsg.disclaimers) setCurrentDisclaimers(lastAssistantMsg.disclaimers)
+        if (lastAssistantMsg.followUps) setCurrentFollowUps(lastAssistantMsg.followUps)
+      }
+
       // Mark that user has started chatting
       hasStartedChatting.current = true
       if (typeof window !== 'undefined') {

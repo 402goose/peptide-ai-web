@@ -162,8 +162,8 @@ export function MessageList({
           )
         })}
 
-        {/* Show typing indicator only when waiting for first content */}
-        {isLoading && !isStreaming && !streamingContent && <TypingIndicator />}
+        {/* Show typing indicator when loading OR when streaming but no content yet */}
+        {(isLoading && !streamingContent) && <TypingIndicator />}
 
         {/* Show streaming content as it comes in */}
         {isStreaming && streamingContent && (
