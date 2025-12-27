@@ -40,6 +40,7 @@ function BacWaterIcon() {
 export function PeptideCalculator() {
   const [syringeSize, setSyringeSize] = useState(1.0)
   const [vialSize, setVialSize] = useState(5)
+  const [vialUnit, setVialUnit] = useState<'mg' | 'mcg'>('mg')
   const [customVial, setCustomVial] = useState('1')
   const [bacWater, setBacWater] = useState(3)
   const [customBacWater, setCustomBacWater] = useState('1')
@@ -49,14 +50,22 @@ export function PeptideCalculator() {
   const [useCustomBacWater, setUseCustomBacWater] = useState(false)
   const [useCustomDose, setUseCustomDose] = useState(false)
 
+  // Vial options based on selected unit
+  const vialOptions = vialUnit === 'mg'
+    ? [5, 10, 15]
+    : [1000, 2000, 3000] // mcg options (1mg, 2mg, 3mg in mcg)
+
   const calculation = useMemo(() => {
-    const actualVial = useCustomVial ? parseFloat(customVial) || 0 : vialSize
+    const actualVialInput = useCustomVial ? parseFloat(customVial) || 0 : vialSize
     const actualBac = useCustomBacWater ? parseFloat(customBacWater) || 0 : bacWater
     const actualDose = useCustomDose ? parseFloat(customDose) || 0 : desiredDose
 
-    if (!actualVial || !actualBac || !actualDose) return null
+    if (!actualVialInput || !actualBac || !actualDose) return null
 
-    const concentrationMcgPerMl = (actualVial * 1000) / actualBac
+    // Convert vial to mcg for calculation
+    const vialInMcg = vialUnit === 'mg' ? actualVialInput * 1000 : actualVialInput
+
+    const concentrationMcgPerMl = vialInMcg / actualBac
     const volumeNeededMl = actualDose / concentrationMcgPerMl
     const unitsToDraw = volumeNeededMl * 100
 
@@ -69,7 +78,7 @@ export function PeptideCalculator() {
       maxUnits,
       doseMcg: actualDose,
     }
-  }, [vialSize, bacWater, desiredDose, syringeSize, customVial, customBacWater, customDose, useCustomVial, useCustomBacWater, useCustomDose])
+  }, [vialSize, vialUnit, bacWater, desiredDose, syringeSize, customVial, customBacWater, customDose, useCustomVial, useCustomBacWater, useCustomDose])
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
@@ -131,11 +140,36 @@ export function PeptideCalculator() {
                 <VialIcon />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1.5">
-                  Select Peptide Vial Quantity
-                </h3>
+                <div className="flex items-center justify-between mb-1.5">
+                  <h3 className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                    Select Peptide Vial Quantity
+                  </h3>
+                  {/* Unit Toggle */}
+                  <div className="flex rounded-md overflow-hidden border border-slate-300 dark:border-slate-600">
+                    <button
+                      onClick={() => { setVialUnit('mg'); setVialSize(5); setUseCustomVial(false) }}
+                      className={`px-2 py-0.5 text-xs font-medium transition-all ${
+                        vialUnit === 'mg'
+                          ? 'bg-purple-500 text-white'
+                          : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                      }`}
+                    >
+                      mg
+                    </button>
+                    <button
+                      onClick={() => { setVialUnit('mcg'); setVialSize(1000); setUseCustomVial(false) }}
+                      className={`px-2 py-0.5 text-xs font-medium transition-all ${
+                        vialUnit === 'mcg'
+                          ? 'bg-purple-500 text-white'
+                          : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                      }`}
+                    >
+                      mcg
+                    </button>
+                  </div>
+                </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {[5, 10, 15].map((size) => (
+                  {vialOptions.map((size) => (
                     <button
                       key={size}
                       onClick={() => { setVialSize(size); setUseCustomVial(false) }}
@@ -145,7 +179,7 @@ export function PeptideCalculator() {
                           : 'border-slate-300 dark:border-slate-600 hover:border-slate-400 bg-white dark:bg-slate-800'
                       }`}
                     >
-                      {size} mg
+                      {size} {vialUnit}
                     </button>
                   ))}
                   <button
@@ -160,7 +194,7 @@ export function PeptideCalculator() {
                   </button>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">Enter vial quantity</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">Enter vial quantity ({vialUnit})</span>
                   <input
                     type="number"
                     value={customVial}
