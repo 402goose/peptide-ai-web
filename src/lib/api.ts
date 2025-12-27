@@ -15,6 +15,7 @@ import type {
   SearchResult,
   AffiliateClickData,
 } from '@/types/affiliate'
+import type { IApiClient } from '@/lib/interfaces/IApiClient'
 
 // API_BASE: Set NEXT_PUBLIC_API_URL in production, otherwise API features are disabled
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
@@ -29,7 +30,7 @@ class ApiError extends Error {
   }
 }
 
-class ApiClient {
+class ApiClient implements IApiClient {
   private apiKey: string | null = null
 
   constructor() {
@@ -265,7 +266,7 @@ class ApiClient {
     })
   }
 
-  async getDoses(journeyId: string): Promise<unknown[]> {
+  async getJourneyDoseLogs(journeyId: string): Promise<unknown[]> {
     return this.fetch<unknown[]>(`/api/v1/journeys/${journeyId}/doses`)
   }
 
@@ -276,7 +277,7 @@ class ApiClient {
     })
   }
 
-  async getSymptoms(journeyId: string): Promise<unknown[]> {
+  async getJourneySymptomLogs(journeyId: string): Promise<unknown[]> {
     return this.fetch<unknown[]>(`/api/v1/journeys/${journeyId}/symptoms`)
   }
 

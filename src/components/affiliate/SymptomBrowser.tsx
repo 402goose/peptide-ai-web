@@ -58,7 +58,7 @@ export function SymptomBrowser({
 
     async function loadSymptoms() {
       try {
-        const { symptoms: syms } = await api.getSymptoms(selectedCategory)
+        const { symptoms: syms } = await api.getSymptoms(selectedCategory ?? undefined)
         setSymptoms(syms)
       } catch (err) {
         console.error('Failed to load symptoms:', err)

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Run type check
+echo "🔍 Type checking..."
+npx tsc --noEmit || exit 1
+
+# Run tests
+echo "🧪 Running tests..."
+npm test -- --run || exit 1
+
+echo "✅ All checks passed!"
