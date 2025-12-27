@@ -6,6 +6,15 @@ import type {
   LogDoseRequest,
   LogSymptomsRequest,
 } from '@/types/journey'
+import type {
+  HolisticProduct,
+  LabTest,
+  Symptom,
+  SymptomWithProducts,
+  CategoryCount,
+  SearchResult,
+  AffiliateClickData,
+} from '@/types/affiliate'
 
 // API_BASE: Set NEXT_PUBLIC_API_URL in production, otherwise API features are disabled
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
@@ -343,6 +352,108 @@ class ApiClient {
     }
     const url = `${API_BASE}/api/v1/share/${shareId}`
     const response = await fetch(url)
+    if (!response.ok) {
+      throw new ApiError(response.status, await response.json().catch(() => ({})))
+    }
+    return response.json()
+  }
+
+  // =========================================================================
+  // AFFILIATE & HOLISTIC PRODUCTS
+  // =========================================================================
+
+  private async fetchPublic<T>(endpoint: string): Promise<T> {
+    // Public endpoints that don't require auth
+    if (!API_BASE) {
+      throw new ApiError(503, { error: 'Backend not configured' })
+    }
+    const url = `${API_BASE}${endpoint}`
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new ApiError(response.status, await response.json().catch(() => ({})))
+    }
+    return response.json()
+  }
+
+  async getSymptoms(
+    category?: string,
+    search?: string,
+    limit = 50,
+    offset = 0
+  ): Promise<{ symptoms: Symptom[]; total: number }> {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) })
+    if (category) params.set('category', category)
+    if (search) params.set('search', search)
+    return this.fetchPublic(`/api/v1/affiliate/symptoms?${params}`)
+  }
+
+  async getSymptomBySlug(slug: string): Promise<SymptomWithProducts> {
+    const data = await this.fetchPublic<{
+      symptom: Symptom
+      products: HolisticProduct[]
+      labs: LabTest[]
+    }>(`/api/v1/affiliate/symptoms/${slug}`)
+    return {
+      ...data.symptom,
+      products: data.products,
+      labs: data.labs,
+    }
+  }
+
+  async getSymptomCategories(): Promise<CategoryCount[]> {
+    const data = await this.fetchPublic<{ categories: CategoryCount[] }>(
+      '/api/v1/affiliate/categories'
+    )
+    return data.categories
+  }
+
+  async getProducts(
+    productType?: string,
+    isPeptide?: boolean,
+    search?: string,
+    limit = 50,
+    offset = 0
+  ): Promise<{ products: HolisticProduct[]; total: number }> {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) })
+    if (productType) params.set('product_type', productType)
+    if (isPeptide !== undefined) params.set('is_peptide', String(isPeptide))
+    if (search) params.set('search', search)
+    return this.fetchPublic(`/api/v1/affiliate/products?${params}`)
+  }
+
+  async getProductById(productId: string): Promise<{
+    product: HolisticProduct
+    related_symptoms: Symptom[]
+  }> {
+    return this.fetchPublic(`/api/v1/affiliate/products/${productId}`)
+  }
+
+  async searchSymptomsAndProducts(
+    query: string,
+    source = 'search'
+  ): Promise<SearchResult> {
+    const params = new URLSearchParams({ q: query, source })
+    return this.fetchPublic(`/api/v1/affiliate/search?${params}`)
+  }
+
+  async trackAffiliateClick(data: AffiliateClickData): Promise<{
+    click_id: string
+    affiliate_url?: string
+    product_name: string
+  }> {
+    const params = new URLSearchParams({
+      product_id: data.product_id,
+      source: data.source,
+    })
+    if (data.symptom_id) params.set('symptom_id', data.symptom_id)
+    if (data.source_id) params.set('source_id', data.source_id)
+
+    if (!API_BASE) {
+      throw new ApiError(503, { error: 'Backend not configured' })
+    }
+
+    const url = `${API_BASE}/api/v1/affiliate/click?${params}`
+    const response = await fetch(url, { method: 'POST' })
     if (!response.ok) {
       throw new ApiError(response.status, await response.json().catch(() => ({})))
     }

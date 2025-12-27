@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, MessageSquare, MoreHorizontal, Trash2, Beaker, FlaskConical, Pencil, Check, X } from 'lucide-react'
+import { Plus, MessageSquare, MoreHorizontal, Trash2, Beaker, FlaskConical, Pencil, Check, X, Calculator, Sparkles } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { ConversationSummary } from '@/types'
 import { cn } from '@/lib/utils'
@@ -156,6 +156,27 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
             <path d="M17.5 14v7M14 17.5h7" />
           </svg>
           Stack Builder
+        </Button>
+
+        {/* Tools Section */}
+        <div className="border-t border-slate-200 dark:border-slate-700 pt-2 mt-2">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 px-2">Tools</span>
+        </div>
+        <Button
+          onClick={() => router.push('/tools/calculator')}
+          className="w-full justify-start gap-2"
+          variant="ghost"
+        >
+          <Calculator className="h-4 w-4 text-blue-500" />
+          Dose Calculator
+        </Button>
+        <Button
+          onClick={() => router.push('/tools/symptoms')}
+          className="w-full justify-start gap-2"
+          variant="ghost"
+        >
+          <Sparkles className="h-4 w-4 text-amber-500" />
+          Symptom Guide
         </Button>
       </div>
 
