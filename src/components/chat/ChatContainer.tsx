@@ -50,6 +50,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   // Don't initialize to conversationId - let the useEffect load it
   // This ensures the loading logic actually runs on first render
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>(undefined)
+  // Track if we're doing the initial load for a conversation ID from URL
+  const [isInitialLoad, setIsInitialLoad] = useState(!!conversationId)
   const [detectedMode, setDetectedMode] = useState<string>('balanced')
   const [mentionedPeptides, setMentionedPeptides] = useState<string[]>([])
   const [userContext, setUserContext] = useState<OnboardingContext | null>(null)
@@ -187,7 +189,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       console.log('[loadConversation] API response:', conversation)
 
       // Convert API messages to our format (handle snake_case from backend)
-      const messages: Message[] = (conversation.messages || []).map((msg: any) => ({
+      const loadedMessages: Message[] = (conversation.messages || []).map((msg: any) => ({
         role: msg.role,
         content: msg.content || '',
         timestamp: msg.timestamp || msg.created_at || new Date().toISOString(),
@@ -197,24 +199,24 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         metadata: msg.metadata,
       })).filter((msg: Message) => msg.content) // Filter out empty messages
 
-      if (messages.length === 0) {
-        // No valid messages - redirect to fresh chat
-        console.log('Conversation has no messages, starting fresh')
+      if (loadedMessages.length === 0) {
+        // No valid messages - redirect to fresh chat using proper router
+        console.log('[loadConversation] Conversation has no messages, starting fresh')
         setMessages([])
-        setActiveConversationId(undefined)
+        // Set activeConversationId to the ID to prevent re-triggering load
+        setActiveConversationId(id)
         setViewState('ready')
-        if (typeof window !== 'undefined') {
-          window.history.replaceState(null, '', '/chat')
-        }
+        // Use router.replace for proper React navigation
+        router.replace('/chat')
         return
       }
 
-      setMessages(messages)
+      setMessages(loadedMessages)
       setActiveConversationId(conversation.conversation_id)
       setViewState('chatting')
 
       // Extract sources, disclaimers, follow-ups from last assistant message
-      const lastAssistantMsg = [...messages].reverse().find(m => m.role === 'assistant')
+      const lastAssistantMsg = [...loadedMessages].reverse().find(m => m.role === 'assistant')
       if (lastAssistantMsg) {
         if (lastAssistantMsg.sources) setCurrentSources(lastAssistantMsg.sources)
         if (lastAssistantMsg.disclaimers) setCurrentDisclaimers(lastAssistantMsg.disclaimers)
@@ -227,16 +229,17 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         sessionStorage.setItem('peptide-ai-chatting', 'true')
       }
     } catch (error) {
-      console.error('Failed to load conversation:', error)
+      console.error('[loadConversation] Failed to load conversation:', error)
+      // Set activeConversationId to the ID to prevent infinite retry loop
+      setActiveConversationId(id)
       // Fallback to fresh chat if conversation not found
       setMessages([])
-      setActiveConversationId(undefined)
       setViewState('ready')
-      if (typeof window !== 'undefined') {
-        window.history.replaceState(null, '', '/chat')
-      }
+      // Use router.replace for proper React navigation
+      router.replace('/chat')
     } finally {
       setIsLoading(false)
+      setIsInitialLoad(false)
     }
   }
 
@@ -686,7 +689,15 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               transition={{ duration: 0.2 }}
               className="h-full"
             >
-              {messages.length === 0 && !isLoading ? (
+              {isInitialLoad ? (
+                // Show loading state during initial conversation load
+                <div className="h-full flex flex-col items-center justify-center px-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg animate-pulse">
+                    <Beaker className="h-7 w-7 text-white" />
+                  </div>
+                  <p className="mt-4 text-slate-500 dark:text-slate-400">Loading conversation...</p>
+                </div>
+              ) : messages.length === 0 && !isLoading ? (
                 // Empty state - show helpful prompt
                 <div className="h-full flex flex-col items-center justify-center px-4">
                   <div className="text-center mb-8">
