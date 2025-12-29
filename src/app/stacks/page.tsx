@@ -14,11 +14,9 @@ export default function StacksPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>('build')
 
-  const handleAskAboutStack = (peptideIds: string[]) => {
-    // Navigate to chat with the stack as a pre-filled question
-    const stackNames = peptideIds.join(', ')
-    const query = encodeURIComponent(`Tell me about this peptide stack: ${stackNames}. What are the synergies, optimal timing, and what should I expect?`)
-    router.push(`/chat?q=${query}`)
+  const handleAskAboutStack = () => {
+    // Navigate to chat - stack context is loaded from localStorage
+    router.push('/chat?stack=ask')
   }
 
   return (

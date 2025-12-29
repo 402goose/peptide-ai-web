@@ -378,7 +378,7 @@ const CATEGORIES = {
 }
 
 interface StackBuilderProps {
-  onAskAboutStack?: (stack: string[]) => void
+  onAskAboutStack?: () => void
 }
 
 // Utility to encode stack data for sharing
@@ -921,7 +921,7 @@ export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
             {/* Action Buttons */}
             <div className="flex gap-2">
               <button
-                onClick={() => onAskAboutStack?.(selectedPeptides)}
+                onClick={() => onAskAboutStack?.()}
                 className="flex-1 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium flex items-center justify-center gap-2 transition-colors"
               >
                 <MessageSquare className="h-4 w-4" />

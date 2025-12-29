@@ -445,6 +445,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   // Handle query parameter (e.g., from Stack Builder "Ask About This Stack")
   useEffect(() => {
     const query = searchParams?.get('q')
+    const stackAction = searchParams?.get('stack')
+
     if (query && !hasHandledQueryParam.current && !isLoading) {
       hasHandledQueryParam.current = true
       // Clear the query param from URL to prevent re-triggering
@@ -453,6 +455,43 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       }
       // Send the query immediately
       handleSendMessage(query)
+    }
+
+    // Handle "Ask about this stack" from Stack Builder
+    if (stackAction === 'ask' && !hasHandledQueryParam.current && !isLoading && typeof window !== 'undefined') {
+      hasHandledQueryParam.current = true
+
+      // Load stack from localStorage
+      const savedStack = localStorage.getItem('peptide-ai-current-stack')
+      const savedGoals = localStorage.getItem('peptide-ai-selected-goals')
+
+      if (savedStack) {
+        try {
+          const peptideIds: string[] = JSON.parse(savedStack)
+          const goalIds: string[] = savedGoals ? JSON.parse(savedGoals) : []
+
+          if (peptideIds.length > 0) {
+            // Format the stack query
+            const peptideNames = peptideIds.map(id =>
+              id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+            ).join(', ')
+
+            const goalsText = goalIds.length > 0
+              ? ` My goals are: ${goalIds.join(', ')}.`
+              : ''
+
+            const stackQuery = `I'm building a peptide stack with: ${peptideNames}.${goalsText} Can you review this combination and give me advice on dosing, timing, and any synergies or concerns I should know about?`
+
+            // Clear the query param from URL
+            window.history.replaceState(null, '', '/chat')
+
+            // Send the query
+            handleSendMessage(stackQuery)
+          }
+        } catch (e) {
+          console.error('Failed to load stack:', e)
+        }
+      }
     }
   }, [searchParams, isLoading, handleSendMessage])
 
