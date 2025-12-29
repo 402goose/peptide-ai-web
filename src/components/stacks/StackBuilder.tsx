@@ -545,14 +545,50 @@ export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
 
   const selectedPeptideData = selectedPeptides.map(id => allPeptides.find(p => p.id === id)!).filter(Boolean)
 
-  // Get recommended peptides based on goals
+  // Goal to symptom keyword mapping for better matching
+  const goalKeywords: Record<string, string[]> = {
+    'fat-loss': ['fat', 'weight', 'metabolic', 'appetite', 'obesity'],
+    'muscle': ['muscle', 'strength', 'recovery', 'anabolic', 'growth'],
+    'healing': ['healing', 'repair', 'injury', 'tissue', 'wound', 'tendon', 'ligament'],
+    'energy': ['energy', 'endurance', 'fatigue', 'stamina', 'mitochondria'],
+    'cognitive': ['cognitive', 'focus', 'memory', 'brain', 'mental', 'neuro'],
+    'sleep': ['sleep', 'insomnia', 'circadian', 'rest'],
+    'longevity': ['longevity', 'aging', 'anti-aging', 'telomere', 'lifespan'],
+    'immune': ['immune', 'inflammation', 'autoimmune', 'infection'],
+  }
+
+  // Get recommended peptides based on goals, sorted by relevance
   const recommendedPeptides = useMemo(() => {
     if (selectedGoals.length === 0) return []
 
-    return allPeptides
+    // Score each peptide by how many goals it matches
+    const scored = allPeptides
       .filter(p => !selectedPeptides.includes(p.id))
-      .filter(p => selectedGoals.some(goal => p.helpsWithSymptoms.some(s => s.includes(goal))))
-      .slice(0, 6)
+      .map(p => {
+        let score = 0
+        selectedGoals.forEach(goal => {
+          const keywords = goalKeywords[goal] || [goal]
+          // Check if any symptom matches any keyword for this goal
+          if (p.helpsWithSymptoms.some(s =>
+            keywords.some(kw => s.toLowerCase().includes(kw))
+          )) {
+            score++
+          }
+          // Also check benefits
+          if (p.benefits.some(b =>
+            keywords.some(kw => b.toLowerCase().includes(kw))
+          )) {
+            score += 0.5
+          }
+        })
+        return { peptide: p, score }
+      })
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map(({ peptide }) => peptide)
+
+    return scored
   }, [selectedGoals, selectedPeptides, allPeptides])
 
   // Check for synergies and conflicts
@@ -646,11 +682,23 @@ export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
 
         {/* Recommended Peptides based on goals */}
         {recommendedPeptides.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-              <Lightbulb className="h-4 w-4 text-yellow-500" />
-              Recommended for your goals
-            </h3>
+          <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300 flex items-center gap-2">
+                <Lightbulb className="h-4 w-4 text-yellow-500" />
+                Recommended for your goals ({recommendedPeptides.length})
+              </h3>
+              <button
+                onClick={() => {
+                  const toAdd = recommendedPeptides.slice(0, 6 - selectedPeptides.length)
+                  toAdd.forEach(p => addPeptide(p.id))
+                }}
+                disabled={selectedPeptides.length >= 6}
+                className="text-xs px-3 py-1 rounded-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium disabled:opacity-50 transition-colors"
+              >
+                + Add All
+              </button>
+            </div>
             <div className="flex flex-wrap gap-2">
               {recommendedPeptides.map((peptide) => {
                 const category = CATEGORIES[peptide.category as keyof typeof CATEGORIES]
@@ -659,9 +707,9 @@ export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
                     key={peptide.id}
                     onClick={() => addPeptide(peptide.id)}
                     disabled={selectedPeptides.length >= 6}
-                    className="group flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-400 hover:shadow-md transition-all disabled:opacity-50"
+                    className="group flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-yellow-300 dark:border-yellow-700 hover:border-yellow-500 hover:shadow-md transition-all disabled:opacity-50"
                   >
-                    <Plus className="h-4 w-4 text-blue-500 group-hover:scale-110 transition-transform" />
+                    <Plus className="h-4 w-4 text-yellow-600 group-hover:scale-110 transition-transform" />
                     <span className="font-medium text-slate-900 dark:text-white">{peptide.name}</span>
                     <span className={cn("text-xs px-2 py-0.5 rounded-full", category?.lightColor)}>
                       {category?.label}
@@ -670,6 +718,19 @@ export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
                 )
               })}
             </div>
+          </div>
+        )}
+
+        {/* Prompt to select goals if none selected and no stack */}
+        {selectedGoals.length === 0 && selectedPeptides.length === 0 && (
+          <div className="mb-6 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-center">
+            <Target className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+            <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">
+              Start by selecting your goals above
+            </p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              We&apos;ll recommend peptides based on what you want to achieve
+            </p>
           </div>
         )}
 
