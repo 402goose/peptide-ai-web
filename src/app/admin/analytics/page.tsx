@@ -8,7 +8,10 @@ import {
   MousePointerClick,
   RefreshCw,
   TrendingUp,
-  Clock
+  Clock,
+  ExternalLink,
+  ShoppingCart,
+  Beaker
 } from 'lucide-react';
 
 interface Metrics {
@@ -22,6 +25,31 @@ interface Metrics {
   time_range_days: number;
 }
 
+interface AffiliateStats {
+  time_range_days: number;
+  totals: {
+    clicks: number;
+    returns: number;
+    purchases: number;
+    return_rate: number;
+    purchase_rate: number;
+  };
+  by_vendor: Array<{
+    vendor: string;
+    clicks: number;
+    returns: number;
+    purchases: number;
+    return_rate: number;
+    purchase_rate: number;
+  }>;
+  by_peptide: Array<{
+    peptide: string;
+    clicks: number;
+    returns: number;
+    purchases: number;
+  }>;
+}
+
 interface FunnelStep {
   name: string;
   count: number;
@@ -31,6 +59,7 @@ interface FunnelStep {
 export default function AnalyticsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [funnel, setFunnel] = useState<FunnelStep[]>([]);
+  const [affiliateStats, setAffiliateStats] = useState<AffiliateStats | null>(null);
   const [timeRange, setTimeRange] = useState(7);
   const [loading, setLoading] = useState(true);
 
@@ -44,9 +73,10 @@ export default function AnalyticsPage() {
         'X-API-Key': process.env.NEXT_PUBLIC_API_KEY || '',
       };
 
-      const [metricsRes, funnelRes] = await Promise.all([
+      const [metricsRes, funnelRes, affiliateRes] = await Promise.all([
         fetch(`${API_URL}/api/v1/analytics/metrics?days=${timeRange}`, { headers }),
         fetch(`${API_URL}/api/v1/analytics/funnel`, { headers }),
+        fetch(`${API_URL}/api/v1/analytics/affiliate/stats?days=${timeRange}`, { headers }),
       ]);
 
       if (metricsRes.ok) setMetrics(await metricsRes.json());
@@ -54,6 +84,7 @@ export default function AnalyticsPage() {
         const data = await funnelRes.json();
         setFunnel(data.steps || []);
       }
+      if (affiliateRes.ok) setAffiliateStats(await affiliateRes.json());
     } catch (err) {
       console.error('Failed to fetch analytics:', err);
     } finally {
@@ -181,6 +212,87 @@ export default function AnalyticsPage() {
             <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No funnel data available yet</p>
             <p className="text-sm mt-1">Start tracking events to see your conversion funnel</p>
+          </div>
+        )}
+      </div>
+
+      {/* Affiliate Tracking */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+        <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+          <ExternalLink className="w-5 h-5" />
+          Affiliate & Vendor Tracking
+        </h2>
+
+        {affiliateStats && affiliateStats.totals.clicks > 0 ? (
+          <div className="space-y-6">
+            {/* Affiliate Totals */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                <p className="text-2xl font-bold text-blue-600">{affiliateStats.totals.clicks}</p>
+                <p className="text-sm text-slate-500">Total Clicks</p>
+              </div>
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                <p className="text-2xl font-bold text-green-600">{affiliateStats.totals.returns}</p>
+                <p className="text-sm text-slate-500">Returns</p>
+              </div>
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                <p className="text-2xl font-bold text-purple-600">{affiliateStats.totals.purchases}</p>
+                <p className="text-sm text-slate-500">Purchases</p>
+              </div>
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                <p className="text-2xl font-bold">{(affiliateStats.totals.return_rate * 100).toFixed(1)}%</p>
+                <p className="text-sm text-slate-500">Return Rate</p>
+              </div>
+              <div className="text-center p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                <p className="text-2xl font-bold text-emerald-600">{(affiliateStats.totals.purchase_rate * 100).toFixed(1)}%</p>
+                <p className="text-sm text-slate-500">Purchase Rate</p>
+              </div>
+            </div>
+
+            {/* By Vendor */}
+            {affiliateStats.by_vendor.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">By Vendor</h3>
+                <div className="space-y-2">
+                  {affiliateStats.by_vendor.map((vendor) => (
+                    <div key={vendor.vendor} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <ShoppingCart className="w-4 h-4 text-slate-400" />
+                        <span className="font-medium">{vendor.vendor}</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span>{vendor.clicks} clicks</span>
+                        <span className="text-green-600">{vendor.returns} returns</span>
+                        <span className="text-purple-600">{vendor.purchases} purchases</span>
+                        <span className="text-emerald-600 font-medium">{(vendor.purchase_rate * 100).toFixed(0)}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* By Peptide */}
+            {affiliateStats.by_peptide.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">By Peptide</h3>
+                <div className="flex flex-wrap gap-2">
+                  {affiliateStats.by_peptide.map((item) => (
+                    <div key={item.peptide} className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 rounded-full text-sm">
+                      <Beaker className="w-3 h-3" />
+                      <span className="font-medium">{item.peptide}</span>
+                      <span className="text-slate-500">({item.clicks})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+            <ExternalLink className="w-10 h-10 mx-auto mb-3 opacity-50" />
+            <p>No affiliate clicks tracked yet</p>
+            <p className="text-sm mt-1">Clicks to vendor links will appear here</p>
           </div>
         )}
       </div>

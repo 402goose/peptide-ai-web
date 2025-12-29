@@ -135,6 +135,134 @@ const PEPTIDE_DATABASE: Record<string, PeptideInfo> = {
     timing: 'Morning',
     research: 'Strong',
   },
+  'ss-31': {
+    name: 'SS-31',
+    category: 'Mitochondrial',
+    benefits: ['Mitochondrial support', 'Cellular energy', 'Anti-aging'],
+    dosing: '1-5mg daily',
+    timing: 'Morning',
+    research: 'Moderate (clinical trials)',
+  },
+  'dihexa': {
+    name: 'Dihexa',
+    category: 'Cognitive',
+    benefits: ['Cognitive enhancement', 'Neurogenesis', 'Memory'],
+    dosing: '5-20mg daily (oral)',
+    timing: 'Morning',
+    research: 'Early (potent BDNF)',
+  },
+  'nad-im': {
+    name: 'NAD+ IM',
+    category: 'Mitochondrial',
+    benefits: ['Cellular energy', 'Anti-aging', 'DNA repair'],
+    dosing: '50-200mg IM weekly',
+    timing: 'Morning',
+    research: 'Moderate',
+  },
+  'll-37': {
+    name: 'LL-37',
+    category: 'Immune',
+    benefits: ['Antimicrobial', 'Immune modulation', 'Wound healing'],
+    dosing: '50-100mcg daily',
+    timing: 'Morning or as needed',
+    research: 'Moderate',
+  },
+  'kpv': {
+    name: 'KPV',
+    category: 'Healing',
+    benefits: ['Anti-inflammatory', 'Gut healing', 'Skin health'],
+    dosing: '200-500mcg daily',
+    timing: 'Morning or with meals',
+    research: 'Moderate',
+  },
+  'larazotide': {
+    name: 'Larazotide',
+    category: 'Healing',
+    benefits: ['Gut barrier support', 'Leaky gut', 'Celiac support'],
+    dosing: '0.5-1mg 3x daily',
+    timing: 'Before meals',
+    research: 'Strong (clinical trials)',
+  },
+  'dsip': {
+    name: 'DSIP',
+    category: 'Sleep',
+    benefits: ['Deep sleep', 'Sleep quality', 'Stress reduction'],
+    dosing: '100-200mcg before bed',
+    timing: '30 min before sleep',
+    research: 'Moderate',
+  },
+  'kisspeptin': {
+    name: 'Kisspeptin',
+    category: 'Sexual Health',
+    benefits: ['Reproductive hormones', 'Libido', 'Fertility support'],
+    dosing: '0.5-1mg as needed',
+    timing: '30-60 min before',
+    research: 'Moderate',
+  },
+  'mots-c': {
+    name: 'MOTS-c',
+    category: 'Metabolic',
+    benefits: ['Metabolic health', 'Exercise mimetic', 'Fat loss'],
+    dosing: '5-10mg 3x weekly',
+    timing: 'Morning, fasted',
+    research: 'Emerging',
+  },
+  'humanin': {
+    name: 'Humanin',
+    category: 'Mitochondrial',
+    benefits: ['Neuroprotection', 'Cell survival', 'Anti-aging'],
+    dosing: '1-5mg weekly',
+    timing: 'Any time',
+    research: 'Emerging',
+  },
+  '5-amino-1mq': {
+    name: '5-Amino 1MQ',
+    category: 'Metabolic',
+    benefits: ['Fat metabolism', 'NNMT inhibition', 'Energy'],
+    dosing: '50-150mg daily (oral)',
+    timing: 'Morning with food',
+    research: 'Emerging',
+  },
+  'p21': {
+    name: 'P21',
+    category: 'Cognitive',
+    benefits: ['Neurogenesis', 'CNTF mimetic', 'Memory'],
+    dosing: '50-100mcg daily',
+    timing: 'Morning',
+    research: 'Early',
+  },
+  'na-selank': {
+    name: 'NA-Selank',
+    category: 'Cognitive',
+    benefits: ['Enhanced Selank', 'Anxiety relief', 'Better bioavailability'],
+    dosing: '200-400mcg daily (nasal)',
+    timing: 'Morning or as needed',
+    research: 'Moderate',
+  },
+  'ghrp-6': {
+    name: 'GHRP-6',
+    category: 'Performance',
+    benefits: ['Strong GH release', 'Appetite increase', 'Recovery'],
+    dosing: '100-300mcg 2-3x daily',
+    timing: 'Fasted, pre-bed',
+    research: 'Strong',
+  },
+  'ghrp-2': {
+    name: 'GHRP-2',
+    category: 'Performance',
+    benefits: ['GH release', 'Less appetite effect', 'Recovery'],
+    dosing: '100-300mcg 2-3x daily',
+    timing: 'Fasted, pre-bed',
+    research: 'Strong',
+  },
+  'sr9009': {
+    name: 'SR9009',
+    category: 'Metabolic',
+    benefits: ['Endurance', 'Fat loss', 'Rev-ErbA agonist'],
+    dosing: '10-30mg daily (oral)',
+    timing: 'Morning or pre-workout',
+    research: 'Moderate',
+  },
 }
 
 // Category colors
@@ -146,6 +274,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Anti-Aging': 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300 border-pink-200 dark:border-pink-800',
   'Immune': 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300 border-teal-200 dark:border-teal-800',
   'Sexual Health': 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+  'Mitochondrial': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+  'Sleep': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
+  'Metabolic': 'bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300 border-lime-200 dark:border-lime-800',
 }
 
 interface PeptidePillProps {
@@ -306,31 +437,48 @@ export function PeptidePill({ name, onAddToStack }: PeptidePillProps) {
   )
 }
 
-// List of peptide name patterns to detect
+// List of peptide name patterns to detect (32 peptides with variants)
 export const PEPTIDE_PATTERNS = [
+  // Healing
   'BPC-157', 'BPC157',
   'TB-500', 'TB500',
+  'GHK-Cu', 'GHK Cu',
+  'KPV',
+  'Larazotide',
+  // Weight Loss / Metabolic
   'Semaglutide', 'Ozempic', 'Wegovy',
   'Tirzepatide', 'Mounjaro', 'Zepbound',
+  'AOD-9604', 'AOD9604',
+  'MOTS-c', 'MOTSc',
+  '5-Amino-1MQ', '5-Amino 1MQ', '5Amino1MQ',
+  'SR9009', 'SR-9009', 'Stenabolic',
+  // Performance
   'Ipamorelin',
   'CJC-1295', 'CJC1295',
   'MK-677', 'MK677', 'Ibutamoren',
-  'GHK-Cu', 'GHK Cu',
-  'Semax',
-  'Selank',
-  'Epithalon', 'Epitalon',
   'Tesamorelin',
-  'AOD-9604', 'AOD9604',
-  'PT-141', 'PT141', 'Bremelanotide',
-  'Thymosin Alpha-1', 'Thymosin Alpha 1', 'TA1',
   'GHRP-6', 'GHRP6',
   'GHRP-2', 'GHRP2',
+  // Cognitive
+  'Semax',
+  'Selank',
+  'NA-Selank',
   'Dihexa',
-  'SS-31', 'Elamipretide',
-  'LL-37',
+  'P21',
+  // Sleep
+  'DSIP',
+  // Anti-Aging
+  'Epithalon', 'Epitalon',
+  // Immune
+  'Thymosin Alpha-1', 'Thymosin Alpha 1', 'TA1',
+  'LL-37', 'LL37',
+  // Sexual Health
+  'PT-141', 'PT141', 'Bremelanotide',
   'Kisspeptin',
-  '5-Amino-1MQ', '5-Amino 1MQ',
-  'SR9009', 'SR-9009', 'Stenabolic',
+  // Mitochondrial
+  'SS-31', 'SS31', 'Elamipretide',
+  'NAD+', 'NAD+ IM',
+  'Humanin',
 ]
 
 // Create a regex pattern for all peptides
