@@ -18,6 +18,7 @@ interface OnboardingFlowProps {
 export interface OnboardingContext {
   primaryGoal: string
   primaryGoalLabel?: string
+  goals: Array<{ id: string; label: string; priority: number; peptides: string[] }>
   conditions: string[]
   conditionLabels?: string[]
   experienceLevel: string
@@ -168,9 +169,18 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
   const handleExperienceSelect = (level: string) => {
     setExperienceLevel(level)
 
-    // Get all selected goals data
-    const selectedGoalData = GOALS.filter(g => selectedGoals.includes(g.id))
-    const goalLabels = selectedGoalData.map(g => g.label)
+    // Get all selected goals data with priority order preserved
+    const goalsWithPriority = selectedGoals.map((goalId, index) => {
+      const goalData = GOALS.find(g => g.id === goalId)!
+      return {
+        id: goalId,
+        label: goalData.label,
+        priority: index + 1,
+        peptides: goalData.peptides,
+      }
+    })
+
+    const goalLabels = goalsWithPriority.map(g => g.label)
 
     // Get condition labels from all selected goals
     const conditionLabels = selectedConditions.map(c => {
@@ -182,13 +192,14 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
       return c
     })
 
-    // Collect peptides from all selected goals
-    const allPeptides = [...new Set(selectedGoalData.flatMap(g => g.peptides))]
+    // Collect peptides from all selected goals (primary goal peptides first)
+    const allPeptides = [...new Set(goalsWithPriority.flatMap(g => g.peptides))]
 
     // Create context object with all the details
     const context: OnboardingContext = {
       primaryGoal: selectedGoals.join(','),
       primaryGoalLabel: goalLabels.join(' & '),
+      goals: goalsWithPriority,
       conditions: selectedConditions,
       conditionLabels,
       experienceLevel: level,
@@ -292,10 +303,10 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
                         : `${goal.bgColor} ${goal.borderColor} hover:shadow-md hover:scale-[1.02]`
                     )}
                   >
-                    {/* Selection indicator */}
+                    {/* Priority indicator - shows order of selection */}
                     {isSelected && (
-                      <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center">
-                        <Check className="h-3 w-3 text-white" />
+                      <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
+                        {selectedGoals.indexOf(goal.id) + 1}
                       </div>
                     )}
                     <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", goal.bgColor)}>
@@ -330,13 +341,16 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
 
         {step === 'conditions' && (
           <div className="w-full max-w-2xl mx-auto pb-4">
-            {/* Show selected goals */}
+            {/* Show selected goals with priority */}
             <div className="flex flex-wrap gap-2 mb-3 justify-center">
-              {selectedGoals.map(goalId => {
+              {selectedGoals.map((goalId, index) => {
                 const goal = GOALS.find(g => g.id === goalId)
                 if (!goal) return null
                 return (
-                  <span key={goalId} className={cn("text-xs px-3 py-1 rounded-full", goal.bgColor, goal.color)}>
+                  <span key={goalId} className={cn("text-xs px-3 py-1 rounded-full flex items-center gap-1.5", goal.bgColor, goal.color)}>
+                    <span className="bg-blue-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold">
+                      {index + 1}
+                    </span>
                     {goal.label}
                   </span>
                 )
