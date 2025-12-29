@@ -17,6 +17,7 @@ interface Feedback {
   id: string;
   component_name: string;
   component_path: string;
+  conversation: Array<{ role: string; content: string }>;
   summary: string;
   product_prompt: string;
   insights: string[];
@@ -284,6 +285,30 @@ export default function FeedbackPage() {
               {/* Expanded Content */}
               {expandedId === item.id && (
                 <div className="border-t border-slate-200 dark:border-slate-700 p-4 space-y-4">
+                  {/* Raw Conversation */}
+                  {item.conversation && item.conversation.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Original Conversation</h4>
+                      <div className="bg-slate-50 dark:bg-slate-900 rounded-lg overflow-hidden">
+                        {item.conversation.map((msg, i) => (
+                          <div
+                            key={i}
+                            className={`p-3 text-sm ${
+                              msg.role === 'user'
+                                ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500'
+                                : 'bg-slate-50 dark:bg-slate-800 border-l-4 border-slate-300 dark:border-slate-600'
+                            } ${i > 0 ? 'border-t border-slate-200 dark:border-slate-700' : ''}`}
+                          >
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1 block">
+                              {msg.role}
+                            </span>
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Insights */}
                   {item.insights.length > 0 && (
                     <div>
