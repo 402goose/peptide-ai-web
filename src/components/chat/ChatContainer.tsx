@@ -316,6 +316,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       const decoder = new TextDecoder()
       let fullContent = ''
       let buffer = ''
+      let newConversationId: string | undefined
 
       while (true) {
         const { done, value } = await reader.read()
@@ -331,14 +332,12 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               const data = JSON.parse(line.slice(6))
 
               if (data.type === 'conversation_id') {
+                newConversationId = data.conversation_id
                 setActiveConversationId(data.conversation_id)
-                // Update URL to include conversation ID (enables sharing)
-                // Use router.replace to trigger usePathname update in layout
-                if (!conversationId) {
-                  router.replace(`/chat/c/${data.conversation_id}`, { scroll: false })
-                  // Dispatch event for layout to enable share button immediately
-                  window.dispatchEvent(new CustomEvent('conversationCreated', { detail: data.conversation_id }))
-                }
+                // Dispatch event for layout to enable share button immediately
+                window.dispatchEvent(new CustomEvent('conversationCreated', { detail: data.conversation_id }))
+                // NOTE: Don't router.replace here - it causes a remount that loses streaming state
+                // URL will be updated after streaming completes
               } else if (data.type === 'sources' && data.sources) {
                 setCurrentSources(data.sources)
               } else if (data.type === 'mode' && data.mode) {
@@ -379,6 +378,12 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
           }
         }
         setMessages(prev => [...prev, assistantMessage])
+
+        // NOW update URL after streaming is complete and messages are set
+        // This avoids the remount issue during streaming
+        if (!conversationId && newConversationId) {
+          router.replace(`/chat/c/${newConversationId}`, { scroll: false })
+        }
       }
 
     } catch (error) {
@@ -512,6 +517,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       const decoder = new TextDecoder()
       let fullContent = ''
       let buffer = ''
+      let newConversationId: string | undefined
 
       while (true) {
         const { done, value } = await reader.read()
@@ -527,12 +533,11 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               const data = JSON.parse(line.slice(6))
 
               if (data.type === 'conversation_id') {
+                newConversationId = data.conversation_id
                 setActiveConversationId(data.conversation_id)
-                // Update URL to include conversation ID (enables sharing)
-                // Use router.replace to trigger usePathname update in layout
-                router.replace(`/chat/c/${data.conversation_id}`, { scroll: false })
                 // Dispatch event for layout to enable share button immediately
                 window.dispatchEvent(new CustomEvent('conversationCreated', { detail: data.conversation_id }))
+                // NOTE: Don't router.replace here - it causes a remount that loses streaming state
               } else if (data.type === 'sources' && data.sources) {
                 setCurrentSources(data.sources)
               } else if (data.type === 'content' && data.content) {
@@ -557,6 +562,11 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
           timestamp: new Date().toISOString(),
         }
         setMessages(prev => [...prev, assistantMessage])
+
+        // NOW update URL after streaming is complete
+        if (newConversationId) {
+          router.replace(`/chat/c/${newConversationId}`, { scroll: false })
+        }
       }
     } catch (error) {
       console.error('Failed to start guided journey:', error)
