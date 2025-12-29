@@ -388,7 +388,7 @@ export default function JourneyPage() {
     setEmailError(null)
 
     try {
-      const response = await fetch('/api/v1/email/journey', {
+      const response = await fetch('/api/email/journey', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
