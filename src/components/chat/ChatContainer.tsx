@@ -156,7 +156,12 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   useEffect(() => {
     // Load if conversationId is set AND it's different from what we have loaded
     // This handles: initial load, switching between conversations, and navigation
-    const shouldLoad = conversationId && conversationId !== activeConversationId && !isStreaming && !isLoading
+    // Don't load if we're currently creating a conversation (prevents race condition with URL update)
+    const shouldLoad = conversationId &&
+      conversationId !== activeConversationId &&
+      !isStreaming &&
+      !isLoading &&
+      !isCreatingConversation.current
 
     if (shouldLoad) {
       loadConversation(conversationId)
@@ -454,6 +459,9 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       sessionStorage.setItem('peptide-ai-chatting', 'true')
     }
 
+    // Mark that we're creating a conversation (prevents useEffect from reloading)
+    isCreatingConversation.current = true
+
     // Transition to chatting state
     setViewState('chatting')
 
@@ -568,6 +576,10 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       setIsLoading(false)
       setIsStreaming(false)
       setStreamingContent('')
+      // Clear the creation flag after a short delay to ensure URL update has settled
+      setTimeout(() => {
+        isCreatingConversation.current = false
+      }, 100)
     }
   }
 
