@@ -169,20 +169,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       !isCreatingConversation.current &&
       !isNewlyCreatedConversation
 
-    console.log('[ChatContainer] Load check:', {
-      conversationId,
-      activeConversationId,
-      isStreaming,
-      isLoading,
-      isCreatingConversation: isCreatingConversation.current,
-      creatingConversationId: creatingConversationIdRef.current,
-      isNewlyCreatedConversation,
-      shouldLoad,
-      messagesCount: messages.length,
-    })
-
     if (shouldLoad) {
-      console.log('[ChatContainer] Calling loadConversation for:', conversationId)
       loadConversation(conversationId)
       setViewState('chatting')
     }
@@ -198,11 +185,9 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   }, [inputFocused, viewState])
 
   async function loadConversation(id: string) {
-    console.log('[ChatContainer] loadConversation called for:', id)
     setIsLoading(true)
     try {
       const conversation = await api.getConversation(id)
-      console.log('[ChatContainer] loadConversation got response:', conversation.conversation_id)
 
       // Convert API messages to our format (handle snake_case from backend)
       const loadedMessages: Message[] = (conversation.messages || []).map((msg: any) => ({
@@ -482,7 +467,6 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
 
     // Mark that we're creating a conversation (prevents useEffect from reloading)
     isCreatingConversation.current = true
-    console.log('[ChatContainer] Set isCreatingConversation = true')
 
     // Transition to chatting state
     setViewState('chatting')
@@ -552,13 +536,11 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
 
               if (data.type === 'conversation_id') {
                 newConversationId = data.conversation_id
-                console.log('[ChatContainer] Got conversation_id from stream:', data.conversation_id)
                 // Track this conversation ID to prevent race condition reloads
                 creatingConversationIdRef.current = data.conversation_id
                 setActiveConversationId(data.conversation_id)
                 // Dispatch event for layout to enable share button immediately
                 window.dispatchEvent(new CustomEvent('conversationCreated', { detail: data.conversation_id }))
-                // NOTE: Don't router.replace here - it causes a remount that loses streaming state
               } else if (data.type === 'sources' && data.sources) {
                 setCurrentSources(data.sources)
               } else if (data.type === 'content' && data.content) {
@@ -584,23 +566,14 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         }
         setMessages(prev => [...prev, assistantMessage])
 
-        // Update URL AFTER state is settled to prevent race condition
-        // Delay ensures React state updates are applied before URL change triggers useEffect
+        // DON'T update URL after onboarding - this prevents the race condition
+        // where the URL update triggers a reload that replaces our styled context card
+        // The conversation is saved and accessible from the sidebar
+        // URL will update naturally when user sends another message or navigates
         if (newConversationId) {
-          console.log('[ChatContainer] Scheduling URL update for:', newConversationId)
-          setTimeout(() => {
-            console.log('[ChatContainer] Executing router.replace to:', `/chat/c/${newConversationId}`)
-            router.replace(`/chat/c/${newConversationId}`, { scroll: false })
-            // Clear creation flags after URL update - keep protection for a bit longer
-            setTimeout(() => {
-              console.log('[ChatContainer] Clearing creation flags')
-              isCreatingConversation.current = false
-              // Clear the ID reference after a longer delay to ensure all renders complete
-              setTimeout(() => {
-                creatingConversationIdRef.current = null
-              }, 500)
-            }, 100)
-          }, 50)
+          // Clear creation flags
+          isCreatingConversation.current = false
+          creatingConversationIdRef.current = null
         }
       }
     } catch (error) {
