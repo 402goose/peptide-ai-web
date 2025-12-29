@@ -24,6 +24,7 @@ interface MessageListProps {
   detectedMode?: string
   mentionedPeptides?: string[]
   conversationId?: string
+  journeyPrompt?: React.ReactNode
 }
 
 // Threshold for considering user "at bottom"
@@ -41,6 +42,7 @@ export function MessageList({
   detectedMode = 'balanced',
   mentionedPeptides = [],
   conversationId,
+  journeyPrompt,
 }: MessageListProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const bottomAnchorRef = useRef<HTMLDivElement>(null)
@@ -234,6 +236,9 @@ export function MessageList({
             />
           </motion.div>
         )}
+
+        {/* Journey Prompt - shows after onboarding AI response */}
+        {journeyPrompt}
 
         {/* Bottom anchor for scroll detection */}
         <div ref={bottomAnchorRef} className="h-4" />

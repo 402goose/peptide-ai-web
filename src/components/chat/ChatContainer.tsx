@@ -746,19 +746,19 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                     detectedMode={detectedMode}
                     mentionedPeptides={mentionedPeptides}
                     conversationId={activeConversationId}
+                    journeyPrompt={
+                      userContext &&
+                      !journeyPromptDismissed &&
+                      !isLoading &&
+                      !isStreaming &&
+                      messages.some(m => m.role === 'assistant') ? (
+                        <JourneyPrompt
+                          context={userContext}
+                          onDismiss={() => setJourneyPromptDismissed(true)}
+                        />
+                      ) : undefined
+                    }
                   />
-
-                  {/* Journey Prompt - shows after onboarding AI response */}
-                  {userContext &&
-                    !journeyPromptDismissed &&
-                    !isLoading &&
-                    !isStreaming &&
-                    messages.some(m => m.role === 'assistant') && (
-                      <JourneyPrompt
-                        context={userContext}
-                        onDismiss={() => setJourneyPromptDismissed(true)}
-                      />
-                    )}
                 </>
               )}
             </motion.div>
