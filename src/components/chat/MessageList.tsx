@@ -145,6 +145,15 @@ export function MessageList({
 
           if (isEmptyStreamingMessage) return null
 
+          // Skip the last assistant message while streaming - we render it separately
+          // as the streaming bubble. This prevents duplicate rendering during the
+          // transition which causes a visual "jolt"
+          const isLastAssistantWhileStreaming = isStreaming &&
+            message.role === 'assistant' &&
+            index === messages.length - 1
+
+          if (isLastAssistantWhileStreaming) return null
+
           const isLastUserMessage = message.role === 'user' &&
             (index === messages.length - 1 || messages[index + 1]?.role === 'assistant')
 
