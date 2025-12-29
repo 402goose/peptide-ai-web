@@ -397,6 +397,7 @@ export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
   const [shareTitle, setShareTitle] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [showAddCustom, setShowAddCustom] = useState(false)
+  const [stackLoaded, setStackLoaded] = useState(false)
   const [customForm, setCustomForm] = useState({
     name: '',
     category: 'performance',
@@ -407,17 +408,40 @@ export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
     tags: [] as Array<'fda-approved' | 'clinical-trials' | 'research-only' | 'user-added'>
   })
 
-  // Load custom peptides from localStorage on mount
+  // Load saved state from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('peptide-ai-custom-peptides')
-      if (saved) {
+      // Load custom peptides
+      const savedCustom = localStorage.getItem('peptide-ai-custom-peptides')
+      if (savedCustom) {
         try {
-          setCustomPeptides(JSON.parse(saved))
+          setCustomPeptides(JSON.parse(savedCustom))
         } catch (e) {
           console.error('Failed to load custom peptides:', e)
         }
       }
+
+      // Load selected stack
+      const savedStack = localStorage.getItem('peptide-ai-current-stack')
+      if (savedStack) {
+        try {
+          setSelectedPeptides(JSON.parse(savedStack))
+        } catch (e) {
+          console.error('Failed to load saved stack:', e)
+        }
+      }
+
+      // Load selected goals
+      const savedGoals = localStorage.getItem('peptide-ai-selected-goals')
+      if (savedGoals) {
+        try {
+          setSelectedGoals(JSON.parse(savedGoals))
+        } catch (e) {
+          console.error('Failed to load saved goals:', e)
+        }
+      }
+
+      setStackLoaded(true)
     }
   }, [])
 
@@ -427,6 +451,20 @@ export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
       localStorage.setItem('peptide-ai-custom-peptides', JSON.stringify(customPeptides))
     }
   }, [customPeptides])
+
+  // Save selected stack to localStorage when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && stackLoaded) {
+      localStorage.setItem('peptide-ai-current-stack', JSON.stringify(selectedPeptides))
+    }
+  }, [selectedPeptides, stackLoaded])
+
+  // Save selected goals to localStorage when they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && stackLoaded) {
+      localStorage.setItem('peptide-ai-selected-goals', JSON.stringify(selectedGoals))
+    }
+  }, [selectedGoals, stackLoaded])
 
   // Combine built-in and custom peptides
   const allPeptides = useMemo(() => [
@@ -569,10 +607,20 @@ export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
       <div className="flex-1 overflow-auto p-4">
         {/* Goals Selection */}
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-            <Target className="h-4 w-4 text-blue-500" />
-            What are you trying to achieve?
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
+              <Target className="h-4 w-4 text-blue-500" />
+              What are you trying to achieve?
+            </h3>
+            {selectedGoals.length > 0 && (
+              <button
+                onClick={() => setSelectedGoals([])}
+                className="text-xs text-slate-400 hover:text-blue-500"
+              >
+                Clear goals
+              </button>
+            )}
+          </div>
           <div className="flex flex-wrap gap-2">
             {SYMPTOM_CATEGORIES.map((goal) => {
               const Icon = goal.icon
@@ -730,6 +778,7 @@ export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
               <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-yellow-500" />
                 Your Stack ({selectedPeptides.length}/6)
+                <span className="text-xs font-normal text-slate-400 ml-1">• Auto-saved</span>
               </h3>
               <button
                 onClick={() => setSelectedPeptides([])}
