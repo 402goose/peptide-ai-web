@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
@@ -120,7 +120,7 @@ const STATUS_CONFIG = {
   discontinued: { label: 'Discontinued', color: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
 }
 
-export default function JourneyPage() {
+function JourneyPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useUser()
@@ -1180,5 +1180,18 @@ export default function JourneyPage() {
       )}
     </div>
     </Feedbackable>
+  )
+}
+
+// Wrap in Suspense for useSearchParams
+export default function JourneyPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
+    }>
+      <JourneyPageContent />
+    </Suspense>
   )
 }
