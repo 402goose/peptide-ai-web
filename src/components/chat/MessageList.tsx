@@ -123,9 +123,16 @@ export function MessageList({
     prevMessageCountRef.current = messages.length
   }, [messages.length, scrollToUserMessage])
 
-  // During streaming - don't auto-scroll, let user control
-  // The arrow will show automatically when not at bottom
-  // User can tap arrow to scroll to bottom if they want
+  // During streaming, periodically check if user has fallen behind (not at bottom)
+  // This triggers the scroll arrow to appear as content streams in
+  useEffect(() => {
+    if (isStreaming) {
+      const interval = setInterval(() => {
+        setIsAtBottom(checkIsAtBottom())
+      }, 300) // Check every 300ms during streaming
+      return () => clearInterval(interval)
+    }
+  }, [isStreaming, checkIsAtBottom])
 
   return (
     <div
