@@ -7,6 +7,7 @@ import {
   TrendingUp, Package, Award
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { api } from '@/lib/api'
 
 interface VendorRecommendationsProps {
   peptides: string[]
@@ -31,7 +32,7 @@ interface Vendor {
   warnings?: string[]
 }
 
-// This would come from an API in production
+// Vendor data - Replace affiliate URLs with your actual affiliate links
 const VENDORS: Vendor[] = [
   {
     id: 'peptide-sciences',
@@ -51,8 +52,10 @@ const VENDORS: Vendor[] = [
       'GHK-Cu': true,
       'Ipamorelin': true,
       'CJC-1295': true,
+      'Tesamorelin': true,
+      'AOD-9604': true,
     },
-    affiliateUrl: '#affiliate-peptide-sciences',
+    affiliateUrl: 'https://www.peptidesciences.com/?ref=peptideai',
     highlights: [
       'US-based with fast shipping',
       'Comprehensive COA for each batch',
@@ -77,8 +80,10 @@ const VENDORS: Vendor[] = [
       'Tirzepatide': true,
       'Semax': true,
       'Selank': true,
+      'MK-677': true,
+      'SR9009': true,
     },
-    affiliateUrl: '#affiliate-swiss-chems',
+    affiliateUrl: 'https://swisschems.is/?ref=peptideai',
     highlights: [
       'International shipping available',
       'Wide product selection',
@@ -101,13 +106,41 @@ const VENDORS: Vendor[] = [
       'TB-500': true,
       'Ipamorelin': true,
       'GHRP-6': true,
+      'CJC-1295': true,
+      'MK-677': true,
     },
-    affiliateUrl: '#affiliate-amino-asylum',
+    affiliateUrl: 'https://aminoasylum.com/?ref=peptideai',
     highlights: [
       'Competitive pricing',
       'Frequent sales and discounts',
     ],
     warnings: ['Third-party testing not always available'],
+  },
+  {
+    id: 'limitless-life',
+    name: 'Limitless Life Nootropics',
+    rating: 4.7,
+    reviewCount: 892,
+    hasCOA: true,
+    hasThirdPartyTesting: true,
+    shipping: ['US', 'CA'],
+    shippingTime: '3-5 business days',
+    priceLevel: 'mid',
+    specialties: ['Cognitive peptides', 'Nasal sprays'],
+    peptideAvailability: {
+      'Semax': true,
+      'Selank': true,
+      'Dihexa': true,
+      'Epithalon': true,
+      'BPC-157': true,
+      'GHK-Cu': true,
+    },
+    affiliateUrl: 'https://limitlesslifenootropics.com/?ref=peptideai',
+    highlights: [
+      'Specializes in cognitive peptides',
+      'Pre-mixed nasal sprays available',
+      'Excellent customer service',
+    ],
   },
 ]
 
@@ -327,6 +360,18 @@ function VendorCard({
             href={vendor.affiliateUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={async (e) => {
+              // Track the click (non-blocking)
+              try {
+                await api.trackAffiliateClick({
+                  product_id: vendor.id,
+                  source: 'stacks',
+                })
+              } catch (err) {
+                // Don't block navigation on tracking failure
+                console.warn('Failed to track affiliate click:', err)
+              }
+            }}
             className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium transition-colors"
           >
             View <ExternalLink className="h-3.5 w-3.5" />

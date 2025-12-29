@@ -86,7 +86,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
             size="icon"
             disabled={disabled || !message.trim()}
             className={cn(
-              "shrink-0 h-10 w-10 rounded-full transition-all duration-200",
+              "shrink-0 h-11 w-11 sm:h-10 sm:w-10 rounded-full transition-all duration-200",
               message.trim()
                 ? "bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900"
                 : "bg-slate-200 dark:bg-slate-700 text-slate-400"

@@ -32,11 +32,12 @@ export function FollowUpChips({ followUps, onClick }: FollowUpChipsProps) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2, delay: index * 0.05 }}
-            className="group flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-full
+            className="group flex-shrink-0 flex items-center gap-2 px-3 py-2.5 sm:py-2 rounded-full
               bg-slate-100 dark:bg-slate-800
               hover:bg-blue-100 dark:hover:bg-blue-900/40
               border border-transparent hover:border-blue-200 dark:hover:border-blue-800
-              transition-all duration-150 text-left max-w-[280px]"
+              transition-all duration-150 text-left max-w-[200px] sm:max-w-[250px] md:max-w-[280px]
+              min-h-[44px] sm:min-h-0"
           >
             <span className="text-sm text-slate-600 dark:text-slate-300 group-hover:text-blue-700 dark:group-hover:text-blue-300 truncate transition-colors">
               {question}

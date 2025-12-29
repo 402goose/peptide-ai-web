@@ -5,19 +5,54 @@ import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { CitationBadge } from './CitationBadge'
+import { PeptidePill, PEPTIDE_REGEX } from './PeptidePill'
 import type { Source } from '@/types'
 
 interface MarkdownRendererProps {
   content: string
   sources?: Source[]
+  onAddToStack?: (peptideId: string) => void
 }
 
-export function MarkdownRenderer({ content, sources = [] }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, sources = [], onAddToStack }: MarkdownRendererProps) {
   // Replace citation markers [1], [2], etc. with interactive badges
   const processedContent = content.replace(
     /\[(\d+)\]/g,
     (match, num) => `<citation data-index="${num}">${match}</citation>`
   )
+
+  // Process text to add peptide pills
+  const processPeptides = (text: string): React.ReactNode[] => {
+    const parts: React.ReactNode[] = []
+    let lastIndex = 0
+    let match
+
+    // Reset regex state
+    PEPTIDE_REGEX.lastIndex = 0
+
+    while ((match = PEPTIDE_REGEX.exec(text)) !== null) {
+      // Add text before the match
+      if (match.index > lastIndex) {
+        parts.push(text.slice(lastIndex, match.index))
+      }
+      // Add the peptide pill
+      parts.push(
+        <PeptidePill
+          key={`peptide-${match.index}`}
+          name={match[0]}
+          onAddToStack={onAddToStack}
+        />
+      )
+      lastIndex = match.index + match[0].length
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push(text.slice(lastIndex))
+    }
+
+    return parts.length > 0 ? parts : [text]
+  }
 
   return (
     <div className="prose prose-slate dark:prose-invert prose-sm max-w-none break-words overflow-hidden
@@ -76,34 +111,40 @@ export function MarkdownRenderer({ content, sources = [] }: MarkdownRendererProp
             )
           },
 
-          // Custom paragraph to handle citation badges
+          // Custom paragraph to handle citation badges and peptide pills
           p({ node, children, ...props }) {
-            // Check if children contains citation markers
-            const processChildren = (child: React.ReactNode): React.ReactNode => {
+            // Process text for citations and peptides
+            const processChildren = (child: React.ReactNode, parentIndex: number = 0): React.ReactNode => {
               if (typeof child === 'string') {
-                // Split by citation pattern and render badges
-                const parts = child.split(/(\[\d+\])/)
-                return parts.map((part, index) => {
-                  const match = part.match(/\[(\d+)\]/)
-                  if (match) {
-                    const sourceIndex = parseInt(match[1]) - 1
+                // First split by citation pattern
+                const citationParts = child.split(/(\[\d+\])/)
+                return citationParts.map((part, index) => {
+                  const citationMatch = part.match(/\[(\d+)\]/)
+                  if (citationMatch) {
+                    const sourceIndex = parseInt(citationMatch[1]) - 1
                     const source = sources[sourceIndex]
                     return (
                       <CitationBadge
-                        key={index}
-                        index={parseInt(match[1])}
+                        key={`citation-${parentIndex}-${index}`}
+                        index={parseInt(citationMatch[1])}
                         source={source}
                       />
                     )
                   }
-                  return part
+                  // Now process for peptide names
+                  return processPeptides(part).map((peptidePart, pIndex) => {
+                    if (typeof peptidePart === 'string') {
+                      return <span key={`text-${parentIndex}-${index}-${pIndex}`}>{peptidePart}</span>
+                    }
+                    return peptidePart
+                  })
                 })
               }
               return child
             }
 
             const processedChildren = Array.isArray(children)
-              ? children.map(processChildren)
+              ? children.map((child, idx) => processChildren(child, idx))
               : processChildren(children)
 
             return <p {...props}>{processedChildren}</p>
@@ -200,9 +241,26 @@ export function MarkdownRenderer({ content, sources = [] }: MarkdownRendererProp
           },
 
           li({ node, children, ...props }) {
+            // Process text for peptides in list items
+            const processLiChildren = (child: React.ReactNode, idx: number = 0): React.ReactNode => {
+              if (typeof child === 'string') {
+                return processPeptides(child).map((part, pIndex) => {
+                  if (typeof part === 'string') {
+                    return <span key={`li-text-${idx}-${pIndex}`}>{part}</span>
+                  }
+                  return part
+                })
+              }
+              return child
+            }
+
+            const processedChildren = Array.isArray(children)
+              ? children.map((child, idx) => processLiChildren(child, idx))
+              : processLiChildren(children)
+
             return (
               <li className="text-slate-700 dark:text-slate-300" {...props}>
-                {children}
+                {processedChildren}
               </li>
             )
           },

@@ -12,6 +12,7 @@ import { JourneyPrompt } from './JourneyPrompt'
 import type { Message, Source } from '@/types'
 import { Beaker, Sparkles, ArrowRight, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/Toast'
 import { trackSessionStart, trackPageView, trackChatSent, trackSourceClicked } from '@/lib/analytics'
 import { api } from '@/lib/api'
 
@@ -41,6 +42,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, isLoaded: isUserLoaded } = useUser()
+  const { showToast } = useToast()
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
@@ -442,6 +444,30 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     handleSendMessage(question)
   }
 
+  // Handle adding a peptide to the stack from a chat response
+  function handleAddToStack(peptideId: string) {
+    if (typeof window === 'undefined') return
+
+    const STORAGE_KEY = 'peptide-ai-current-stack'
+    const existing = localStorage.getItem(STORAGE_KEY)
+    const currentStack: string[] = existing ? JSON.parse(existing) : []
+
+    // Don't add duplicates, max 6 items
+    if (currentStack.includes(peptideId)) {
+      showToast(`${peptideId} is already in your stack`, 'info')
+      return
+    }
+
+    if (currentStack.length >= 6) {
+      showToast('Stack is full (max 6 peptides)', 'warning')
+      return
+    }
+
+    currentStack.push(peptideId)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentStack))
+    showToast(`Added ${peptideId} to your stack`, 'success')
+  }
+
   // Handle query parameter (e.g., from Stack Builder "Ask About This Stack")
   useEffect(() => {
     const query = searchParams?.get('q')
@@ -782,6 +808,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                     disclaimers={currentDisclaimers}
                     followUps={currentFollowUps}
                     onFollowUpClick={handleFollowUpClick}
+                    onAddToStack={handleAddToStack}
                     detectedMode={detectedMode}
                     mentionedPeptides={mentionedPeptides}
                     conversationId={activeConversationId}

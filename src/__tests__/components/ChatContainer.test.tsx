@@ -48,6 +48,13 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
 }))
 
+// Mock Toast
+const mockShowToast = vi.fn()
+vi.mock('@/components/ui/Toast', () => ({
+  useToast: () => ({ showToast: mockShowToast }),
+  ToastProvider: ({ children }: React.PropsWithChildren) => <>{children}</>,
+}))
+
 // Mock analytics
 vi.mock('@/lib/analytics', () => ({
   trackSessionStart: vi.fn(),

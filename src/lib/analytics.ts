@@ -16,10 +16,21 @@ export const EventType = {
   // Activation
   FIRST_CHAT: 'first_chat',
   FIRST_SOURCE_VIEW: 'first_source_view',
+  FIRST_STACK_CREATED: 'first_stack_created',
   // Engagement
   CHAT_SENT: 'chat_sent',
   SOURCE_CLICKED: 'source_clicked',
   SESSION_START: 'session_start',
+  // Stack Builder
+  STACK_GOAL_SELECTED: 'stack_goal_selected',
+  STACK_PEPTIDE_ADDED: 'stack_peptide_added',
+  STACK_PEPTIDE_REMOVED: 'stack_peptide_removed',
+  STACK_SHARED: 'stack_shared',
+  STACK_ASK_AI: 'stack_ask_ai',
+  STACK_START_JOURNEY: 'stack_start_journey',
+  // Journey
+  JOURNEY_CREATED: 'journey_created',
+  JOURNEY_SHARED: 'journey_shared',
   // Retention
   RETURN_VISIT: 'return_visit',
   // Feedback
@@ -222,6 +233,146 @@ export function trackFeedbackSubmitted(properties: {
 }): void {
   trackEvent({
     eventType: EventType.FEEDBACK_SUBMITTED,
+    properties,
+  });
+}
+
+// =============================================================================
+// STACK BUILDER ANALYTICS
+// =============================================================================
+
+// Track if user has created their first stack
+function isFirstStack(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  const hasCreatedStack = localStorage.getItem('peptide_has_created_stack');
+  if (!hasCreatedStack) {
+    localStorage.setItem('peptide_has_created_stack', 'true');
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Track when a user selects a goal in Stack Builder
+ */
+export function trackStackGoalSelected(properties: {
+  goalId: string;
+  goalLabel: string;
+  totalGoals: number;
+}): void {
+  trackEvent({
+    eventType: EventType.STACK_GOAL_SELECTED,
+    properties,
+  });
+}
+
+/**
+ * Track when a user adds a peptide to their stack
+ */
+export function trackStackPeptideAdded(properties: {
+  peptideId: string;
+  peptideName: string;
+  stackSize: number;
+  fromRecommendation?: boolean;
+}): void {
+  const firstStack = properties.stackSize === 1 && isFirstStack();
+
+  if (firstStack) {
+    trackEvent({
+      eventType: EventType.FIRST_STACK_CREATED,
+      properties,
+    });
+  }
+
+  trackEvent({
+    eventType: EventType.STACK_PEPTIDE_ADDED,
+    properties: {
+      ...properties,
+      is_first_stack: firstStack,
+    },
+  });
+}
+
+/**
+ * Track when a user removes a peptide from their stack
+ */
+export function trackStackPeptideRemoved(properties: {
+  peptideId: string;
+  peptideName: string;
+  stackSize: number;
+}): void {
+  trackEvent({
+    eventType: EventType.STACK_PEPTIDE_REMOVED,
+    properties,
+  });
+}
+
+/**
+ * Track when a user shares their stack
+ */
+export function trackStackShared(properties: {
+  stackSize: number;
+  peptides: string[];
+}): void {
+  trackEvent({
+    eventType: EventType.STACK_SHARED,
+    properties,
+  });
+}
+
+/**
+ * Track when a user clicks "Ask AI About This Stack"
+ */
+export function trackStackAskAI(properties: {
+  stackSize: number;
+  peptides: string[];
+  goals: string[];
+}): void {
+  trackEvent({
+    eventType: EventType.STACK_ASK_AI,
+    properties,
+  });
+}
+
+/**
+ * Track when a user clicks "Start Journey with This Stack"
+ */
+export function trackStackStartJourney(properties: {
+  stackSize: number;
+  peptides: string[];
+  goals: string[];
+}): void {
+  trackEvent({
+    eventType: EventType.STACK_START_JOURNEY,
+    properties,
+  });
+}
+
+/**
+ * Track when a user creates a journey
+ */
+export function trackJourneyCreated(properties: {
+  primaryPeptide: string;
+  additionalPeptides: string[];
+  hasGoals: boolean;
+}): void {
+  trackEvent({
+    eventType: EventType.JOURNEY_CREATED,
+    properties,
+  });
+}
+
+/**
+ * Track when a user shares their journey
+ */
+export function trackJourneyShared(properties: {
+  journeyStatus: string;
+  doseCount: number;
+  checkInCount: number;
+}): void {
+  trackEvent({
+    eventType: EventType.JOURNEY_SHARED,
     properties,
   });
 }

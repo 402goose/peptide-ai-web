@@ -13,6 +13,8 @@ interface MessageBubbleProps {
   isStreaming?: boolean
   /** Skip entrance animation (for messages that are already visible) */
   skipAnimation?: boolean
+  /** Callback when user adds a peptide to stack from a pill */
+  onAddToStack?: (peptideId: string) => void
 }
 
 // Experience level labels
@@ -22,7 +24,7 @@ const EXPERIENCE_LABELS: Record<string, string> = {
   experienced: 'Experienced user',
 }
 
-export function MessageBubble({ message, isLast, isStreaming, skipAnimation = false }: MessageBubbleProps) {
+export function MessageBubble({ message, isLast, isStreaming, skipAnimation = false, onAddToStack }: MessageBubbleProps) {
   const isUser = message.role === 'user'
   const isOnboardingContext = message.metadata?.type === 'onboarding_context'
 
@@ -124,6 +126,7 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
         <MarkdownRenderer
           content={message.content}
           sources={message.sources}
+          onAddToStack={onAddToStack}
         />
         {/* Streaming cursor indicator */}
         {isStreaming && (

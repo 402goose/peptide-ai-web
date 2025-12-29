@@ -16,6 +16,7 @@ import {
   Share2, Copy
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { trackJourneyCreated, trackJourneyShared } from '@/lib/analytics'
 
 // Local journey types for localStorage
 interface LocalJourney {
@@ -236,6 +237,13 @@ export default function JourneyPage() {
     updateJourneys(prev => [...prev, journey])
     setNewJourney({ title: '', primaryPeptide: '', additionalPeptides: [], goals: '' })
     setView('list')
+
+    // Track the journey creation
+    trackJourneyCreated({
+      primaryPeptide: newJourney.primaryPeptide,
+      additionalPeptides: newJourney.additionalPeptides,
+      hasGoals: Boolean(newJourney.goals),
+    })
   }
 
   function handleStartJourney(journeyId: string) {
@@ -518,6 +526,13 @@ export default function JourneyPage() {
     setShareLink(link)
     setShareModalJourney(journey)
     setShareCopied(false)
+
+    // Track the journey share
+    trackJourneyShared({
+      journeyStatus: journey.status,
+      doseCount: journey.doseLogs.length,
+      checkInCount: journey.checkIns.length,
+    })
   }
 
   const handleCopyShareLink = async () => {
@@ -993,8 +1008,8 @@ export default function JourneyPage() {
 
       {/* Email Modal */}
       {emailModalJourney && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="relative w-full max-w-md rounded-xl bg-white dark:bg-slate-800 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50">
+          <div className="relative w-full max-w-sm sm:max-w-md rounded-xl bg-white dark:bg-slate-800 shadow-xl">
             {/* Close button */}
             <button
               onClick={closeEmailModal}
@@ -1087,8 +1102,8 @@ export default function JourneyPage() {
 
       {/* Share Modal */}
       {shareModalJourney && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="relative w-full max-w-md rounded-xl bg-white dark:bg-slate-800 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50">
+          <div className="relative w-full max-w-sm sm:max-w-md rounded-xl bg-white dark:bg-slate-800 shadow-xl">
             {/* Close button */}
             <button
               onClick={closeShareModal}

@@ -25,6 +25,7 @@ interface MessageListProps {
   mentionedPeptides?: string[]
   conversationId?: string
   journeyPrompt?: React.ReactNode
+  onAddToStack?: (peptideId: string) => void
 }
 
 // Threshold for considering user "at bottom"
@@ -43,6 +44,7 @@ export function MessageList({
   mentionedPeptides = [],
   conversationId,
   journeyPrompt,
+  onAddToStack,
 }: MessageListProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const bottomAnchorRef = useRef<HTMLDivElement>(null)
@@ -175,6 +177,7 @@ export function MessageList({
                 message={message}
                 isLast={index === messages.length - 1 && !isLoading}
                 isStreaming={isStreaming && index === messages.length - 1}
+                onAddToStack={onAddToStack}
               />
             </div>
           )
@@ -193,6 +196,7 @@ export function MessageList({
             }}
             isLast={true}
             isStreaming={true}
+            onAddToStack={onAddToStack}
           />
         )}
 

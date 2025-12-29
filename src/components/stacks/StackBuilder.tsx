@@ -8,6 +8,15 @@ import {
   Pill, Target, Activity, Flame, Brain, Moon, Shield, Heart, Dumbbell
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  trackStackGoalSelected,
+  trackStackPeptideAdded,
+  trackStackPeptideRemoved,
+  trackStackShared,
+  trackStackAskAI,
+  trackStackStartJourney,
+} from '@/lib/analytics'
+import { VendorRecommendations } from '@/components/vendors/VendorRecommendations'
 
 // Types for custom peptides
 interface CustomPeptide {
@@ -473,22 +482,52 @@ export function StackBuilder({ onAskAboutStack, onStartJourney }: StackBuilderPr
     ...customPeptides.map(p => ({ ...p, helpsWithSymptoms: p.helpsWithSymptoms || [], sideEffects: p.sideEffects || [] }))
   ], [customPeptides])
 
-  const addPeptide = (id: string) => {
+  const addPeptide = (id: string, fromRecommendation = false) => {
     if (!selectedPeptides.includes(id) && selectedPeptides.length < 6) {
+      const peptide = allPeptides.find(p => p.id === id)
+      const newStackSize = selectedPeptides.length + 1
       setSelectedPeptides([...selectedPeptides, id])
+
+      // Track the addition
+      trackStackPeptideAdded({
+        peptideId: id,
+        peptideName: peptide?.name || id,
+        stackSize: newStackSize,
+        fromRecommendation,
+      })
     }
   }
 
   const removePeptide = (id: string) => {
+    const peptide = allPeptides.find(p => p.id === id)
+    const newStackSize = selectedPeptides.length - 1
     setSelectedPeptides(selectedPeptides.filter(p => p !== id))
+
+    // Track the removal
+    trackStackPeptideRemoved({
+      peptideId: id,
+      peptideName: peptide?.name || id,
+      stackSize: newStackSize,
+    })
   }
 
   const toggleGoal = (goalId: string) => {
+    const isSelecting = !selectedGoals.includes(goalId)
     setSelectedGoals(prev =>
       prev.includes(goalId)
         ? prev.filter(g => g !== goalId)
         : [...prev, goalId]
     )
+
+    // Only track when selecting a goal, not deselecting
+    if (isSelecting) {
+      const goal = SYMPTOM_CATEGORIES.find(g => g.id === goalId)
+      trackStackGoalSelected({
+        goalId,
+        goalLabel: goal?.label || goalId,
+        totalGoals: selectedGoals.length + 1,
+      })
+    }
   }
 
   const addCustomPeptide = () => {
@@ -532,6 +571,12 @@ export function StackBuilder({ onAskAboutStack, onStartJourney }: StackBuilderPr
     setShareLink(link)
     setShowShareModal(true)
     setCopied(false)
+
+    // Track the share action
+    trackStackShared({
+      stackSize: selectedPeptides.length,
+      peptides: selectedPeptideData.map(p => p.name),
+    })
   }
 
   const copyToClipboard = async () => {
@@ -692,7 +737,7 @@ export function StackBuilder({ onAskAboutStack, onStartJourney }: StackBuilderPr
               <button
                 onClick={() => {
                   const toAdd = recommendedPeptides.slice(0, 6 - selectedPeptides.length)
-                  toAdd.forEach(p => addPeptide(p.id))
+                  toAdd.forEach(p => addPeptide(p.id, true))
                 }}
                 disabled={selectedPeptides.length >= 6}
                 className="text-xs px-3 py-1 rounded-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium disabled:opacity-50 transition-colors"
@@ -706,7 +751,7 @@ export function StackBuilder({ onAskAboutStack, onStartJourney }: StackBuilderPr
                 return (
                   <button
                     key={peptide.id}
-                    onClick={() => addPeptide(peptide.id)}
+                    onClick={() => addPeptide(peptide.id, true)}
                     disabled={selectedPeptides.length >= 6}
                     className="group flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-yellow-300 dark:border-yellow-700 hover:border-yellow-500 hover:shadow-md transition-all disabled:opacity-50"
                   >
@@ -800,7 +845,7 @@ export function StackBuilder({ onAskAboutStack, onStartJourney }: StackBuilderPr
                 placeholder="Peptide name"
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm"
               />
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <input
                   type="text"
                   value={customForm.dosing}
@@ -984,7 +1029,14 @@ export function StackBuilder({ onAskAboutStack, onStartJourney }: StackBuilderPr
             <div className="space-y-2">
               <div className="flex gap-2">
                 <button
-                  onClick={() => onAskAboutStack?.()}
+                  onClick={() => {
+                    trackStackAskAI({
+                      stackSize: selectedPeptides.length,
+                      peptides: selectedPeptideData.map(p => p.name),
+                      goals: selectedGoals,
+                    })
+                    onAskAboutStack?.()
+                  }}
                   className="flex-1 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium flex items-center justify-center gap-2 transition-colors"
                 >
                   <MessageSquare className="h-4 w-4" />
@@ -1000,7 +1052,14 @@ export function StackBuilder({ onAskAboutStack, onStartJourney }: StackBuilderPr
                 </button>
               </div>
               <button
-                onClick={() => onStartJourney?.()}
+                onClick={() => {
+                  trackStackStartJourney({
+                    stackSize: selectedPeptides.length,
+                    peptides: selectedPeptideData.map(p => p.name),
+                    goals: selectedGoals,
+                  })
+                  onStartJourney?.()
+                }}
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium flex items-center justify-center gap-2 transition-colors"
               >
                 <Beaker className="h-4 w-4" />
@@ -1008,6 +1067,13 @@ export function StackBuilder({ onAskAboutStack, onStartJourney }: StackBuilderPr
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
+
+            {/* Vendor Recommendations */}
+            <VendorRecommendations
+              peptides={selectedPeptideData.map(p => p.name)}
+              userGoals={selectedGoals}
+              className="mt-4"
+            />
           </div>
         )}
 
