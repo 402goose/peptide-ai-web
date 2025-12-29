@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
 import { OnboardingFlow, type OnboardingContext } from './OnboardingFlow'
+import { JourneyPrompt } from './JourneyPrompt'
 import type { Message, Source } from '@/types'
 import { Beaker, Sparkles, ArrowRight, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -55,6 +56,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   const [detectedMode, setDetectedMode] = useState<string>('balanced')
   const [mentionedPeptides, setMentionedPeptides] = useState<string[]>([])
   const [userContext, setUserContext] = useState<OnboardingContext | null>(null)
+  const [journeyPromptDismissed, setJourneyPromptDismissed] = useState(false)
   const [inputFocused, setInputFocused] = useState(false)
   const [anonChatCount, setAnonChatCount] = useState(0)
   const [showSignUpPrompt, setShowSignUpPrompt] = useState(false)
@@ -711,19 +713,33 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                   </div>
                 </div>
               ) : (
-                <MessageList
-                  messages={messages}
-                  isLoading={isLoading}
-                  isStreaming={isStreaming}
-                  streamingContent={streamingContent}
-                  sources={currentSources}
-                  disclaimers={currentDisclaimers}
-                  followUps={currentFollowUps}
-                  onFollowUpClick={handleFollowUpClick}
-                  detectedMode={detectedMode}
-                  mentionedPeptides={mentionedPeptides}
-                  conversationId={activeConversationId}
-                />
+                <>
+                  <MessageList
+                    messages={messages}
+                    isLoading={isLoading}
+                    isStreaming={isStreaming}
+                    streamingContent={streamingContent}
+                    sources={currentSources}
+                    disclaimers={currentDisclaimers}
+                    followUps={currentFollowUps}
+                    onFollowUpClick={handleFollowUpClick}
+                    detectedMode={detectedMode}
+                    mentionedPeptides={mentionedPeptides}
+                    conversationId={activeConversationId}
+                  />
+
+                  {/* Journey Prompt - shows after onboarding AI response */}
+                  {userContext &&
+                    !journeyPromptDismissed &&
+                    !isLoading &&
+                    !isStreaming &&
+                    messages.some(m => m.role === 'assistant') && (
+                      <JourneyPrompt
+                        context={userContext}
+                        onDismiss={() => setJourneyPromptDismissed(true)}
+                      />
+                    )}
+                </>
               )}
             </motion.div>
           )}
