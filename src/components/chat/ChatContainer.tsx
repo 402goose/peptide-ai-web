@@ -151,17 +151,23 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
 
   // Track if we're in the middle of creating a new conversation (prevents reset race condition)
   const isCreatingConversation = useRef(false)
+  // Track the ID of the conversation we're currently creating (for race condition protection)
+  const creatingConversationIdRef = useRef<string | null>(null)
 
   // Load existing conversation when navigating to a conversation URL
   useEffect(() => {
     // Load if conversationId is set AND it's different from what we have loaded
     // This handles: initial load, switching between conversations, and navigation
     // Don't load if we're currently creating a conversation (prevents race condition with URL update)
+    // The creatingConversationIdRef tracks which conversation we just created via onboarding
+    // to prevent reloading it even if the URL update races with state updates
+    const isNewlyCreatedConversation = conversationId === creatingConversationIdRef.current
     const shouldLoad = conversationId &&
       conversationId !== activeConversationId &&
       !isStreaming &&
       !isLoading &&
-      !isCreatingConversation.current
+      !isCreatingConversation.current &&
+      !isNewlyCreatedConversation
 
     console.log('[ChatContainer] Load check:', {
       conversationId,
@@ -169,6 +175,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       isStreaming,
       isLoading,
       isCreatingConversation: isCreatingConversation.current,
+      creatingConversationId: creatingConversationIdRef.current,
+      isNewlyCreatedConversation,
       shouldLoad,
       messagesCount: messages.length,
     })
@@ -545,6 +553,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               if (data.type === 'conversation_id') {
                 newConversationId = data.conversation_id
                 console.log('[ChatContainer] Got conversation_id from stream:', data.conversation_id)
+                // Track this conversation ID to prevent race condition reloads
+                creatingConversationIdRef.current = data.conversation_id
                 setActiveConversationId(data.conversation_id)
                 // Dispatch event for layout to enable share button immediately
                 window.dispatchEvent(new CustomEvent('conversationCreated', { detail: data.conversation_id }))
@@ -581,10 +591,14 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
           setTimeout(() => {
             console.log('[ChatContainer] Executing router.replace to:', `/chat/c/${newConversationId}`)
             router.replace(`/chat/c/${newConversationId}`, { scroll: false })
-            // Clear creation flag after URL update
+            // Clear creation flags after URL update - keep protection for a bit longer
             setTimeout(() => {
-              console.log('[ChatContainer] Clearing isCreatingConversation flag')
+              console.log('[ChatContainer] Clearing creation flags')
               isCreatingConversation.current = false
+              // Clear the ID reference after a longer delay to ensure all renders complete
+              setTimeout(() => {
+                creatingConversationIdRef.current = null
+              }, 500)
             }, 100)
           }, 50)
         }
