@@ -275,7 +275,7 @@ describe('ChatContainer', () => {
       })
     })
 
-    it('should set activeConversationId from stream', async () => {
+    it('should update URL with conversation ID from stream', async () => {
       const user = userEvent.setup()
       render(<ChatContainer />)
 
@@ -283,10 +283,13 @@ describe('ChatContainer', () => {
       await user.type(input, 'Hello')
       await user.keyboard('{Enter}')
 
-      // URL update is disabled to prevent component remount
-      // But activeConversationId should be set from the stream
       await waitFor(() => {
         expect(screen.getByText('Hello! How can I help?')).toBeInTheDocument()
+      })
+
+      // URL should be updated with conversation ID after streaming completes
+      await waitFor(() => {
+        expect(mockReplace).toHaveBeenCalledWith('/chat/c/conv-123', { scroll: false })
       })
     })
   })
