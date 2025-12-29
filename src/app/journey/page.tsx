@@ -12,7 +12,8 @@ import { Feedbackable } from '@/components/feedback'
 import {
   Plus, ArrowLeft, Syringe, Heart, Beaker, Play, Pause,
   CheckCircle, XCircle, Clock, Pill, Calendar, Trash2,
-  ChevronDown, ChevronUp, TrendingUp, Search, Mail, X, Loader2
+  ChevronDown, ChevronUp, TrendingUp, Search, Mail, X, Loader2,
+  Share2, Copy
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -143,6 +144,11 @@ export default function JourneyPage() {
   const [emailSending, setEmailSending] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const [emailError, setEmailError] = useState<string | null>(null)
+
+  // Share modal state
+  const [shareModalJourney, setShareModalJourney] = useState<LocalJourney | null>(null)
+  const [shareLink, setShareLink] = useState('')
+  const [shareCopied, setShareCopied] = useState(false)
 
   useEffect(() => {
     const loaded = loadJourneys()
@@ -477,6 +483,59 @@ export default function JourneyPage() {
     setEmailError(null)
   }
 
+  // Calculate journey duration
+  const getJourneyDuration = (journey: LocalJourney) => {
+    if (!journey.startDate) return undefined
+    const start = new Date(journey.startDate)
+    const end = journey.endDate ? new Date(journey.endDate) : new Date()
+    const days = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+    if (days < 7) return `${days} days`
+    if (days < 30) return `${Math.floor(days / 7)} weeks`
+    return `${Math.floor(days / 30)} months`
+  }
+
+  // Encode journey for sharing
+  const encodeJourneyForSharing = (journey: LocalJourney): string => {
+    const avgRating = getAverageRating(journey)
+    const data = {
+      t: journey.title,
+      p: journey.primaryPeptide,
+      a: journey.additionalPeptides,
+      s: journey.status,
+      d: journey.startDate,
+      g: journey.goals?.slice(0, 100), // Truncate goals
+      dc: journey.doseLogs.length,
+      cc: journey.checkIns.length,
+      r: avgRating ? parseFloat(avgRating) : undefined,
+      du: getJourneyDuration(journey),
+    }
+    return btoa(JSON.stringify(data)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+  }
+
+  const handleShareJourney = (journey: LocalJourney) => {
+    const code = encodeJourneyForSharing(journey)
+    const link = `${window.location.origin}/share/journey/${code}`
+    setShareLink(link)
+    setShareModalJourney(journey)
+    setShareCopied(false)
+  }
+
+  const handleCopyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareLink)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
+
+  const closeShareModal = () => {
+    setShareModalJourney(null)
+    setShareLink('')
+    setShareCopied(false)
+  }
+
   return (
     <Feedbackable name="Journey Tracker" path="app/journey/page.tsx" className="min-h-screen">
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -747,6 +806,14 @@ export default function JourneyPage() {
                             </Button>
                             <Button
                               size="sm"
+                              variant="outline"
+                              onClick={() => handleShareJourney(journey)}
+                            >
+                              <Share2 className="h-3.5 w-3.5 mr-1" />
+                              Share
+                            </Button>
+                            <Button
+                              size="sm"
                               variant="ghost"
                               className="text-red-500 hover:text-red-600 hover:bg-red-50 ml-auto"
                               onClick={() => handleDeleteJourney(journey.id)}
@@ -1012,6 +1079,85 @@ export default function JourneyPage() {
                     </div>
                   </div>
                 </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {shareModalJourney && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="relative w-full max-w-md rounded-xl bg-white dark:bg-slate-800 shadow-xl">
+            {/* Close button */}
+            <button
+              onClick={closeShareModal}
+              className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                  <Share2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900 dark:text-white">
+                    Share Your Journey
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {shareModalJourney.title}
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                Share your journey with friends. They&apos;ll see a preview of your progress and can start their own journey!
+              </p>
+
+              {/* Link preview */}
+              <div className="mb-4 p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <Pill className="h-4 w-4 text-emerald-500" />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {shareModalJourney.primaryPeptide}
+                    {shareModalJourney.additionalPeptides.length > 0 && (
+                      <span className="text-slate-400"> +{shareModalJourney.additionalPeptides.length}</span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex gap-4 text-xs text-slate-500">
+                  <span>{shareModalJourney.doseLogs.length} doses</span>
+                  <span>{shareModalJourney.checkIns.length} check-ins</span>
+                </div>
+              </div>
+
+              {/* Share link */}
+              <div className="flex gap-2">
+                <Input
+                  value={shareLink}
+                  readOnly
+                  className="text-sm bg-slate-50 dark:bg-slate-900"
+                />
+                <Button
+                  onClick={handleCopyShareLink}
+                  variant={shareCopied ? "default" : "outline"}
+                  className={shareCopied ? "bg-green-500 hover:bg-green-600" : ""}
+                >
+                  {shareCopied ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+
+              {shareCopied && (
+                <p className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">
+                  Link copied to clipboard!
+                </p>
               )}
             </div>
           </div>
