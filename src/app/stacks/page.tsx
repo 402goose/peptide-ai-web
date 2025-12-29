@@ -19,6 +19,11 @@ export default function StacksPage() {
     router.push('/chat?stack=ask')
   }
 
+  const handleStartJourney = () => {
+    // Navigate to journey page - stack context is loaded from localStorage
+    router.push('/journey?fromStack=true')
+  }
+
   return (
     <div className="h-full flex flex-col bg-white dark:bg-slate-900">
       {/* Tab Header */}
@@ -53,7 +58,7 @@ export default function StacksPage() {
       <div className="flex-1 overflow-auto">
         {activeTab === 'build' ? (
           <Feedbackable name="Stack Builder" path="components/stacks/StackBuilder.tsx">
-            <StackBuilder onAskAboutStack={handleAskAboutStack} />
+            <StackBuilder onAskAboutStack={handleAskAboutStack} onStartJourney={handleStartJourney} />
           </Feedbackable>
         ) : (
           <Feedbackable name="Compare View" path="components/stacks/CompareView.tsx">

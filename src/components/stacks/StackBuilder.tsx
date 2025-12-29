@@ -379,6 +379,7 @@ const CATEGORIES = {
 
 interface StackBuilderProps {
   onAskAboutStack?: () => void
+  onStartJourney?: () => void
 }
 
 // Utility to encode stack data for sharing
@@ -387,7 +388,7 @@ function encodeStackForSharing(peptides: string[], title?: string): string {
   return btoa(JSON.stringify(data)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
 }
 
-export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
+export function StackBuilder({ onAskAboutStack, onStartJourney }: StackBuilderProps) {
   const [selectedPeptides, setSelectedPeptides] = useState<string[]>([])
   const [selectedGoals, setSelectedGoals] = useState<string[]>([])
   const [customPeptides, setCustomPeptides] = useState<CustomPeptide[]>([])
@@ -980,21 +981,31 @@ export function StackBuilder({ onAskAboutStack }: StackBuilderProps) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2">
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onAskAboutStack?.()}
+                  className="flex-1 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium flex items-center justify-center gap-2 transition-colors"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Ask AI About This Stack
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={handleShare}
+                  className="px-4 py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-medium flex items-center justify-center gap-2 transition-colors"
+                  title="Share this stack"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+              </div>
               <button
-                onClick={() => onAskAboutStack?.()}
-                className="flex-1 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium flex items-center justify-center gap-2 transition-colors"
+                onClick={() => onStartJourney?.()}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-medium flex items-center justify-center gap-2 transition-colors"
               >
-                <MessageSquare className="h-4 w-4" />
-                Ask AI About This Stack
+                <Beaker className="h-4 w-4" />
+                Start Journey with This Stack
                 <ArrowRight className="h-4 w-4" />
-              </button>
-              <button
-                onClick={handleShare}
-                className="px-4 py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-medium flex items-center justify-center gap-2 transition-colors"
-                title="Share this stack"
-              >
-                <Share2 className="h-4 w-4" />
               </button>
             </div>
           </div>

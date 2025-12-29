@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -120,6 +120,7 @@ const STATUS_CONFIG = {
 
 export default function JourneyPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useUser()
   const [journeys, setJourneys] = useState<LocalJourney[]>([])
   const [loading, setLoading] = useState(true)
@@ -148,6 +149,59 @@ export default function JourneyPage() {
     setJourneys(loaded)
     setLoading(false)
   }, [])
+
+  // Handle coming from Stack Builder with a pre-built stack
+  useEffect(() => {
+    const fromStack = searchParams?.get('fromStack')
+    if (fromStack === 'true' && typeof window !== 'undefined') {
+      // Load stack from localStorage (saved by Stack Builder)
+      const savedStack = localStorage.getItem('peptide-ai-current-stack')
+      const savedGoals = localStorage.getItem('peptide-ai-selected-goals')
+
+      if (savedStack) {
+        try {
+          const peptideIds: string[] = JSON.parse(savedStack)
+          const goalIds: string[] = savedGoals ? JSON.parse(savedGoals) : []
+
+          if (peptideIds.length > 0) {
+            // Convert peptide IDs to names (matching PEPTIDES list or using formatted ID)
+            const peptideNames = peptideIds.map(id => {
+              const found = PEPTIDES.find(p => p.id === id)
+              return found ? found.name : id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+            })
+
+            // First peptide is primary, rest are additional
+            const primaryPeptide = peptideNames[0]
+            const additionalPeptides = peptideNames.slice(1)
+
+            // Create a default title based on the stack
+            const title = primaryPeptide + (additionalPeptides.length > 0 ? ` + ${additionalPeptides.length} more` : '') + ' Journey'
+
+            // Format goals text
+            const goalsText = goalIds.length > 0
+              ? `Goals: ${goalIds.map(g => g.replace(/-/g, ' ')).join(', ')}`
+              : ''
+
+            // Pre-fill the form
+            setNewJourney({
+              title,
+              primaryPeptide,
+              additionalPeptides,
+              goals: goalsText,
+            })
+
+            // Switch to create view
+            setView('create')
+
+            // Clear the URL param
+            window.history.replaceState(null, '', '/journey')
+          }
+        } catch (e) {
+          console.error('Failed to load stack:', e)
+        }
+      }
+    }
+  }, [searchParams])
 
   const updateJourneys = useCallback((updater: (journeys: LocalJourney[]) => LocalJourney[]) => {
     setJourneys(prev => {
