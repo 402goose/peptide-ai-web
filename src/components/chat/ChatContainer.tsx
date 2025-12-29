@@ -156,17 +156,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     // This handles: initial load, switching between conversations, and navigation
     const shouldLoad = conversationId && conversationId !== activeConversationId && !isStreaming && !isLoading
 
-    console.log('[ChatContainer] useEffect check:', {
-      conversationId,
-      activeConversationId,
-      isStreaming,
-      isLoading,
-      isCreatingConversation: isCreatingConversation.current,
-      shouldLoad
-    })
-
     if (shouldLoad) {
-      console.log('[ChatContainer] Loading conversation:', conversationId)
       loadConversation(conversationId)
       setViewState('chatting')
     }
@@ -182,11 +172,9 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   }, [inputFocused, viewState])
 
   async function loadConversation(id: string) {
-    console.log('[loadConversation] Starting load for:', id)
     setIsLoading(true)
     try {
       const conversation = await api.getConversation(id)
-      console.log('[loadConversation] API response:', conversation)
 
       // Convert API messages to our format (handle snake_case from backend)
       const loadedMessages: Message[] = (conversation.messages || []).map((msg: any) => ({
@@ -200,8 +188,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       })).filter((msg: Message) => msg.content) // Filter out empty messages
 
       if (loadedMessages.length === 0) {
-        // No valid messages - redirect to fresh chat using proper router
-        console.log('[loadConversation] Conversation has no messages, starting fresh')
+        // No valid messages - redirect to fresh chat
         setMessages([])
         // Set activeConversationId to the ID to prevent re-triggering load
         setActiveConversationId(id)
