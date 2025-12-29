@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import { useUser } from '@clerk/nextjs'
 import { FeedbackModal } from './FeedbackModal'
 
 interface FeedbackItem {
@@ -64,7 +65,10 @@ function saveFeedback(items: FeedbackItem[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
 }
 
-async function sendFeedbackToAPI(feedback: FeedbackItem): Promise<{ success: boolean; error?: string }> {
+async function sendFeedbackToAPI(
+  feedback: FeedbackItem,
+  userEmail?: string
+): Promise<{ success: boolean; error?: string }> {
   try {
     const response = await fetch('/api/feedback', {
       method: 'POST',
@@ -79,6 +83,7 @@ async function sendFeedbackToAPI(feedback: FeedbackItem): Promise<{ success: boo
         priority: feedback.priority,
         category: feedback.category,
         user_context: feedback.userContext,
+        user_email: userEmail,
       }),
     })
 
@@ -117,10 +122,14 @@ async function sendFeedbackToAPI(feedback: FeedbackItem): Promise<{ success: boo
 }
 
 export function FeedbackProvider({ children }: { children: ReactNode }) {
+  const { user } = useUser()
   const [isEnabled, setIsEnabled] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentComponent, setCurrentComponent] = useState({ name: '', path: '' })
   const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>(() => loadFeedback())
+
+  // Get user's primary email if available
+  const userEmail = user?.primaryEmailAddress?.emailAddress
 
   const openFeedback = useCallback((componentName: string, componentPath: string) => {
     setCurrentComponent({ name: componentName, path: componentPath })
@@ -135,8 +144,8 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
       return updated
     })
 
-    // Send to API and wait for result
-    const result = await sendFeedbackToAPI(feedback)
+    // Send to API and wait for result (include user email for follow-up notifications)
+    const result = await sendFeedbackToAPI(feedback, userEmail)
 
     if (result.success) {
       console.log('✅ Feedback saved to server')
@@ -145,7 +154,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     }
 
     return result
-  }, [])
+  }, [userEmail])
 
   const updateFeedbackStatus = useCallback((id: string, status: FeedbackItem['status']) => {
     setFeedbackItems(prev => {
