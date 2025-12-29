@@ -833,35 +833,39 @@ export default function JourneyPage() {
         )}
 
         {view === 'dose' && selectedJourney && (
-          <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
-            <div className="mb-4 text-sm text-slate-500">
-              Logging for: <span className="font-medium text-slate-700 dark:text-slate-300">{selectedJourney.title}</span>
+          <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 max-h-[calc(100vh-200px)] overflow-y-auto">
+            <div className="p-6">
+              <div className="mb-4 text-sm text-slate-500">
+                Logging for: <span className="font-medium text-slate-700 dark:text-slate-300">{selectedJourney.title}</span>
+              </div>
+              <DoseLogForm
+                peptide={selectedJourney.primaryPeptide}
+                onSubmit={handleLogDose}
+                onCancel={() => {
+                  setView('list')
+                  setSelectedJourney(null)
+                }}
+                loading={false}
+              />
             </div>
-            <DoseLogForm
-              peptide={selectedJourney.primaryPeptide}
-              onSubmit={handleLogDose}
-              onCancel={() => {
-                setView('list')
-                setSelectedJourney(null)
-              }}
-              loading={false}
-            />
           </div>
         )}
 
         {view === 'checkin' && selectedJourney && (
-          <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
-            <div className="mb-4 text-sm text-slate-500">
-              Check-in for: <span className="font-medium text-slate-700 dark:text-slate-300">{selectedJourney.title}</span>
+          <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 max-h-[calc(100vh-200px)] overflow-y-auto">
+            <div className="p-6">
+              <div className="mb-4 text-sm text-slate-500">
+                Check-in for: <span className="font-medium text-slate-700 dark:text-slate-300">{selectedJourney.title}</span>
+              </div>
+              <CheckInForm
+                onSubmit={handleCheckIn}
+                onCancel={() => {
+                  setView('list')
+                  setSelectedJourney(null)
+                }}
+                loading={false}
+              />
             </div>
-            <CheckInForm
-              onSubmit={handleCheckIn}
-              onCancel={() => {
-                setView('list')
-                setSelectedJourney(null)
-              }}
-              loading={false}
-            />
           </div>
         )}
       </main>
