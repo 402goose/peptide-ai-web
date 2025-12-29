@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useUser } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -11,7 +12,7 @@ import { Feedbackable } from '@/components/feedback'
 import {
   Plus, ArrowLeft, Syringe, Heart, Beaker, Play, Pause,
   CheckCircle, XCircle, Clock, Pill, Calendar, Trash2,
-  ChevronDown, ChevronUp, TrendingUp, Search, Mail
+  ChevronDown, ChevronUp, TrendingUp, Search, Mail, X, Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -119,6 +120,7 @@ const STATUS_CONFIG = {
 
 export default function JourneyPage() {
   const router = useRouter()
+  const { user } = useUser()
   const [journeys, setJourneys] = useState<LocalJourney[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<View>('list')
@@ -133,6 +135,13 @@ export default function JourneyPage() {
     goals: '',
   })
   const [peptideSearch, setPeptideSearch] = useState('')
+
+  // Email modal state
+  const [emailModalJourney, setEmailModalJourney] = useState<LocalJourney | null>(null)
+  const [emailAddress, setEmailAddress] = useState('')
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+  const [emailError, setEmailError] = useState<string | null>(null)
 
   useEffect(() => {
     const loaded = loadJourneys()
@@ -364,9 +373,54 @@ export default function JourneyPage() {
   }
 
   const handleEmailPlan = (journey: LocalJourney) => {
-    const subject = encodeURIComponent(`My Peptide Journey: ${journey.title}`)
-    const body = encodeURIComponent(formatJourneyForEmail(journey))
-    window.location.href = `mailto:?subject=${subject}&body=${body}`
+    // Pre-fill with user's email if available
+    const userEmail = user?.primaryEmailAddress?.emailAddress || ''
+    setEmailAddress(userEmail)
+    setEmailModalJourney(journey)
+    setEmailSent(false)
+    setEmailError(null)
+  }
+
+  const handleSendEmail = async () => {
+    if (!emailModalJourney || !emailAddress) return
+
+    setEmailSending(true)
+    setEmailError(null)
+
+    try {
+      const response = await fetch('/api/v1/email/journey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to_email: emailAddress,
+          journey_title: emailModalJourney.title,
+          journey_content: formatJourneyForEmail(emailModalJourney),
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'Failed to send email')
+      }
+
+      setEmailSent(true)
+      // Auto-close after success
+      setTimeout(() => {
+        setEmailModalJourney(null)
+        setEmailSent(false)
+      }, 2000)
+    } catch (err) {
+      setEmailError(err instanceof Error ? err.message : 'Failed to send email')
+    } finally {
+      setEmailSending(false)
+    }
+  }
+
+  const closeEmailModal = () => {
+    setEmailModalJourney(null)
+    setEmailAddress('')
+    setEmailSent(false)
+    setEmailError(null)
   }
 
   return (
@@ -811,6 +865,100 @@ export default function JourneyPage() {
           </div>
         )}
       </main>
+
+      {/* Email Modal */}
+      {emailModalJourney && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="relative w-full max-w-md rounded-xl bg-white dark:bg-slate-800 shadow-xl">
+            {/* Close button */}
+            <button
+              onClick={closeEmailModal}
+              className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="p-6">
+              {emailSent ? (
+                // Success state
+                <div className="text-center py-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30 mx-auto mb-4">
+                    <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                    Email Sent!
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Check your inbox for your journey plan.
+                  </p>
+                </div>
+              ) : (
+                // Email form
+                <>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                      <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900 dark:text-white">
+                        Email Your Plan
+                      </h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {emailModalJourney.title}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Email Address
+                      </label>
+                      <Input
+                        type="email"
+                        placeholder="your@email.com"
+                        value={emailAddress}
+                        onChange={(e) => setEmailAddress(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+
+                    {emailError && (
+                      <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
+                        {emailError}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleSendEmail}
+                        disabled={!emailAddress || emailSending}
+                        className="flex-1 gap-2"
+                      >
+                        {emailSending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="h-4 w-4" />
+                            Send Email
+                          </>
+                        )}
+                      </Button>
+                      <Button variant="outline" onClick={closeEmailModal}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </Feedbackable>
   )
