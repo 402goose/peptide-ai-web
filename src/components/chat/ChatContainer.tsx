@@ -379,11 +379,13 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         }
         setMessages(prev => [...prev, assistantMessage])
 
-        // NOW update URL after streaming is complete and messages are set
-        // This avoids the remount issue during streaming
-        if (!conversationId && newConversationId) {
-          router.replace(`/chat/c/${newConversationId}`, { scroll: false })
-        }
+        // NOTE: URL update disabled because /chat and /chat/c/[id] are different
+        // page components, causing ChatContainer to remount and lose state.
+        // The conversation is saved in the database - users can access it from sidebar.
+        // TODO: Fix by using a single route like /chat/[[...id]]/page.tsx
+        // if (!conversationId && newConversationId) {
+        //   router.replace(`/chat/c/${newConversationId}`, { scroll: false })
+        // }
       }
 
     } catch (error) {
@@ -563,10 +565,10 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         }
         setMessages(prev => [...prev, assistantMessage])
 
-        // NOW update URL after streaming is complete
-        if (newConversationId) {
-          router.replace(`/chat/c/${newConversationId}`, { scroll: false })
-        }
+        // NOTE: URL update disabled - see comment in handleSendMessage
+        // if (newConversationId) {
+        //   router.replace(`/chat/c/${newConversationId}`, { scroll: false })
+        // }
       }
     } catch (error) {
       console.error('Failed to start guided journey:', error)
