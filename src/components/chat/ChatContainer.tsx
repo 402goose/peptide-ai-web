@@ -163,7 +163,18 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       !isLoading &&
       !isCreatingConversation.current
 
+    console.log('[ChatContainer] Load check:', {
+      conversationId,
+      activeConversationId,
+      isStreaming,
+      isLoading,
+      isCreatingConversation: isCreatingConversation.current,
+      shouldLoad,
+      messagesCount: messages.length,
+    })
+
     if (shouldLoad) {
+      console.log('[ChatContainer] Calling loadConversation for:', conversationId)
       loadConversation(conversationId)
       setViewState('chatting')
     }
@@ -179,9 +190,11 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   }, [inputFocused, viewState])
 
   async function loadConversation(id: string) {
+    console.log('[ChatContainer] loadConversation called for:', id)
     setIsLoading(true)
     try {
       const conversation = await api.getConversation(id)
+      console.log('[ChatContainer] loadConversation got response:', conversation.conversation_id)
 
       // Convert API messages to our format (handle snake_case from backend)
       const loadedMessages: Message[] = (conversation.messages || []).map((msg: any) => ({
@@ -461,6 +474,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
 
     // Mark that we're creating a conversation (prevents useEffect from reloading)
     isCreatingConversation.current = true
+    console.log('[ChatContainer] Set isCreatingConversation = true')
 
     // Transition to chatting state
     setViewState('chatting')
@@ -530,6 +544,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
 
               if (data.type === 'conversation_id') {
                 newConversationId = data.conversation_id
+                console.log('[ChatContainer] Got conversation_id from stream:', data.conversation_id)
                 setActiveConversationId(data.conversation_id)
                 // Dispatch event for layout to enable share button immediately
                 window.dispatchEvent(new CustomEvent('conversationCreated', { detail: data.conversation_id }))
@@ -559,9 +574,19 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         }
         setMessages(prev => [...prev, assistantMessage])
 
-        // Update URL to include conversation ID
+        // Update URL AFTER state is settled to prevent race condition
+        // Delay ensures React state updates are applied before URL change triggers useEffect
         if (newConversationId) {
-          router.replace(`/chat/c/${newConversationId}`, { scroll: false })
+          console.log('[ChatContainer] Scheduling URL update for:', newConversationId)
+          setTimeout(() => {
+            console.log('[ChatContainer] Executing router.replace to:', `/chat/c/${newConversationId}`)
+            router.replace(`/chat/c/${newConversationId}`, { scroll: false })
+            // Clear creation flag after URL update
+            setTimeout(() => {
+              console.log('[ChatContainer] Clearing isCreatingConversation flag')
+              isCreatingConversation.current = false
+            }, 100)
+          }, 50)
         }
       }
     } catch (error) {
@@ -576,10 +601,6 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       setIsLoading(false)
       setIsStreaming(false)
       setStreamingContent('')
-      // Clear the creation flag after a short delay to ensure URL update has settled
-      setTimeout(() => {
-        isCreatingConversation.current = false
-      }, 100)
     }
   }
 
