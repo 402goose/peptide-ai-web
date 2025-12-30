@@ -121,13 +121,17 @@
   }
   html {
     height: 100%;
-    overflow: hidden;
+    /* Allow scroll to trigger Safari's URL bar auto-hide */
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground;
-    height: 100%;
-    height: 100dvh; /* Dynamic viewport height - accounts for mobile browser chrome */
-    overflow: hidden;
+    /* Use svh (small viewport height) which is the viewport with browser chrome hidden */
+    /* This makes the app fill the screen when Safari chrome is hidden */
+    min-height: 100svh;
+    min-height: 100dvh; /* Fallback for browsers without svh */
+    /* Don't use overflow:hidden - it prevents Safari URL bar from hiding */
   }
 }
 
