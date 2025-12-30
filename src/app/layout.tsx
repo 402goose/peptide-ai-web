@@ -35,7 +35,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  minimumScale: 1,
   maximumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
@@ -61,6 +63,7 @@ export default function RootLayout({
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
           <meta name="apple-mobile-web-app-title" content="Peptide AI" />
+          <meta name="mobile-web-app-capable" content="yes" />
           <link rel="apple-touch-icon" sizes="180x180" href="/api/icon/192" />
           <link rel="apple-touch-icon" sizes="152x152" href="/api/icon/192" />
           <link rel="apple-touch-icon" sizes="120x120" href="/api/icon/192" />
@@ -68,6 +71,8 @@ export default function RootLayout({
           <meta name="apple-touch-fullscreen" content="yes" />
           {/* Prevent telephone number detection */}
           <meta name="format-detection" content="telephone=no" />
+          {/* Minimal UI hint for browsers */}
+          <meta name="browsermode" content="application" />
         </head>
         <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
           <Providers>
