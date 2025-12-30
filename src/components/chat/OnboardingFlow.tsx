@@ -400,15 +400,21 @@ export function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
         )}
 
         {step === 'experience' && (
-          <div className="w-full max-w-lg mx-auto pb-4">
+          <div className="w-full max-w-lg mx-auto pb-20">
             <div className="grid gap-3">
               {EXPERIENCE_LEVELS.map((level) => (
                 <button
                   key={level.id}
+                  type="button"
                   onClick={() => handleExperienceSelect(level.id)}
+                  onTouchEnd={(e) => {
+                    e.preventDefault()
+                    handleExperienceSelect(level.id)
+                  }}
                   className={cn(
-                    "flex items-center justify-between rounded-xl border-2 p-4 text-left transition-all hover:scale-[1.01]",
-                    "border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
+                    "flex items-center justify-between rounded-xl border-2 p-4 text-left transition-all active:scale-[0.98]",
+                    "border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50/50 dark:hover:bg-blue-950/30",
+                    "cursor-pointer select-none touch-manipulation"
                   )}
                 >
                   <div>
