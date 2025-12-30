@@ -52,6 +52,16 @@ export function MessageList({
   const bottomAnchorRef = useRef<HTMLDivElement>(null)
   const lastUserMessageRef = useRef<HTMLDivElement>(null)
 
+  // Track when streaming just ended to skip animation for the final message
+  // We detect this during render (not in useEffect) so it's available immediately
+  const prevIsStreamingRef = useRef(isStreaming)
+  const justFinishedStreaming = prevIsStreamingRef.current && !isStreaming
+
+  // Update the ref for next render (must be done after we calculate justFinishedStreaming)
+  useEffect(() => {
+    prevIsStreamingRef.current = isStreaming
+  }, [isStreaming])
+
   // Track if user is at bottom
   const [isAtBottom, setIsAtBottom] = useState(true)
   // Track if user manually scrolled up
@@ -170,6 +180,11 @@ export function MessageList({
           const isLastUserMessage = message.role === 'user' &&
             (index === messages.length - 1 || messages[index + 1]?.role === 'assistant')
 
+          // Skip animation for the last assistant message if we just finished streaming
+          // This prevents the "jolt" when transitioning from streaming to final message
+          const isLastAssistant = message.role === 'assistant' && index === messages.length - 1
+          const skipAnimation = isLastAssistant && justFinishedStreaming
+
           return (
             <div
               key={`${message.timestamp}-${index}`}
@@ -179,6 +194,7 @@ export function MessageList({
                 message={message}
                 isLast={index === messages.length - 1 && !isLoading}
                 isStreaming={isStreaming && index === messages.length - 1}
+                skipAnimation={skipAnimation}
                 onAddToStack={onAddToStack}
                 onLearnMore={onLearnMore}
               />

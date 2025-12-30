@@ -130,6 +130,7 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
           sources={message.sources}
           onAddToStack={onAddToStack}
           onLearnMore={onLearnMore}
+          isStreaming={isStreaming}
         />
         {/* Streaming cursor indicator */}
         {isStreaming && (

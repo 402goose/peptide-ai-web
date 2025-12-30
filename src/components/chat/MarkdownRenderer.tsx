@@ -13,17 +13,24 @@ interface MarkdownRendererProps {
   sources?: Source[]
   onAddToStack?: (peptideId: string) => void
   onLearnMore?: (message: string) => void
+  /** When true, skip interactive elements like peptide pills to prevent flickering */
+  isStreaming?: boolean
 }
 
-export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnMore }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnMore, isStreaming = false }: MarkdownRendererProps) {
   // Replace citation markers [1], [2], etc. with interactive badges
   const processedContent = content.replace(
     /\[(\d+)\]/g,
     (match, num) => `<citation data-index="${num}">${match}</citation>`
   )
 
-  // Process text to add peptide pills
+  // Process text to add peptide pills (skip during streaming to prevent flickering)
   const processPeptides = (text: string): React.ReactNode[] => {
+    // During streaming, just return plain text to avoid pill flickering
+    if (isStreaming) {
+      return [text]
+    }
+
     const parts: React.ReactNode[] = []
     let lastIndex = 0
     let match
