@@ -9,6 +9,7 @@ import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
 import { VoiceButton } from './VoiceButton'
 import { JourneyPrompt } from './JourneyPrompt'
+import { OnboardingFlow } from './OnboardingFlow'
 import type { OnboardingContext } from './OnboardingFlow'
 import { InstallHint } from '@/components/pwa/InstallHint'
 import type { Message, Source } from '@/types'
@@ -94,6 +95,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   const [anonChatCount, setAnonChatCount] = useState(0)
   const [showSignUpPrompt, setShowSignUpPrompt] = useState(false)
   const [pendingVoiceText, setPendingVoiceText] = useState<string | null>(null)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const hasHandledQueryParam = useRef(false)
 
@@ -478,6 +480,22 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     }
   }
 
+  // Handle onboarding flow completion
+  function handleOnboardingComplete(query: string, context: OnboardingContext) {
+    setUserContext(context)
+    setShowOnboarding(false)
+
+    // Generate a personalized opening message based on goals
+    const goalLabels = context.goals?.map(g => g.label).join(' and ') || 'peptide research'
+    const peptides = context.peptideSuggestions?.slice(0, 3).join(', ') || ''
+
+    const openingMessage = context.experienceLevel === 'new'
+      ? `I'm interested in ${goalLabels}. I'm new to peptides${peptides ? ` and would like to learn about ${peptides}` : ''}. Can you give me an introduction and recommendations?`
+      : `I'm looking to optimize my ${goalLabels} protocol${peptides ? ` with ${peptides}` : ''}. What should I know about dosing, timing, and best practices?`
+
+    handleSendMessage(openingMessage)
+  }
+
   // Handle query parameter (from Stack Builder)
   useEffect(() => {
     const query = searchParams?.get('q')
@@ -587,7 +605,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 className="mb-6"
               >
                 <Button
-                  onClick={() => handleSendMessage("I'm new to peptides and want personalized recommendations. Can you ask me about my goals and help me find the right peptides?")}
+                  onClick={() => setShowOnboarding(true)}
                   variant="outline"
                   className="gap-2 px-6 py-5 text-base border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
                 >
@@ -706,6 +724,24 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
           )}
         </div>
       </div>
+
+      {/* Onboarding Modal */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-white dark:bg-slate-950"
+          >
+            <OnboardingFlow
+              onComplete={handleOnboardingComplete}
+              onSkip={() => setShowOnboarding(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
