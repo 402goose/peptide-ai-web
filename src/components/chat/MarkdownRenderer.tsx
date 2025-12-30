@@ -24,13 +24,10 @@ export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnM
     (match, num) => `<citation data-index="${num}">${match}</citation>`
   )
 
-  // Process text to add peptide pills (skip during streaming to prevent flickering)
+  // Process text to add peptide pills
+  // During streaming, only pill-ify "complete" peptides (followed by space/punctuation)
+  // This enables progressive pill rendering without flickering
   const processPeptides = (text: string): React.ReactNode[] => {
-    // During streaming, just return plain text to avoid pill flickering
-    if (isStreaming) {
-      return [text]
-    }
-
     const parts: React.ReactNode[] = []
     let lastIndex = 0
     let match
@@ -39,6 +36,19 @@ export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnM
     PEPTIDE_REGEX.lastIndex = 0
 
     while ((match = PEPTIDE_REGEX.exec(text)) !== null) {
+      const matchEnd = match.index + match[0].length
+      const charAfter = text[matchEnd]
+
+      // During streaming, only render pill if peptide is "complete"
+      // (followed by space, punctuation, or nothing more in text)
+      if (isStreaming) {
+        const isComplete = !charAfter || /[\s,.:;!?)}\]>]/.test(charAfter)
+        if (!isComplete) {
+          // Skip this match - peptide might still be streaming
+          continue
+        }
+      }
+
       // Add text before the match
       if (match.index > lastIndex) {
         parts.push(text.slice(lastIndex, match.index))
@@ -46,13 +56,13 @@ export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnM
       // Add the peptide pill
       parts.push(
         <PeptidePill
-          key={`peptide-${match.index}`}
+          key={`peptide-${match.index}-${match[0]}`}
           name={match[0]}
           onAddToStack={onAddToStack}
           onLearnMore={onLearnMore}
         />
       )
-      lastIndex = match.index + match[0].length
+      lastIndex = matchEnd
     }
 
     // Add remaining text
@@ -202,8 +212,32 @@ export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnM
             )
           },
 
-          // Custom h2 rendering with peptide pill support
+          // Custom h2 rendering with section-based styling
           h2({ node, children, ...props }) {
+            // Get text content for section detection
+            const textContent = Array.isArray(children)
+              ? children.filter(c => typeof c === 'string').join('')
+              : typeof children === 'string' ? children : ''
+            const lowerText = textContent.toLowerCase()
+
+            // Detect section type for visual styling
+            let sectionStyle = 'border-l-4 border-blue-500 pl-3 bg-blue-50/50 dark:bg-blue-950/20'
+            let iconColor = 'text-blue-500'
+
+            if (lowerText.includes('essential') || lowerText.includes('primary') || lowerText.includes('core')) {
+              sectionStyle = 'border-l-4 border-emerald-500 pl-3 bg-emerald-50/50 dark:bg-emerald-950/20'
+              iconColor = 'text-emerald-500'
+            } else if (lowerText.includes('supportive') || lowerText.includes('secondary') || lowerText.includes('complementary')) {
+              sectionStyle = 'border-l-4 border-amber-500 pl-3 bg-amber-50/50 dark:bg-amber-950/20'
+              iconColor = 'text-amber-500'
+            } else if (lowerText.includes('advanced') || lowerText.includes('optional') || lowerText.includes('experimental')) {
+              sectionStyle = 'border-l-4 border-purple-500 pl-3 bg-purple-50/50 dark:bg-purple-950/20'
+              iconColor = 'text-purple-500'
+            } else if (lowerText.includes('warning') || lowerText.includes('caution') || lowerText.includes('risk')) {
+              sectionStyle = 'border-l-4 border-red-500 pl-3 bg-red-50/50 dark:bg-red-950/20'
+              iconColor = 'text-red-500'
+            }
+
             // Process text for peptides in headings
             const processHeadingChildren = (child: React.ReactNode, idx: number = 0): React.ReactNode => {
               if (typeof child === 'string') {
@@ -222,14 +256,30 @@ export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnM
               : processHeadingChildren(children)
 
             return (
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700" {...props}>
+              <h2 className={`flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-3 py-2 rounded-r-lg ${sectionStyle}`} {...props}>
                 {processedChildren}
               </h2>
             )
           },
 
-          // Custom h3 rendering with emoji support and peptide pills
+          // Custom h3 rendering with visual accent
           h3({ node, children, ...props }) {
+            // Get text content for styling hints
+            const textContent = Array.isArray(children)
+              ? children.filter(c => typeof c === 'string').join('')
+              : typeof children === 'string' ? children : ''
+            const lowerText = textContent.toLowerCase()
+
+            // Subtle accent based on content
+            let accentColor = 'text-blue-600 dark:text-blue-400'
+            if (lowerText.includes('dosing') || lowerText.includes('dose')) {
+              accentColor = 'text-teal-600 dark:text-teal-400'
+            } else if (lowerText.includes('timing') || lowerText.includes('schedule')) {
+              accentColor = 'text-indigo-600 dark:text-indigo-400'
+            } else if (lowerText.includes('stack') || lowerText.includes('combination')) {
+              accentColor = 'text-violet-600 dark:text-violet-400'
+            }
+
             // Process text for peptides in headings
             const processHeadingChildren = (child: React.ReactNode, idx: number = 0): React.ReactNode => {
               if (typeof child === 'string') {
@@ -248,7 +298,7 @@ export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnM
               : processHeadingChildren(children)
 
             return (
-              <h3 className="flex items-center gap-2 text-base font-semibold text-blue-600 dark:text-blue-400 mt-5 mb-2" {...props}>
+              <h3 className={`flex items-center gap-2 text-base font-semibold ${accentColor} mt-5 mb-2`} {...props}>
                 {processedChildren}
               </h3>
             )
