@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, Square, Loader2 } from 'lucide-react'
 import { useVoiceRecording } from '@/hooks/useVoiceRecording'
 import { cn } from '@/lib/utils'
+import { haptic } from '@/lib/haptics'
 
 interface VoiceButtonProps {
   onTranscription: (text: string) => void
@@ -26,6 +27,7 @@ export function VoiceButton({ onTranscription, size = 'default', className }: Vo
   })
 
   async function handleClick() {
+    haptic('impact')
     if (isRecording) {
       await stopRecording()
     } else {

@@ -21,17 +21,50 @@ import { api } from '@/lib/api'
 // Higher limit for anonymous users - let them experience the app first
 const ANONYMOUS_CHAT_LIMIT = 10
 
-// Common peptide names for tracking
+// Common peptide names for tracking - include variations
 const PEPTIDE_NAMES = [
-  'bpc-157', 'bpc157', 'tb-500', 'tb500', 'semaglutide', 'tirzepatide',
-  'ipamorelin', 'cjc-1295', 'ghrp-6', 'ghrp-2', 'mk-677', 'pt-141',
-  'melanotan', 'aod-9604', 'sermorelin', 'hexarelin', 'epithalon',
-  'thymosin', 'll-37', 'ghk-cu', 'selank', 'semax', 'dihexa'
+  'bpc-157', 'bpc157', 'bpc 157',
+  'tb-500', 'tb500', 'tb 500',
+  'semaglutide', 'tirzepatide', 'retatrutide',
+  'ipamorelin', 'cjc-1295', 'cjc1295', 'cjc 1295',
+  'ghrp-6', 'ghrp6', 'ghrp-2', 'ghrp2',
+  'mk-677', 'mk677', 'mk 677', 'ibutamoren',
+  'pt-141', 'pt141', 'bremelanotide',
+  'melanotan', 'mt-2', 'mt2',
+  'aod-9604', 'aod9604',
+  'sermorelin', 'hexarelin', 'epithalon', 'epitalon',
+  'thymosin', 'thymalin', 'ta-1', 'tb4',
+  'll-37', 'ghk-cu', 'ghk cu', 'ghkcu',
+  'selank', 'semax', 'dihexa',
+  'kisspeptin', 'gonadorelin', 'tesamorelin',
+  'mots-c', 'motsc', 'ss-31', 'humanin',
+  'peptide', 'peptides'
 ]
 
 function extractPeptideMention(text: string): string | undefined {
   const lower = text.toLowerCase()
   return PEPTIDE_NAMES.find(p => lower.includes(p))
+}
+
+// More robust peptide extraction for AI responses
+function extractAllPeptides(text: string): string[] {
+  const lower = text.toLowerCase()
+  const found = new Set<string>()
+
+  // Check for specific peptide names
+  for (const name of PEPTIDE_NAMES) {
+    if (lower.includes(name) && name !== 'peptide' && name !== 'peptides') {
+      // Normalize the name (e.g., "bpc 157" -> "BPC-157")
+      const normalized = name
+        .toUpperCase()
+        .replace(/\s+/g, '-')
+        .replace(/(\d)/, '-$1')
+        .replace(/--/g, '-')
+      found.add(normalized)
+    }
+  }
+
+  return Array.from(found)
 }
 
 interface ChatContainerProps {
@@ -294,11 +327,43 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         }
       }
 
-      const extractedPeptides = PEPTIDE_NAMES.filter(p =>
-        fullContent.toLowerCase().includes(p.toLowerCase())
-      )
+      // Use robust peptide extraction
+      const extractedPeptides = extractAllPeptides(fullContent)
       if (extractedPeptides.length > 0) {
         setMentionedPeptides(extractedPeptides)
+
+        // Set user context for JourneyPrompt if we have peptides mentioned
+        // This allows the journey prompt to appear without requiring onboarding flow
+        if (!userContext) {
+          setUserContext({
+            primaryGoal: 'research',
+            primaryGoalLabel: 'Peptide Research',
+            goals: [{
+              id: 'research',
+              label: 'Peptide Research',
+              priority: 1,
+              peptides: extractedPeptides,
+            }],
+            conditions: [],
+            experienceLevel: 'some',
+            peptideSuggestions: extractedPeptides,
+          })
+        }
+      } else if (!userContext && fullContent.toLowerCase().includes('peptide')) {
+        // Even if no specific peptides found, show journey prompt if discussing peptides
+        setUserContext({
+          primaryGoal: 'research',
+          primaryGoalLabel: 'Peptide Research',
+          goals: [{
+            id: 'research',
+            label: 'Peptide Research',
+            priority: 1,
+            peptides: [],
+          }],
+          conditions: [],
+          experienceLevel: 'new',
+          peptideSuggestions: [],
+        })
       }
 
       if (fullContent) {
@@ -357,8 +422,14 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       }
     } finally {
       setIsLoading(false)
-      setIsStreaming(false)
-      setStreamingContent('')
+      // Delay clearing streaming state to allow smooth transition
+      // The message is already added to messages array, so we just need to
+      // let React reconcile before hiding the streaming bubble
+      requestAnimationFrame(() => {
+        setIsStreaming(false)
+        // Clear streaming content after a brief delay for smooth handoff
+        setTimeout(() => setStreamingContent(''), 50)
+      })
 
       if (isAnonymous) {
         const count = parseInt(sessionStorage.getItem('peptide-ai-anon-chats') || '0', 10)

@@ -206,28 +206,27 @@ export function MessageList({
         {(isLoading && !streamingContent) && <TypingIndicator />}
 
         {/* Show streaming content as it comes in */}
-        {isStreaming && streamingContent && (
-          <MessageBubble
-            message={{
-              role: 'assistant',
-              content: streamingContent,
-              timestamp: new Date().toISOString(),
-            }}
-            isLast={true}
-            isStreaming={true}
-            onAddToStack={onAddToStack}
-            onLearnMore={onLearnMore}
-          />
-        )}
+        {/* Use AnimatePresence for smooth exit transition */}
+        <AnimatePresence mode="wait">
+          {isStreaming && streamingContent && (
+            <MessageBubble
+              key="streaming-message"
+              message={{
+                role: 'assistant',
+                content: streamingContent,
+                timestamp: new Date().toISOString(),
+              }}
+              isLast={true}
+              isStreaming={true}
+              onAddToStack={onAddToStack}
+              onLearnMore={onLearnMore}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Show interactive elements after the last assistant message */}
         {!isLoading && messages.length > 0 && messages[messages.length - 1].role === 'assistant' && (
-          <motion.div
-            className="mt-4 space-y-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
+          <div className="mt-4 space-y-3">
             {/* Follow-up suggestions - compact horizontal chips */}
             {followUps.length > 0 && (
               <FollowUpChips followUps={followUps} onClick={onFollowUpClick} />
@@ -235,16 +234,10 @@ export function MessageList({
 
             {/* Collapsible research card with sources */}
             {sources.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: 0.1 }}
-              >
-                <ResponseCard
-                  sources={sources}
-                  showVendors={true}
-                />
-              </motion.div>
+              <ResponseCard
+                sources={sources}
+                showVendors={true}
+              />
             )}
 
             {/* Subtle disclaimer - just a text line */}
@@ -258,7 +251,7 @@ export function MessageList({
               peptides={mentionedPeptides}
               conversationId={conversationId}
             />
-          </motion.div>
+          </div>
         )}
 
         {/* Journey Prompt - shows after onboarding AI response */}

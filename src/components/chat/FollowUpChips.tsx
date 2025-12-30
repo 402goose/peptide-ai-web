@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { MessageCircle } from 'lucide-react'
+import { haptic } from '@/lib/haptics'
 
 interface FollowUpChipsProps {
   followUps: string[]
@@ -28,7 +29,10 @@ export function FollowUpChips({ followUps, onClick }: FollowUpChipsProps) {
         {followUps.map((question, index) => (
           <motion.button
             key={index}
-            onClick={() => onClick(question)}
+            onClick={() => {
+              haptic('light')
+              onClick(question)
+            }}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2, delay: index * 0.05 }}

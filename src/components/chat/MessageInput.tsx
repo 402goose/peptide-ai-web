@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Send, Mic, Square, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useVoiceRecording } from '@/hooks/useVoiceRecording'
+import { haptic } from '@/lib/haptics'
 
 interface MessageInputProps {
   onSend: (message: string) => void
@@ -58,6 +59,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
     function handleSubmit(e: React.FormEvent) {
       e.preventDefault()
       if (message.trim() && !disabled) {
+        haptic('medium')
         onSend(message.trim())
         setMessage('')
       }
@@ -81,6 +83,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
     }
 
     async function handleVoiceClick() {
+      haptic('impact')
       if (isRecording) {
         await stopRecording()
       } else {

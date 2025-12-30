@@ -96,11 +96,11 @@ export function FeedbackModal({
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      // Start the conversation
-      setMessages([{
-        role: 'assistant',
-        content: `Hi! I see you have feedback about the **${componentName}**. I'd love to understand your thoughts. What would you like to share? Is it a bug, a feature idea, or general feedback?`
-      }])
+      // Start the conversation with a cleaner intro
+      const intro = componentName === 'General Feedback'
+        ? "Hi! I'd love to hear your thoughts about Peptide AI. What would you like to share? Is it a bug, a feature idea, or general feedback?"
+        : `Hi! I see you have feedback about **${componentName}**. I'd love to understand your thoughts. What would you like to share?`
+      setMessages([{ role: 'assistant', content: intro }])
     }
   }, [isOpen, componentName, messages.length])
 

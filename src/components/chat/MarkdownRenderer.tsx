@@ -202,20 +202,54 @@ export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnM
             )
           },
 
-          // Custom h2 rendering
+          // Custom h2 rendering with peptide pill support
           h2({ node, children, ...props }) {
+            // Process text for peptides in headings
+            const processHeadingChildren = (child: React.ReactNode, idx: number = 0): React.ReactNode => {
+              if (typeof child === 'string') {
+                return processPeptides(child).map((part, pIndex) => {
+                  if (typeof part === 'string') {
+                    return <span key={`h2-text-${idx}-${pIndex}`}>{part}</span>
+                  }
+                  return part
+                })
+              }
+              return child
+            }
+
+            const processedChildren = Array.isArray(children)
+              ? children.map((child, idx) => processHeadingChildren(child, idx))
+              : processHeadingChildren(children)
+
             return (
               <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100 mt-6 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700" {...props}>
-                {children}
+                {processedChildren}
               </h2>
             )
           },
 
-          // Custom h3 rendering with emoji support
+          // Custom h3 rendering with emoji support and peptide pills
           h3({ node, children, ...props }) {
+            // Process text for peptides in headings
+            const processHeadingChildren = (child: React.ReactNode, idx: number = 0): React.ReactNode => {
+              if (typeof child === 'string') {
+                return processPeptides(child).map((part, pIndex) => {
+                  if (typeof part === 'string') {
+                    return <span key={`h3-text-${idx}-${pIndex}`}>{part}</span>
+                  }
+                  return part
+                })
+              }
+              return child
+            }
+
+            const processedChildren = Array.isArray(children)
+              ? children.map((child, idx) => processHeadingChildren(child, idx))
+              : processHeadingChildren(children)
+
             return (
               <h3 className="flex items-center gap-2 text-base font-semibold text-blue-600 dark:text-blue-400 mt-5 mb-2" {...props}>
-                {children}
+                {processedChildren}
               </h3>
             )
           },

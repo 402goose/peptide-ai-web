@@ -4,6 +4,9 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { Providers } from '@/components/providers'
 import './globals.css'
 
+// Force dynamic rendering to avoid Clerk issues during build
+export const dynamic = 'force-dynamic'
+
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],

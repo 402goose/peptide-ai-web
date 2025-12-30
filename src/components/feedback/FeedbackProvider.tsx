@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { FeedbackModal } from './FeedbackModal'
+import { haptic } from '@/lib/haptics'
 
 interface FeedbackItem {
   id: string
@@ -189,7 +190,10 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
       {/* Floating feedback button - opens feedback modal */}
       {/* Bottom right, above the chat input area (safe-area + input height) */}
       <button
-        onClick={() => openFeedback('General Feedback', window.location.pathname)}
+        onClick={() => {
+          haptic('light')
+          openFeedback('General Feedback', window.location.pathname)
+        }}
         className="fixed right-4 z-40 p-3 rounded-full shadow-lg transition-all bg-purple-500 text-white hover:bg-purple-600 hover:scale-105 active:scale-95"
         style={{
           bottom: 'calc(env(safe-area-inset-bottom, 0px) + 140px)'

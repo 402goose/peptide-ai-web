@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Beaker, X, Plus, ExternalLink, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { haptic } from '@/lib/haptics'
 
 interface PeptideInfo {
   name: string
@@ -309,6 +310,7 @@ export function PeptidePill({ name, onAddToStack, onLearnMore }: PeptidePillProp
 
   // Calculate position when opening
   const handleOpen = () => {
+    haptic('light')
     if (pillRef.current) {
       const rect = pillRef.current.getBoundingClientRect()
       const spaceBelow = window.innerHeight - rect.bottom
@@ -413,6 +415,7 @@ export function PeptidePill({ name, onAddToStack, onLearnMore }: PeptidePillProp
           <div className="flex gap-2">
             <button
               onClick={() => {
+                haptic('success')
                 onAddToStack?.(normalizedName)
                 setIsOpen(false)
               }}
@@ -423,6 +426,7 @@ export function PeptidePill({ name, onAddToStack, onLearnMore }: PeptidePillProp
             </button>
             <button
               onClick={() => {
+                haptic('light')
                 const message = `Tell me more about ${peptideInfo.name}`
                 if (onLearnMore) {
                   onLearnMore(message)

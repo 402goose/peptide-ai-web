@@ -30,7 +30,7 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
   const isUser = message.role === 'user'
   const isOnboardingContext = message.metadata?.type === 'onboarding_context'
 
-  // Animation variants for message entrance
+  // Animation variants for message entrance and exit
   const messageVariants = {
     hidden: {
       opacity: 0,
@@ -44,6 +44,12 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
       transition: {
         duration: 0.25,
         ease: [0.25, 0.1, 0.25, 1] as const, // Custom ease for smooth feel
+      }
+    },
+    exit: {
+      opacity: 0,
+      transition: {
+        duration: 0.1, // Quick exit to avoid overlap
       }
     },
   }
@@ -120,6 +126,7 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
       className="mb-6 group"
       initial={skipAnimation ? "visible" : "hidden"}
       animate="visible"
+      exit="exit"
       variants={messageVariants}
       data-testid="assistant-message"
       data-streaming={isStreaming ? 'true' : undefined}

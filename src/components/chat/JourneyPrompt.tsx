@@ -6,6 +6,7 @@ import { Rocket, X, Syringe, Target, CheckCircle, ExternalLink } from 'lucide-re
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import type { OnboardingContext } from './OnboardingFlow'
+import { haptic } from '@/lib/haptics'
 
 // Journey types (matching Journey page)
 interface LocalJourney {
@@ -50,6 +51,7 @@ export function JourneyPrompt({ context, onDismiss }: JourneyPromptProps) {
   const [createdJourneyId, setCreatedJourneyId] = useState<string | null>(null)
 
   const handleStartJourney = async () => {
+    haptic('success')
     setIsCreating(true)
 
     // Get primary peptide and goals info
