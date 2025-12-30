@@ -198,7 +198,7 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
       </div>
 
       {/* Conversations List */}
-      <ScrollArea className="flex-1 px-2">
+      <ScrollArea className="flex-1 min-h-0 px-2">
         {loading ? (
           <div className="space-y-1">
             {[...Array(8)].map((_, i) => (

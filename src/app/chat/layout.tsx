@@ -91,7 +91,7 @@ export default function ChatLayout({
   return (
     <div className="h-[100svh] flex bg-white dark:bg-slate-950 overflow-hidden">
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-slate-200 dark:md:border-slate-800">
+      <div className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-slate-200 dark:md:border-slate-800 h-full overflow-hidden">
         <ConversationSidebar />
       </div>
 
