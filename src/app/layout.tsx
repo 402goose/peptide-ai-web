@@ -57,9 +57,17 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <head>
-          <link rel="apple-touch-icon" sizes="180x180" href="/api/icon/192" />
+          {/* iOS PWA support */}
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+          <meta name="apple-mobile-web-app-title" content="Peptide AI" />
+          <link rel="apple-touch-icon" sizes="180x180" href="/api/icon/192" />
+          <link rel="apple-touch-icon" sizes="152x152" href="/api/icon/192" />
+          <link rel="apple-touch-icon" sizes="120x120" href="/api/icon/192" />
+          {/* Splash screens for iOS */}
+          <meta name="apple-touch-fullscreen" content="yes" />
+          {/* Prevent telephone number detection */}
+          <meta name="format-detection" content="telephone=no" />
         </head>
         <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
           <Providers>

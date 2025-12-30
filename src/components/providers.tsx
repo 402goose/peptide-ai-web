@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { FeedbackProvider } from '@/components/feedback/FeedbackProvider'
 import { ToastProvider } from '@/components/ui/Toast'
 import { UpdateToast } from '@/components/pwa/UpdateToast'
+import { PWANavigationHandler } from '@/components/pwa/PWANavigationHandler'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -30,6 +31,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         <FeedbackProvider>
           <ToastProvider>
+            <PWANavigationHandler />
             {children}
             <UpdateToast />
           </ToastProvider>
