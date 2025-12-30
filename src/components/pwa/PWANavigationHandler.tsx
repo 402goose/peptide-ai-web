@@ -11,7 +11,7 @@ import { useEffect } from 'react'
  * This component:
  * 1. Intercepts clicks on external links and opens them in Safari (not in PWA)
  * 2. Ensures internal navigation stays within the PWA
- * 3. Logs when the app is in standalone mode
+ * 3. Triggers Safari's minimal UI by scrolling
  */
 export function PWANavigationHandler() {
   useEffect(() => {
@@ -26,6 +26,21 @@ export function PWANavigationHandler() {
     if (isStandalone) {
       console.log('[PWA] Running in standalone mode')
     }
+
+    // Trigger Safari's minimal UI by performing a small scroll
+    // This helps hide the address bar in Safari
+    const triggerMinimalUI = () => {
+      // Only on iOS Safari (not in standalone mode)
+      const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+      if (isIOS && !isStandalone) {
+        // Scroll down 1px then back to trigger Safari's hide
+        setTimeout(() => {
+          window.scrollTo(0, 1)
+        }, 100)
+      }
+    }
+
+    triggerMinimalUI()
 
     // Handle link clicks
     const handleClick = (e: MouseEvent) => {
