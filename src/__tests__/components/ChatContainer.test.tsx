@@ -159,7 +159,7 @@ describe('ChatContainer', () => {
 
       // Should show the ready state with Peptide AI branding
       expect(screen.getByText('Peptide AI')).toBeInTheDocument()
-      expect(screen.getByText(/Your research journal/)).toBeInTheDocument()
+      expect(screen.getByText(/Your research companion/)).toBeInTheDocument()
     })
 
     it('should show voice button in ready state', () => {

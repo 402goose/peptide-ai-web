@@ -136,7 +136,7 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
   return (
     <div className="flex h-full flex-col bg-slate-50 dark:bg-slate-900">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-slate-200 p-4 dark:border-slate-800">
+      <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2.5 dark:border-slate-800">
         <Beaker className="h-5 w-5 text-blue-600" />
         <span className="font-semibold text-slate-900 dark:text-white">
           Peptide AI
@@ -144,29 +144,29 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
       </div>
 
       {/* New Chat Button */}
-      <div className="p-3 space-y-2">
+      <div className="p-2 space-y-0.5">
         <Button
           onClick={handleNewChat}
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 h-8 text-sm"
           variant="outline"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-3.5 w-3.5" />
           New Research Query
         </Button>
         <Button
           onClick={() => handleFeatureNavigation('journey', '/journey')}
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 h-8 text-sm"
           variant="ghost"
         >
-          <FlaskConical className="h-4 w-4 text-purple-500" />
+          <FlaskConical className="h-3.5 w-3.5 text-purple-500" />
           Journey Tracker
         </Button>
         <Button
           onClick={() => handleFeatureNavigation('stack', '/stacks')}
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 h-8 text-sm"
           variant="ghost"
         >
-          <svg className="h-4 w-4 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="h-3.5 w-3.5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="3" y="3" width="7" height="7" rx="1" />
             <rect x="14" y="3" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -176,43 +176,43 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
         </Button>
 
         {/* Tools Section */}
-        <div className="border-t border-slate-200 dark:border-slate-700 pt-2 mt-2">
+        <div className="border-t border-slate-200 dark:border-slate-700 pt-1.5 mt-1.5">
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400 px-2">Tools</span>
         </div>
         <Button
           onClick={() => handleFeatureNavigation('calculator', '/tools/calculator')}
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 h-8 text-sm"
           variant="ghost"
         >
-          <Calculator className="h-4 w-4 text-blue-500" />
+          <Calculator className="h-3.5 w-3.5 text-blue-500" />
           Dose Calculator
         </Button>
         <Button
           onClick={() => handleFeatureNavigation('symptoms', '/tools/symptoms')}
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 h-8 text-sm"
           variant="ghost"
         >
-          <Sparkles className="h-4 w-4 text-amber-500" />
+          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
           Symptom Guide
         </Button>
       </div>
 
       {/* Conversations List */}
-      <ScrollArea className="flex-1 px-3">
+      <ScrollArea className="flex-1 px-2">
         {loading ? (
-          <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
+          <div className="space-y-1">
+            {[...Array(8)].map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
         ) : conversations.length === 0 ? (
-          <div className="py-8 text-center text-sm text-slate-500">
+          <div className="py-6 text-center text-sm text-slate-500">
             No conversations yet.
             <br />
             Start a new research query!
           </div>
         ) : (
-          <div className="space-y-1 pb-4">
+          <div className="space-y-0.5 pb-2">
             {conversations.map((conversation) => {
               const isEditing = editingId === conversation.conversation_id
 
@@ -220,13 +220,13 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
                 <div
                   key={conversation.conversation_id}
                   className={cn(
-                    'group flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-slate-200 dark:hover:bg-slate-800',
+                    'group flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-slate-200 dark:hover:bg-slate-800',
                     currentId === conversation.conversation_id &&
                       'bg-slate-200 dark:bg-slate-800'
                   )}
                   onClick={() => !isEditing && handleSelectConversation(conversation.conversation_id)}
                 >
-                  <MessageSquare className="h-4 w-4 shrink-0 text-slate-500" />
+                  <MessageSquare className="h-3.5 w-3.5 shrink-0 text-slate-500" />
                   <div className="min-w-0 flex-1">
                     {isEditing ? (
                       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -244,7 +244,7 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 shrink-0 text-green-600 hover:text-green-700"
+                          className="h-5 w-5 shrink-0 text-green-600 hover:text-green-700"
                           onClick={() => handleSaveRename(conversation.conversation_id)}
                         >
                           <Check className="h-3 w-3" />
@@ -252,7 +252,7 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 shrink-0 text-slate-500 hover:text-slate-700"
+                          className="h-5 w-5 shrink-0 text-slate-500 hover:text-slate-700"
                           onClick={handleCancelRename}
                         >
                           <X className="h-3 w-3" />
@@ -260,10 +260,10 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
                       </div>
                     ) : (
                       <>
-                        <div className="truncate font-medium text-slate-900 dark:text-white">
+                        <div className="truncate text-[13px] font-medium text-slate-900 dark:text-white leading-tight">
                           {conversation.title}
                         </div>
-                        <div className="truncate text-xs text-slate-500">
+                        <div className="truncate text-[11px] text-slate-500 leading-tight">
                           {formatDate(conversation.updated_at)}
                         </div>
                       </>
@@ -275,10 +275,10 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
+                          className="h-5 w-5 shrink-0 opacity-0 group-hover:opacity-100"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <MoreHorizontal className="h-4 w-4" />
+                          <MoreHorizontal className="h-3.5 w-3.5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -306,7 +306,7 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
       </ScrollArea>
 
       {/* Footer */}
-      <div className="border-t border-slate-200 p-3 text-xs text-slate-500 dark:border-slate-800">
+      <div className="border-t border-slate-200 px-2 py-2 text-[11px] text-slate-500 dark:border-slate-800">
         Research platform. Not medical advice.
       </div>
 

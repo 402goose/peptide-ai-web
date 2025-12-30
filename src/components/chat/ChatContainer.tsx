@@ -13,7 +13,7 @@ import { OnboardingFlow } from './OnboardingFlow'
 import type { OnboardingContext } from './OnboardingFlow'
 import { InstallHint } from '@/components/pwa/InstallHint'
 import type { Message, Source } from '@/types'
-import { Beaker, Sparkles, ArrowRight, Lock, Target } from 'lucide-react'
+import { Beaker, Sparkles, ArrowRight, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/Toast'
 import { trackSessionStart, trackPageView, trackChatSent } from '@/lib/analytics'
@@ -571,7 +571,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
           </div>
         ) : (
         <AnimatePresence mode="wait" initial={false}>
-          {/* Ready State - Big voice button, simple */}
+          {/* Ready State - Clean welcome with input and suggestions */}
           {viewState === 'ready' && (
             <motion.div
               key="ready"
@@ -596,7 +596,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                   Peptide AI
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 max-w-sm">
-                  Your research journal. Talk about peptides, log your journey, get insights.
+                  Your research companion for peptides, dosing, and protocols.
                 </p>
               </motion.div>
 
@@ -605,7 +605,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
-                className="mb-12 sm:hidden"
+                className="mb-8 sm:hidden"
               >
                 <VoiceButton
                   size="large"
@@ -618,7 +618,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
-                className="hidden sm:block w-full max-w-2xl mb-8"
+                className="hidden sm:block w-full max-w-2xl mb-6"
               >
                 <MessageInput
                   onSend={handleSendMessage}
@@ -627,28 +627,11 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 />
               </motion.div>
 
-              {/* Get Personalized Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25, duration: 0.3 }}
-                className="mb-6"
-              >
-                <Button
-                  onClick={() => setShowOnboarding(true)}
-                  variant="outline"
-                  className="gap-2 px-6 py-5 text-base border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                >
-                  <Target className="h-5 w-5 text-blue-500" />
-                  Get Personalized Recommendations
-                </Button>
-              </motion.div>
-
               {/* Quick suggestions */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35, duration: 0.3 }}
+                transition={{ delay: 0.3, duration: 0.3 }}
                 className="flex flex-wrap justify-center gap-2 max-w-xl mb-8"
               >
                 {[
@@ -672,7 +655,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.3 }}
+                transition={{ delay: 0.4, duration: 0.3 }}
               >
                 <InstallHint />
               </motion.div>
