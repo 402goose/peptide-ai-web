@@ -16,7 +16,7 @@ import { Plus, MessageSquare, MoreHorizontal, Trash2, Beaker, FlaskConical, Penc
 import { api } from '@/lib/api'
 import type { ConversationSummary } from '@/types'
 import { cn } from '@/lib/utils'
-import { AuthPromptModal } from '@/components/auth/AuthPromptModal'
+import { AuthPromptModal, type AuthFeature } from '@/components/auth/AuthPromptModal'
 import { haptic } from '@/lib/haptics'
 
 interface ConversationSidebarProps {
@@ -33,9 +33,9 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
-  const [authModal, setAuthModal] = useState<{ isOpen: boolean; feature: 'journey' | 'stack'; path: string } | null>(null)
+  const [authModal, setAuthModal] = useState<{ isOpen: boolean; feature: AuthFeature; path: string } | null>(null)
 
-  const handleFeatureNavigation = (feature: 'journey' | 'stack', path: string) => {
+  const handleFeatureNavigation = (feature: AuthFeature, path: string) => {
     haptic('light')
     // If user is logged in, navigate directly
     if (isLoaded && user) {
@@ -180,7 +180,7 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400 px-2">Tools</span>
         </div>
         <Button
-          onClick={() => router.push('/tools/calculator')}
+          onClick={() => handleFeatureNavigation('calculator', '/tools/calculator')}
           className="w-full justify-start gap-2"
           variant="ghost"
         >
@@ -188,7 +188,7 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
           Dose Calculator
         </Button>
         <Button
-          onClick={() => router.push('/tools/symptoms')}
+          onClick={() => handleFeatureNavigation('symptoms', '/tools/symptoms')}
           className="w-full justify-start gap-2"
           variant="ghost"
         >
@@ -314,12 +314,13 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
       {authModal && (
         <AuthPromptModal
           isOpen={authModal.isOpen}
-          onClose={() => {
-            setAuthModal(null)
-            onSelect?.()
-          }}
+          onClose={() => setAuthModal(null)}
           feature={authModal.feature}
           targetPath={authModal.path}
+          onContinue={() => {
+            router.push(authModal.path)
+            onSelect?.()
+          }}
         />
       )}
     </div>

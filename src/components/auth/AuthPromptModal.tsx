@@ -4,18 +4,29 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
-import { X, LogIn, UserPlus, FlaskConical, Layers } from 'lucide-react'
+import { X, LogIn, UserPlus, FlaskConical, Layers, Calculator, Sparkles, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { haptic } from '@/lib/haptics'
+
+export type AuthFeature = 'journey' | 'stack' | 'calculator' | 'symptoms' | 'add-stack'
 
 interface AuthPromptModalProps {
   isOpen: boolean
   onClose: () => void
-  feature: 'journey' | 'stack'
-  targetPath: string
+  feature: AuthFeature
+  targetPath?: string
+  onContinue?: () => void
 }
 
-const FEATURE_CONFIG = {
+const FEATURE_CONFIG: Record<AuthFeature, {
+  icon: React.ComponentType<{ className?: string }>
+  iconColor: string
+  iconBg: string
+  title: string
+  description: string
+  benefits: string[]
+  allowGuest?: boolean
+}> = {
   journey: {
     icon: FlaskConical,
     iconColor: 'text-purple-500',
@@ -27,6 +38,7 @@ const FEATURE_CONFIG = {
       'Track energy, sleep, and mood',
       'Share your journey with friends',
     ],
+    allowGuest: true,
   },
   stack: {
     icon: Layers,
@@ -39,10 +51,50 @@ const FEATURE_CONFIG = {
       'Get dosing recommendations',
       'Save and share your protocols',
     ],
+    allowGuest: true,
+  },
+  calculator: {
+    icon: Calculator,
+    iconColor: 'text-blue-500',
+    iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+    title: 'Dose Calculator',
+    description: 'Calculate precise peptide doses based on your weight and goals.',
+    benefits: [
+      'Accurate dosing calculations',
+      'Weight-based recommendations',
+      'Save your presets',
+    ],
+    allowGuest: true,
+  },
+  symptoms: {
+    icon: Sparkles,
+    iconColor: 'text-amber-500',
+    iconBg: 'bg-amber-100 dark:bg-amber-900/30',
+    title: 'Symptom Guide',
+    description: 'Find the right peptides based on your symptoms and goals.',
+    benefits: [
+      'Symptom-based search',
+      'Personalized suggestions',
+      'Research-backed info',
+    ],
+    allowGuest: true,
+  },
+  'add-stack': {
+    icon: Plus,
+    iconColor: 'text-green-500',
+    iconBg: 'bg-green-100 dark:bg-green-900/30',
+    title: 'Add to Stack',
+    description: 'Save this peptide to your personal stack for easy reference.',
+    benefits: [
+      'Build your custom stack',
+      'Track what you\'re researching',
+      'Get stack recommendations',
+    ],
+    allowGuest: true,
   },
 }
 
-export function AuthPromptModal({ isOpen, onClose, feature, targetPath }: AuthPromptModalProps) {
+export function AuthPromptModal({ isOpen, onClose, feature, targetPath, onContinue }: AuthPromptModalProps) {
   const router = useRouter()
   const { user, isLoaded } = useUser()
   const { openSignIn, openSignUp } = useClerk()
@@ -51,11 +103,15 @@ export function AuthPromptModal({ isOpen, onClose, feature, targetPath }: AuthPr
   const config = FEATURE_CONFIG[feature]
   const Icon = config.icon
 
-  // If user is already signed in, just navigate
+  // If user is already signed in, just navigate or continue
   if (isLoaded && user) {
     if (isOpen && !isNavigating) {
       setIsNavigating(true)
-      router.push(targetPath)
+      if (onContinue) {
+        onContinue()
+      } else if (targetPath) {
+        router.push(targetPath)
+      }
       onClose()
     }
     return null
@@ -66,8 +122,8 @@ export function AuthPromptModal({ isOpen, onClose, feature, targetPath }: AuthPr
   const handleSignIn = () => {
     haptic('medium')
     openSignIn({
-      afterSignInUrl: targetPath,
-      afterSignUpUrl: targetPath,
+      afterSignInUrl: targetPath || '/chat',
+      afterSignUpUrl: targetPath || '/chat',
     })
     onClose()
   }
@@ -75,15 +131,19 @@ export function AuthPromptModal({ isOpen, onClose, feature, targetPath }: AuthPr
   const handleSignUp = () => {
     haptic('medium')
     openSignUp({
-      afterSignInUrl: targetPath,
-      afterSignUpUrl: targetPath,
+      afterSignInUrl: targetPath || '/chat',
+      afterSignUpUrl: targetPath || '/chat',
     })
     onClose()
   }
 
   const handleContinueAsGuest = () => {
     haptic('light')
-    router.push(targetPath)
+    if (onContinue) {
+      onContinue()
+    } else if (targetPath) {
+      router.push(targetPath)
+    }
     onClose()
   }
 
