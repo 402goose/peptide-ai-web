@@ -15,6 +15,8 @@ interface MessageBubbleProps {
   skipAnimation?: boolean
   /** Callback when user adds a peptide to stack from a pill */
   onAddToStack?: (peptideId: string) => void
+  /** Callback when user clicks "Learn More" on a peptide pill */
+  onLearnMore?: (message: string) => void
 }
 
 // Experience level labels
@@ -24,7 +26,7 @@ const EXPERIENCE_LABELS: Record<string, string> = {
   experienced: 'Experienced user',
 }
 
-export function MessageBubble({ message, isLast, isStreaming, skipAnimation = false, onAddToStack }: MessageBubbleProps) {
+export function MessageBubble({ message, isLast, isStreaming, skipAnimation = false, onAddToStack, onLearnMore }: MessageBubbleProps) {
   const isUser = message.role === 'user'
   const isOnboardingContext = message.metadata?.type === 'onboarding_context'
 
@@ -127,6 +129,7 @@ export function MessageBubble({ message, isLast, isStreaming, skipAnimation = fa
           content={message.content}
           sources={message.sources}
           onAddToStack={onAddToStack}
+          onLearnMore={onLearnMore}
         />
         {/* Streaming cursor indicator */}
         {isStreaming && (

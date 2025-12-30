@@ -12,9 +12,10 @@ interface MarkdownRendererProps {
   content: string
   sources?: Source[]
   onAddToStack?: (peptideId: string) => void
+  onLearnMore?: (message: string) => void
 }
 
-export function MarkdownRenderer({ content, sources = [], onAddToStack }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnMore }: MarkdownRendererProps) {
   // Replace citation markers [1], [2], etc. with interactive badges
   const processedContent = content.replace(
     /\[(\d+)\]/g,
@@ -41,6 +42,7 @@ export function MarkdownRenderer({ content, sources = [], onAddToStack }: Markdo
           key={`peptide-${match.index}`}
           name={match[0]}
           onAddToStack={onAddToStack}
+          onLearnMore={onLearnMore}
         />
       )
       lastIndex = match.index + match[0].length

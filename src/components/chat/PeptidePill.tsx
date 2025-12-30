@@ -282,9 +282,10 @@ const CATEGORY_COLORS: Record<string, string> = {
 interface PeptidePillProps {
   name: string
   onAddToStack?: (peptideId: string) => void
+  onLearnMore?: (message: string) => void
 }
 
-export function PeptidePill({ name, onAddToStack }: PeptidePillProps) {
+export function PeptidePill({ name, onAddToStack, onLearnMore }: PeptidePillProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [position, setPosition] = useState<'above' | 'below'>('below')
   const pillRef = useRef<HTMLButtonElement>(null)
@@ -422,8 +423,13 @@ export function PeptidePill({ name, onAddToStack }: PeptidePillProps) {
             </button>
             <button
               onClick={() => {
-                // Navigate to chat with peptide question
-                window.location.href = `/chat?q=Tell me more about ${peptideInfo.name}`
+                const message = `Tell me more about ${peptideInfo.name}`
+                if (onLearnMore) {
+                  onLearnMore(message)
+                } else {
+                  // Fallback: navigate to chat if no callback provided
+                  window.location.href = `/chat?q=${encodeURIComponent(message)}`
+                }
                 setIsOpen(false)
               }}
               className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-medium transition-colors"

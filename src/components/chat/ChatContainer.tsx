@@ -7,17 +7,19 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
-import { OnboardingFlow, type OnboardingContext } from './OnboardingFlow'
+import { VoiceButton } from './VoiceButton'
 import { JourneyPrompt } from './JourneyPrompt'
+import { InstallHint } from '@/components/pwa/InstallHint'
 import type { Message, Source } from '@/types'
+import type { OnboardingContext } from './OnboardingFlow'
 import { Beaker, Sparkles, ArrowRight, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/Toast'
-import { trackSessionStart, trackPageView, trackChatSent, trackSourceClicked } from '@/lib/analytics'
+import { trackSessionStart, trackPageView, trackChatSent } from '@/lib/analytics'
 import { api } from '@/lib/api'
 
-// Limit for anonymous users
-const ANONYMOUS_CHAT_LIMIT = 3
+// Higher limit for anonymous users - let them experience the app first
+const ANONYMOUS_CHAT_LIMIT = 10
 
 // Common peptide names for tracking
 const PEPTIDE_NAMES = [
@@ -36,7 +38,7 @@ interface ChatContainerProps {
   conversationId?: string
 }
 
-type ViewState = 'onboarding' | 'ready' | 'chatting'
+type ViewState = 'ready' | 'chatting'
 
 export function ChatContainer({ conversationId }: ChatContainerProps) {
   const router = useRouter()
@@ -50,23 +52,17 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   const [currentSources, setCurrentSources] = useState<Source[]>([])
   const [currentDisclaimers, setCurrentDisclaimers] = useState<string[]>([])
   const [currentFollowUps, setCurrentFollowUps] = useState<string[]>([])
-  // Don't initialize to conversationId - let the useEffect load it
-  // This ensures the loading logic actually runs on first render
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>(undefined)
-  // Track if we're doing the initial load for a conversation ID from URL
   const [isInitialLoad, setIsInitialLoad] = useState(!!conversationId)
   const [detectedMode, setDetectedMode] = useState<string>('balanced')
   const [mentionedPeptides, setMentionedPeptides] = useState<string[]>([])
   const [userContext, setUserContext] = useState<OnboardingContext | null>(null)
   const [journeyPromptDismissed, setJourneyPromptDismissed] = useState(false)
-  const [inputFocused, setInputFocused] = useState(false)
   const [anonChatCount, setAnonChatCount] = useState(0)
   const [showSignUpPrompt, setShowSignUpPrompt] = useState(false)
+  const [pendingVoiceText, setPendingVoiceText] = useState<string | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const hasHandledQueryParam = useRef(false)
-
-  // Track if user has started chatting (persists across navigation via sessionStorage)
-  const hasStartedChatting = useRef(false)
 
   // Check if user is anonymous
   const isAnonymous = isUserLoaded && !user
@@ -82,87 +78,46 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     }
   }, [isAnonymous])
 
-  // Initialize chatting state from sessionStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem('peptide-ai-chatting')
-      if (stored === 'true') {
-        hasStartedChatting.current = true
-        // Only transition to 'ready' (not chatting) since we may not have messages
-        if (viewState === 'onboarding') {
-          setViewState('ready')
-        }
-      }
-    }
-  }, [])
-
   // Track session and page view on mount
   useEffect(() => {
     trackSessionStart()
     trackPageView('chat')
   }, [])
 
-  // Clean up browser history after OAuth redirects to prevent Google 400 errors on back navigation
+  // Clean up browser history after OAuth redirects
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Check if we came from an OAuth flow (referrer contains google or clerk)
       const referrer = document.referrer.toLowerCase()
       const isFromOAuth = referrer.includes('google') ||
                           referrer.includes('clerk') ||
                           referrer.includes('accounts.') ||
                           referrer.includes('oauth')
 
-      // Also check URL for auth-related params that Clerk might add
       const urlParams = new URLSearchParams(window.location.search)
       const hasAuthParams = urlParams.has('__clerk_status') ||
                             urlParams.has('__clerk_created_session')
 
       if (isFromOAuth || hasAuthParams) {
-        // Replace history state to prevent back navigation to OAuth URLs
         window.history.replaceState(null, '', '/chat')
-
-        // Push a new state so the first back goes to our app, not OAuth
         window.history.pushState(null, '', '/chat')
       }
-
-      // Handle popstate (back button) - redirect to home instead of OAuth pages
-      const handlePopState = () => {
-        // If somehow navigating back would go to an OAuth URL, redirect to home
-        if (document.referrer.toLowerCase().includes('google') ||
-            document.referrer.toLowerCase().includes('accounts.')) {
-          window.history.pushState(null, '', '/chat')
-          router.replace('/')
-        }
-      }
-
-      window.addEventListener('popstate', handlePopState)
-      return () => window.removeEventListener('popstate', handlePopState)
     }
-  }, [router])
+  }, [])
 
-  // Determine initial view state
+  // Determine initial view state - simple: if we have a conversation, show it, otherwise ready
   const getInitialViewState = (): ViewState => {
-    if (conversationId) return 'chatting'
-    // If user has chatted before in this session, skip onboarding but show ready state
-    if (typeof window !== 'undefined' && sessionStorage.getItem('peptide-ai-chatting') === 'true') {
-      return 'ready'
-    }
-    return 'onboarding'
+    return conversationId ? 'chatting' : 'ready'
   }
   const [viewState, setViewState] = useState<ViewState>(getInitialViewState)
 
-  // Track if we're in the middle of creating a new conversation (prevents reset race condition)
+  // Track if we're in the middle of creating a new conversation
   const isCreatingConversation = useRef(false)
-  // Track the ID of the conversation we're currently creating (for race condition protection)
   const creatingConversationIdRef = useRef<string | null>(null)
+  // Track last conversation ID to detect navigation
+  const lastConversationIdRef = useRef<string | undefined>(conversationId)
 
-  // Load existing conversation when navigating to a conversation URL
+  // Load existing conversation OR reset when navigating to /chat
   useEffect(() => {
-    // Load if conversationId is set AND it's different from what we have loaded
-    // This handles: initial load, switching between conversations, and navigation
-    // Don't load if we're currently creating a conversation (prevents race condition with URL update)
-    // The creatingConversationIdRef tracks which conversation we just created via onboarding
-    // to prevent reloading it even if the URL update races with state updates
     const isNewlyCreatedConversation = conversationId === creatingConversationIdRef.current
     const shouldLoad = conversationId &&
       conversationId !== activeConversationId &&
@@ -176,14 +131,12 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       setViewState('chatting')
     }
 
-    // Reset to fresh state when navigating to /chat (no conversationId)
-    // This handles "New Research Query" button clicks
-    // Only reset if we're not in an active chat session (no loading/streaming)
-    // and if the URL actually changed (activeConversationId was set from a previous URL)
-    const isActiveChatSession = isStreaming || isLoading || messages.length > 0
-    const urlChanged = !conversationId && activeConversationId && creatingConversationIdRef.current !== activeConversationId
+    // Reset to fresh state when navigating from a conversation to /chat
+    // This is the fix for "+ New Research Query" not working
+    const navigatedAwayFromConversation = lastConversationIdRef.current && !conversationId
 
-    if (urlChanged && !isActiveChatSession && !isCreatingConversation.current) {
+    if (navigatedAwayFromConversation && !isStreaming && !isLoading && !isCreatingConversation.current) {
+      // Reset everything
       setMessages([])
       setActiveConversationId(undefined)
       setCurrentSources([])
@@ -193,21 +146,16 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       setViewState('ready')
       creatingConversationIdRef.current = null
     }
-  }, [conversationId, activeConversationId, isStreaming, isLoading])
 
-  // Transition to ready state when input is focused during onboarding
-  useEffect(() => {
-    if (inputFocused && viewState === 'onboarding') {
-      setViewState('ready')
-    }
-  }, [inputFocused, viewState])
+    // Update the ref for next comparison
+    lastConversationIdRef.current = conversationId
+  }, [conversationId, activeConversationId, isStreaming, isLoading])
 
   async function loadConversation(id: string) {
     setIsLoading(true)
     try {
       const conversation = await api.getConversation(id)
 
-      // Convert API messages to our format (handle snake_case from backend)
       const loadedMessages: Message[] = (conversation.messages || []).map((msg: any) => ({
         role: msg.role,
         content: msg.content || '',
@@ -216,15 +164,12 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         disclaimers: msg.disclaimers,
         followUps: msg.follow_ups || msg.followUps,
         metadata: msg.metadata,
-      })).filter((msg: Message) => msg.content) // Filter out empty messages
+      })).filter((msg: Message) => msg.content)
 
       if (loadedMessages.length === 0) {
-        // No valid messages - redirect to fresh chat
         setMessages([])
-        // Set activeConversationId to the ID to prevent re-triggering load
         setActiveConversationId(id)
         setViewState('ready')
-        // Use router.replace for proper React navigation
         router.replace('/chat')
         return
       }
@@ -233,27 +178,17 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       setActiveConversationId(conversation.conversation_id)
       setViewState('chatting')
 
-      // Extract sources, disclaimers, follow-ups from last assistant message
       const lastAssistantMsg = [...loadedMessages].reverse().find(m => m.role === 'assistant')
       if (lastAssistantMsg) {
         if (lastAssistantMsg.sources) setCurrentSources(lastAssistantMsg.sources)
         if (lastAssistantMsg.disclaimers) setCurrentDisclaimers(lastAssistantMsg.disclaimers)
         if (lastAssistantMsg.followUps) setCurrentFollowUps(lastAssistantMsg.followUps)
       }
-
-      // Mark that user has started chatting
-      hasStartedChatting.current = true
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('peptide-ai-chatting', 'true')
-      }
     } catch (error) {
-      console.error('[loadConversation] Failed to load conversation:', error)
-      // Set activeConversationId to the ID to prevent infinite retry loop
+      console.error('[loadConversation] Failed:', error)
       setActiveConversationId(id)
-      // Fallback to fresh chat if conversation not found
       setMessages([])
       setViewState('ready')
-      // Use router.replace for proper React navigation
       router.replace('/chat')
     } finally {
       setIsLoading(false)
@@ -271,32 +206,19 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         setShowSignUpPrompt(true)
         return
       }
-      // Increment anonymous chat count
       const newCount = currentCount + 1
       sessionStorage.setItem('peptide-ai-anon-chats', String(newCount))
       setAnonChatCount(newCount)
-      if (newCount >= ANONYMOUS_CHAT_LIMIT) {
-        // Will show prompt after this message completes
-      }
     }
 
-    // Track chat sent
     trackChatSent({
       conversationId: activeConversationId,
       messageLength: content.length,
       peptideMentioned: extractPeptideMention(content),
     })
 
-    // Mark that user has started chatting - persists across navigation
-    hasStartedChatting.current = true
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('peptide-ai-chatting', 'true')
-    }
-
-    // Transition to chatting state
     setViewState('chatting')
 
-    // Add user message immediately
     const userMessage: Message = {
       role: 'user',
       content,
@@ -312,13 +234,12 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     setCurrentFollowUps([])
 
     try {
-      // Try streaming first
       const response = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: content,
-          conversation_id: activeConversationId, // Continue existing conversation
+          conversation_id: activeConversationId,
           messages: newMessages.filter(m => m.content).map(m => ({
             role: m.role,
             content: m.content,
@@ -352,10 +273,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               if (data.type === 'conversation_id') {
                 newConversationId = data.conversation_id
                 setActiveConversationId(data.conversation_id)
-                // Dispatch event for layout to enable share button immediately
                 window.dispatchEvent(new CustomEvent('conversationCreated', { detail: data.conversation_id }))
-                // NOTE: Don't router.replace here - it causes a remount that loses streaming state
-                // URL will be updated after streaming completes
               } else if (data.type === 'sources' && data.sources) {
                 setCurrentSources(data.sources)
               } else if (data.type === 'mode' && data.mode) {
@@ -369,14 +287,13 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               } else if (data.type === 'error') {
                 throw new Error(data.error)
               }
-            } catch (e) {
+            } catch {
               // Skip invalid JSON
             }
           }
         }
       }
 
-      // Extract peptide names mentioned for feature suggestions
       const extractedPeptides = PEPTIDE_NAMES.filter(p =>
         fullContent.toLowerCase().includes(p.toLowerCase())
       )
@@ -384,7 +301,6 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         setMentionedPeptides(extractedPeptides)
       }
 
-      // Add final message with metadata
       if (fullContent) {
         const assistantMessage: Message = {
           role: 'assistant',
@@ -397,7 +313,6 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         }
         setMessages(prev => [...prev, assistantMessage])
 
-        // Update URL to include conversation ID (without remounting since we use [[...segments]] route)
         if (!conversationId && newConversationId) {
           router.replace(`/chat/c/${newConversationId}`, { scroll: false })
         }
@@ -406,14 +321,13 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     } catch (error) {
       console.error('Streaming failed, trying non-streaming:', error)
 
-      // Fallback to non-streaming
       try {
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: content,
-            conversation_id: activeConversationId, // Continue existing conversation
+            conversation_id: activeConversationId,
             messages: newMessages.filter(m => m.content).map(m => ({
               role: m.role,
               content: m.content,
@@ -446,7 +360,6 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       setIsStreaming(false)
       setStreamingContent('')
 
-      // Show sign-up prompt after response if anonymous limit reached
       if (isAnonymous) {
         const count = parseInt(sessionStorage.getItem('peptide-ai-anon-chats') || '0', 10)
         if (count >= ANONYMOUS_CHAT_LIMIT) {
@@ -454,13 +367,12 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         }
       }
     }
-  }, [messages, isLoading, isStreaming, isAnonymous])
+  }, [messages, isLoading, isStreaming, isAnonymous, activeConversationId, conversationId, detectedMode, router])
 
   function handleFollowUpClick(question: string) {
     handleSendMessage(question)
   }
 
-  // Handle adding a peptide to the stack from a chat response
   function handleAddToStack(peptideId: string) {
     if (typeof window === 'undefined') return
 
@@ -468,7 +380,6 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     const existing = localStorage.getItem(STORAGE_KEY)
     const currentStack: string[] = existing ? JSON.parse(existing) : []
 
-    // Don't add duplicates, max 6 items
     if (currentStack.includes(peptideId)) {
       showToast(`${peptideId} is already in your stack`, 'info')
       return
@@ -484,26 +395,34 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     showToast(`Added ${peptideId} to your stack`, 'success')
   }
 
-  // Handle query parameter (e.g., from Stack Builder "Ask About This Stack")
+  // Handle "Learn More" clicks on peptide pills - send message in current chat
+  function handleLearnMore(message: string) {
+    handleSendMessage(message)
+  }
+
+  // Handle voice transcription from big button
+  function handleVoiceTranscription(text: string) {
+    if (text.trim()) {
+      handleSendMessage(text)
+    }
+  }
+
+  // Handle query parameter (from Stack Builder)
   useEffect(() => {
     const query = searchParams?.get('q')
     const stackAction = searchParams?.get('stack')
 
     if (query && !hasHandledQueryParam.current && !isLoading) {
       hasHandledQueryParam.current = true
-      // Clear the query param from URL to prevent re-triggering
       if (typeof window !== 'undefined') {
         window.history.replaceState(null, '', '/chat')
       }
-      // Send the query immediately
       handleSendMessage(query)
     }
 
-    // Handle "Ask about this stack" from Stack Builder
     if (stackAction === 'ask' && !hasHandledQueryParam.current && !isLoading && typeof window !== 'undefined') {
       hasHandledQueryParam.current = true
 
-      // Load stack from localStorage
       const savedStack = localStorage.getItem('peptide-ai-current-stack')
       const savedGoals = localStorage.getItem('peptide-ai-selected-goals')
 
@@ -513,7 +432,6 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
           const goalIds: string[] = savedGoals ? JSON.parse(savedGoals) : []
 
           if (peptideIds.length > 0) {
-            // Format the stack query
             const peptideNames = peptideIds.map(id =>
               id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
             ).join(', ')
@@ -524,10 +442,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
 
             const stackQuery = `I'm building a peptide stack with: ${peptideNames}.${goalsText} Can you review this combination and give me advice on dosing, timing, and any synergies or concerns I should know about?`
 
-            // Clear the query param from URL
             window.history.replaceState(null, '', '/chat')
-
-            // Send the query
             handleSendMessage(stackQuery)
           }
         } catch (e) {
@@ -537,168 +452,11 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     }
   }, [searchParams, isLoading, handleSendMessage])
 
-  async function handleOnboardingComplete(query: string, context: OnboardingContext) {
-    setUserContext(context)
-
-    // Mark that user has started chatting
-    hasStartedChatting.current = true
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('peptide-ai-chatting', 'true')
-    }
-
-    // Mark that we're creating a conversation (prevents useEffect from reloading)
-    isCreatingConversation.current = true
-
-    // Transition to chatting state
-    setViewState('chatting')
-
-    // Create a context message that shows selections visually (not as boring text)
-    const contextMessage: Message = {
-      role: 'user',
-      content: '', // Empty - we'll render this specially based on metadata
-      timestamp: new Date().toISOString(),
-      metadata: {
-        type: 'onboarding_context',
-        goal: context.primaryGoalLabel,
-        conditions: context.conditionLabels,
-        experience: context.experienceLevel,
-      }
-    }
-    setMessages([contextMessage])
-    setIsLoading(true)
-    setIsStreaming(true)
-    setStreamingContent('')
-    setCurrentSources([])
-    setCurrentDisclaimers([])
-    setCurrentFollowUps([])
-
-    try {
-      // Create a user-friendly first message that will make a good title
-      // Format: "Help me with [goal] - focusing on [conditions]"
-      const userFriendlyMessage = context.conditionLabels?.length
-        ? `Help me with ${context.primaryGoalLabel?.toLowerCase()} - focusing on ${context.conditionLabels.join(', ')}`
-        : `Help me with ${context.primaryGoalLabel?.toLowerCase()}`
-
-      // System context for the AI (not shown to user, but guides the response)
-      const systemContext = `[Context: User is ${context.experienceLevel} with peptides. Suggested peptides: ${context.peptideSuggestions?.join(', ')}. Please acknowledge their goal warmly and provide specific research-backed recommendations.]`
-
-      // Use streaming endpoint for progressive response
-      const response = await fetch('/api/chat/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: `${userFriendlyMessage}\n\n${systemContext}`,
-          messages: [],
-        }),
-      })
-
-      if (!response.ok || !response.body) {
-        throw new Error('Streaming failed')
-      }
-
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let fullContent = ''
-      let buffer = ''
-      let newConversationId: string | undefined
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6))
-
-              if (data.type === 'conversation_id') {
-                newConversationId = data.conversation_id
-                // Track this conversation ID to prevent race condition reloads
-                creatingConversationIdRef.current = data.conversation_id
-                setActiveConversationId(data.conversation_id)
-                // Dispatch event for layout to enable share button immediately
-                window.dispatchEvent(new CustomEvent('conversationCreated', { detail: data.conversation_id }))
-              } else if (data.type === 'sources' && data.sources) {
-                setCurrentSources(data.sources)
-              } else if (data.type === 'content' && data.content) {
-                fullContent += data.content
-                setStreamingContent(fullContent)
-              } else if (data.type === 'done') {
-                if (data.disclaimers) setCurrentDisclaimers(data.disclaimers)
-                if (data.follow_up_questions) setCurrentFollowUps(data.follow_up_questions)
-              }
-            } catch {
-              // Skip invalid JSON
-            }
-          }
-        }
-      }
-
-      // Add final message
-      if (fullContent) {
-        const assistantMessage: Message = {
-          role: 'assistant',
-          content: fullContent,
-          timestamp: new Date().toISOString(),
-        }
-        setMessages(prev => [...prev, assistantMessage])
-
-        // DON'T update URL after onboarding - this prevents the race condition
-        // where the URL update triggers a reload that replaces our styled context card
-        // The conversation is saved and accessible from the sidebar
-        // URL will update naturally when user sends another message or navigates
-        if (newConversationId) {
-          // Clear creation flags
-          isCreatingConversation.current = false
-          creatingConversationIdRef.current = null
-        }
-      }
-    } catch (error) {
-      console.error('Failed to start guided journey:', error)
-      const errorMessage: Message = {
-        role: 'assistant',
-        content: 'I apologize, but I encountered an error. Please try again or ask me directly about peptides.',
-        timestamp: new Date().toISOString(),
-      }
-      setMessages(prev => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
-      setIsStreaming(false)
-      setStreamingContent('')
-    }
-  }
-
-  function handleSkipToChat() {
-    setViewState('ready')
-    // Focus the input after a brief delay for the animation
-    setTimeout(() => {
-      inputRef.current?.focus()
-    }, 300)
-  }
-
-  function handleBackToOnboarding() {
-    // Clear session state to allow fresh start
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('peptide-ai-chatting')
-    }
-    hasStartedChatting.current = false
-    setMessages([])
-    setActiveConversationId(undefined)
-    setViewState('onboarding')
-  }
-
-  // Show loading state when initially loading a conversation
   const showLoadingState = isInitialLoad && conversationId
 
   return (
     <div className="flex h-full flex-col relative">
-      {/* Main Content Area */}
       <div className="flex-1 overflow-hidden">
-        {/* Loading State - shown while loading conversation */}
         {showLoadingState ? (
           <div className="h-full flex flex-col items-center justify-center px-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg animate-pulse">
@@ -708,24 +466,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
           </div>
         ) : (
         <AnimatePresence mode="wait" initial={false}>
-          {/* Onboarding State */}
-          {viewState === 'onboarding' && (
-            <motion.div
-              key="onboarding"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="h-full"
-            >
-              <OnboardingFlow
-                onComplete={handleOnboardingComplete}
-                onSkip={handleSkipToChat}
-              />
-            </motion.div>
-          )}
-
-          {/* Ready State - Minimal centered view */}
+          {/* Ready State - Big voice button, simple */}
           {viewState === 'ready' && (
             <motion.div
               key="ready"
@@ -741,30 +482,43 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 transition={{ delay: 0.1, duration: 0.3 }}
                 className="text-center mb-8"
               >
-                <div className="mb-4 flex justify-center">
+                <div className="mb-6 flex justify-center">
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
                     <Beaker className="h-7 w-7 text-white" />
                   </div>
                 </div>
                 <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
-                  What can I help you research?
+                  Peptide AI
                 </h1>
-                <p className="text-slate-500 dark:text-slate-400 max-w-md">
-                  Ask about peptides, protocols, research findings, or user experiences
+                <p className="text-slate-500 dark:text-slate-400 max-w-sm">
+                  Your research journal. Talk about peptides, log your journey, get insights.
                 </p>
+              </motion.div>
+
+              {/* Big Voice Button */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="mb-12"
+              >
+                <VoiceButton
+                  size="large"
+                  onTranscription={handleVoiceTranscription}
+                />
               </motion.div>
 
               {/* Quick suggestions */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.3 }}
-                className="flex flex-wrap justify-center gap-2 max-w-xl"
+                transition={{ delay: 0.3, duration: 0.3 }}
+                className="flex flex-wrap justify-center gap-2 max-w-xl mb-8"
               >
                 {[
                   'What peptides help with healing?',
                   'BPC-157 vs TB-500',
-                  'Semaglutide for weight loss',
+                  'Semaglutide dosing',
                 ].map((suggestion, i) => (
                   <button
                     key={i}
@@ -778,16 +532,14 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 ))}
               </motion.div>
 
-              {/* Back to onboarding */}
-              <motion.button
+              {/* Install hint */}
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.4, duration: 0.3 }}
-                onClick={handleBackToOnboarding}
-                className="mt-8 text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                transition={{ delay: 0.5, duration: 0.3 }}
               >
-                ← Back to guided setup
-              </motion.button>
+                <InstallHint />
+              </motion.div>
             </motion.div>
           )}
 
@@ -811,6 +563,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 followUps={currentFollowUps}
                 onFollowUpClick={handleFollowUpClick}
                 onAddToStack={handleAddToStack}
+                onLearnMore={handleLearnMore}
                 detectedMode={detectedMode}
                 mentionedPeptides={mentionedPeptides}
                 conversationId={activeConversationId}
@@ -833,11 +586,10 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
         )}
       </div>
 
-      {/* Input Area - Hidden on mobile during onboarding to save space */}
-      <div className={`shrink-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 safe-area-bottom ${viewState === 'onboarding' ? 'hidden md:block' : ''}`}>
+      {/* Input Area */}
+      <div className={`shrink-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 safe-area-bottom ${viewState === 'ready' ? 'hidden' : ''}`}>
         <div className="mx-auto max-w-3xl px-4 pt-3 pb-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
           {showSignUpPrompt ? (
-            // Sign up prompt for anonymous users who hit the limit
             <div className="text-center py-2">
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
                 Sign up to continue chatting and save your conversations
@@ -861,14 +613,7 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               ref={inputRef}
               onSend={handleSendMessage}
               disabled={isLoading}
-              placeholder={
-                viewState === 'onboarding'
-                  ? "Or type your question here..."
-                  : "Ask about peptide research..."
-              }
-              onFocus={() => setInputFocused(true)}
-              onBlur={() => setInputFocused(false)}
-              showSkipHint={viewState === 'onboarding'}
+              placeholder="Ask about peptide research..."
             />
           )}
         </div>

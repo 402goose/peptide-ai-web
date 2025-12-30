@@ -25,6 +25,11 @@ interface StreamingMessageProps {
    * Class name for the container
    */
   className?: string
+
+  /**
+   * Callback when user clicks "Learn More" on a peptide pill
+   */
+  onLearnMore?: (message: string) => void
 }
 
 /**
@@ -40,6 +45,7 @@ export function StreamingMessage({
   isStreaming,
   sources = [],
   className,
+  onLearnMore,
 }: StreamingMessageProps) {
   const streamingRef = useRef<StreamingTextHandle>(null)
   const [showMarkdown, setShowMarkdown] = useState(false)
@@ -79,7 +85,7 @@ export function StreamingMessage({
   if (showMarkdown && !isStreaming) {
     return (
       <div className={className}>
-        <MarkdownRenderer content={content} sources={sources} />
+        <MarkdownRenderer content={content} sources={sources} onLearnMore={onLearnMore} />
       </div>
     )
   }

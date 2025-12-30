@@ -3,6 +3,7 @@
   "short_name": "Peptide AI",
   "description": "Your AI Research Journal for Peptide Science",
   "start_url": "/chat",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#3b82f6",
