@@ -175,8 +175,24 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       loadConversation(conversationId)
       setViewState('chatting')
     }
-    // Note: We don't auto-reset here anymore - reset only happens via explicit user action
-    // (handleBackToOnboarding or clicking New Chat in sidebar)
+
+    // Reset to fresh state when navigating to /chat (no conversationId)
+    // This handles "New Research Query" button clicks
+    // Only reset if we're not in an active chat session (no loading/streaming)
+    // and if the URL actually changed (activeConversationId was set from a previous URL)
+    const isActiveChatSession = isStreaming || isLoading || messages.length > 0
+    const urlChanged = !conversationId && activeConversationId && creatingConversationIdRef.current !== activeConversationId
+
+    if (urlChanged && !isActiveChatSession && !isCreatingConversation.current) {
+      setMessages([])
+      setActiveConversationId(undefined)
+      setCurrentSources([])
+      setCurrentDisclaimers([])
+      setCurrentFollowUps([])
+      setIsInitialLoad(false)
+      setViewState('ready')
+      creatingConversationIdRef.current = null
+    }
   }, [conversationId, activeConversationId, isStreaming, isLoading])
 
   // Transition to ready state when input is focused during onboarding
@@ -675,19 +691,31 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     setViewState('onboarding')
   }
 
+  // Show loading state when initially loading a conversation
+  const showLoadingState = isInitialLoad && conversationId
+
   return (
     <div className="flex h-full flex-col relative">
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden">
-        <AnimatePresence mode="wait">
+        {/* Loading State - shown while loading conversation */}
+        {showLoadingState ? (
+          <div className="h-full flex flex-col items-center justify-center px-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg animate-pulse">
+              <Beaker className="h-7 w-7 text-white" />
+            </div>
+            <p className="mt-4 text-slate-500 dark:text-slate-400">Loading conversation...</p>
+          </div>
+        ) : (
+        <AnimatePresence mode="wait" initial={false}>
           {/* Onboarding State */}
           {viewState === 'onboarding' && (
             <motion.div
               key="onboarding"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20, scale: 0.98 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               className="h-full"
             >
               <OnboardingFlow
@@ -701,10 +729,10 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
           {viewState === 'ready' && (
             <motion.div
               key="ready"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               className="h-full flex flex-col items-center justify-center px-4"
             >
               <motion.div
@@ -769,67 +797,40 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               key="chatting"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
               className="h-full"
             >
-              {isInitialLoad ? (
-                // Show loading state during initial conversation load
-                <div className="h-full flex flex-col items-center justify-center px-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg animate-pulse">
-                    <Beaker className="h-7 w-7 text-white" />
-                  </div>
-                  <p className="mt-4 text-slate-500 dark:text-slate-400">Loading conversation...</p>
-                </div>
-              ) : messages.length === 0 && !isLoading ? (
-                // Empty state - show helpful prompt
-                <div className="h-full flex flex-col items-center justify-center px-4">
-                  <div className="text-center mb-8">
-                    <div className="mb-4 flex justify-center">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
-                        <Beaker className="h-7 w-7 text-white" />
-                      </div>
-                    </div>
-                    <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
-                      What can I help you research?
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 max-w-md">
-                      Ask about peptides, protocols, or research findings
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <MessageList
-                    messages={messages}
-                    isLoading={isLoading}
-                    isStreaming={isStreaming}
-                    streamingContent={streamingContent}
-                    sources={currentSources}
-                    disclaimers={currentDisclaimers}
-                    followUps={currentFollowUps}
-                    onFollowUpClick={handleFollowUpClick}
-                    onAddToStack={handleAddToStack}
-                    detectedMode={detectedMode}
-                    mentionedPeptides={mentionedPeptides}
-                    conversationId={activeConversationId}
-                    journeyPrompt={
-                      userContext &&
-                      !journeyPromptDismissed &&
-                      !isLoading &&
-                      !isStreaming &&
-                      messages.some(m => m.role === 'assistant') ? (
-                        <JourneyPrompt
-                          context={userContext}
-                          onDismiss={() => setJourneyPromptDismissed(true)}
-                        />
-                      ) : undefined
-                    }
-                  />
-                </>
-              )}
+              <MessageList
+                messages={messages}
+                isLoading={isLoading}
+                isStreaming={isStreaming}
+                streamingContent={streamingContent}
+                sources={currentSources}
+                disclaimers={currentDisclaimers}
+                followUps={currentFollowUps}
+                onFollowUpClick={handleFollowUpClick}
+                onAddToStack={handleAddToStack}
+                detectedMode={detectedMode}
+                mentionedPeptides={mentionedPeptides}
+                conversationId={activeConversationId}
+                journeyPrompt={
+                  userContext &&
+                  !journeyPromptDismissed &&
+                  !isLoading &&
+                  !isStreaming &&
+                  messages.some(m => m.role === 'assistant') ? (
+                    <JourneyPrompt
+                      context={userContext}
+                      onDismiss={() => setJourneyPromptDismissed(true)}
+                    />
+                  ) : undefined
+                }
+              />
             </motion.div>
           )}
         </AnimatePresence>
+        )}
       </div>
 
       {/* Input Area - Hidden on mobile during onboarding to save space */}

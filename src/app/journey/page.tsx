@@ -62,28 +62,51 @@ interface LocalCheckIn {
 
 // Peptide database (matching StackBuilder)
 const PEPTIDES = [
+  // Healing
   { id: 'bpc-157', name: 'BPC-157', category: 'Healing' },
   { id: 'tb-500', name: 'TB-500', category: 'Healing' },
   { id: 'ghk-cu', name: 'GHK-Cu', category: 'Healing' },
   { id: 'pentadecarginine', name: 'Pentadecarginine', category: 'Healing' },
+  // Weight Management
   { id: 'semaglutide', name: 'Semaglutide', category: 'Weight Management' },
   { id: 'tirzepatide', name: 'Tirzepatide', category: 'Weight Management' },
   { id: 'aod-9604', name: 'AOD-9604', category: 'Weight Management' },
   { id: 'tesamorelin', name: 'Tesamorelin', category: 'Weight Management' },
   { id: 'sr9009', name: 'SR9009', category: 'Weight Management' },
+  { id: '5-amino-1mq', name: '5-Amino 1MQ', category: 'Weight Management' },
+  // Performance
   { id: 'ipamorelin', name: 'Ipamorelin', category: 'Performance' },
   { id: 'cjc-1295', name: 'CJC-1295', category: 'Performance' },
   { id: 'mk-677', name: 'MK-677', category: 'Performance' },
   { id: 'ghrp-6', name: 'GHRP-6', category: 'Performance' },
   { id: 'ghrp-2', name: 'GHRP-2', category: 'Performance' },
+  { id: 'sermorelin', name: 'Sermorelin', category: 'Performance' },
+  // Cognitive
   { id: 'semax', name: 'Semax', category: 'Cognitive' },
   { id: 'selank', name: 'Selank', category: 'Cognitive' },
   { id: 'dihexa', name: 'Dihexa', category: 'Cognitive' },
+  { id: 'na-selank', name: 'NA-Selank', category: 'Cognitive' },
+  { id: 'p21', name: 'P21', category: 'Cognitive' },
+  // Mitochondrial
+  { id: 'ss-31', name: 'SS-31', category: 'Mitochondrial' },
+  { id: 'mots-c', name: 'MOTS-c', category: 'Mitochondrial' },
+  { id: 'humanin', name: 'Humanin', category: 'Mitochondrial' },
+  { id: 'nad-im', name: 'NAD+ IM', category: 'Mitochondrial' },
+  // Sleep
+  { id: 'dsip', name: 'DSIP', category: 'Sleep' },
+  // Anti-Aging
   { id: 'epithalon', name: 'Epithalon', category: 'Anti-Aging' },
+  // Immune
   { id: 'thymosin-alpha-1', name: 'Thymosin Alpha-1', category: 'Immune' },
   { id: 'll-37', name: 'LL-37', category: 'Immune' },
+  { id: 'kpv', name: 'KPV', category: 'Immune' },
+  // Gut
+  { id: 'larazotide', name: 'Larazotide', category: 'Gut Health' },
+  // Sexual Health
   { id: 'pt-141', name: 'PT-141', category: 'Sexual Health' },
   { id: 'kisspeptin', name: 'Kisspeptin', category: 'Sexual Health' },
+  // Other
+  { id: 'melanotan-ii', name: 'Melanotan II', category: 'Tanning' },
 ]
 
 type View = 'list' | 'create' | 'dose' | 'checkin' | 'detail'

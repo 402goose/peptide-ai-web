@@ -365,10 +365,9 @@ class ApiClient implements IApiClient {
 
   private async fetchPublic<T>(endpoint: string): Promise<T> {
     // Public endpoints that don't require auth
-    if (!API_BASE) {
-      throw new ApiError(503, { error: 'Backend not configured' })
-    }
-    const url = `${API_BASE}${endpoint}`
+    // Use fallback URL for public endpoints in case API_BASE is not configured
+    const baseUrl = API_BASE || 'https://peptide-ai-api-production.up.railway.app'
+    const url = `${baseUrl}${endpoint}`
     const response = await fetch(url)
     if (!response.ok) {
       throw new ApiError(response.status, await response.json().catch(() => ({})))
