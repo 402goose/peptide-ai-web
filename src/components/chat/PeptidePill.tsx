@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useUser } from '@clerk/nextjs'
 import { Beaker, X, Plus, ExternalLink, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { haptic } from '@/lib/haptics'
+import { AuthPromptModal } from '@/components/auth/AuthPromptModal'
 
 interface PeptideInfo {
   name: string
@@ -287,7 +289,9 @@ interface PeptidePillProps {
 }
 
 export function PeptidePill({ name, onAddToStack, onLearnMore }: PeptidePillProps) {
+  const { user, isLoaded } = useUser()
   const [isOpen, setIsOpen] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({})
   const pillRef = useRef<HTMLButtonElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -442,6 +446,11 @@ export function PeptidePill({ name, onAddToStack, onLearnMore }: PeptidePillProp
             <button
               onClick={() => {
                 haptic('success')
+                // Check if user is logged in
+                if (isLoaded && !user) {
+                  setShowAuthModal(true)
+                  return
+                }
                 onAddToStack?.(normalizedName)
                 setIsOpen(false)
               }}
@@ -469,6 +478,17 @@ export function PeptidePill({ name, onAddToStack, onLearnMore }: PeptidePillProp
           </div>
         </div>
       )}
+
+      {/* Auth Modal for Add to Stack */}
+      <AuthPromptModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        feature="add-stack"
+        onContinue={() => {
+          onAddToStack?.(normalizedName)
+          setIsOpen(false)
+        }}
+      />
     </span>
   )
 }

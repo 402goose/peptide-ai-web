@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useUser } from '@clerk/nextjs'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Rocket, X, Syringe, Target, CheckCircle, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import type { OnboardingContext } from './OnboardingFlow'
 import { haptic } from '@/lib/haptics'
+import { AuthPromptModal } from '@/components/auth/AuthPromptModal'
 
 // Journey types (matching Journey page)
 interface LocalJourney {
@@ -46,12 +48,21 @@ interface JourneyPromptProps {
 }
 
 export function JourneyPrompt({ context, onDismiss }: JourneyPromptProps) {
+  const { user, isLoaded } = useUser()
   const [isCreating, setIsCreating] = useState(false)
   const [isCreated, setIsCreated] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [createdJourneyId, setCreatedJourneyId] = useState<string | null>(null)
 
   const handleStartJourney = async () => {
     haptic('success')
+
+    // Check if user is logged in
+    if (isLoaded && !user) {
+      setShowAuthModal(true)
+      return
+    }
+
     setIsCreating(true)
 
     // Get primary peptide and goals info
@@ -256,6 +267,41 @@ export function JourneyPrompt({ context, onDismiss }: JourneyPromptProps) {
             Maybe Later
           </Button>
         </div>
+
+        {/* Auth Modal */}
+        <AuthPromptModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          feature="journey"
+          targetPath="/journey"
+          onContinue={() => {
+            setShowAuthModal(false)
+            // Proceed with creating the journey
+            setIsCreating(true)
+            // Re-run the journey creation logic
+            const primaryPeptide = context.goals?.[0]?.peptides?.[0] || context.peptideSuggestions?.[0] || 'Unknown'
+            const primaryGoalLabel = context.goals?.[0]?.label || 'Peptide Research'
+            const goalsText = context.goals?.map(g => `${g.label} (Priority ${g.priority})`).join(', ') || ''
+            const journey = {
+              id: `journey-${Date.now()}`,
+              title: `${primaryGoalLabel} Journey`,
+              primaryPeptide: primaryPeptide,
+              additionalPeptides: context.peptideSuggestions?.slice(1, 4) || [],
+              status: 'planning' as const,
+              goals: `Goals: ${goalsText}\nExperience: ${context.experienceLevel || 'Not specified'}`,
+              doseLogs: [],
+              checkIns: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }
+            const existingJourneys = loadJourneys()
+            saveJourneys([...existingJourneys, journey])
+            setCreatedJourneyId(journey.id)
+            setIsCreating(false)
+            setIsCreated(true)
+            setTimeout(() => onDismiss(), 5000)
+          }}
+        />
       </div>
     </motion.div>
   )
