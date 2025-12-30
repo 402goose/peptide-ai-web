@@ -1,7 +1,8 @@
 {
+  "id": "/chat",
   "name": "Peptide AI",
   "short_name": "Peptide AI",
-  "description": "Your AI Research Journal for Peptide Science",
+  "description": "Your AI Research Journal for Peptide Science. Get research-backed answers about peptides, build your stack, and track your journey.",
   "start_url": "/chat",
   "scope": "/",
   "display": "standalone",
@@ -22,6 +23,32 @@
       "purpose": "any maskable"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "New Chat",
+      "short_name": "Chat",
+      "description": "Start a new AI conversation",
+      "url": "/chat?utm_source=shortcut",
+      "icons": [{ "src": "/api/icon/192", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Stack",
+      "short_name": "Stack",
+      "description": "View your peptide stack",
+      "url": "/stack?utm_source=shortcut",
+      "icons": [{ "src": "/api/icon/192", "sizes": "192x192" }]
+    },
+    {
+      "name": "Journey Log",
+      "short_name": "Journal",
+      "description": "Log your daily progress",
+      "url": "/journey?utm_source=shortcut",
+      "icons": [{ "src": "/api/icon/192", "sizes": "192x192" }]
+    }
+  ],
   "categories": ["health", "lifestyle", "medical"],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
 }

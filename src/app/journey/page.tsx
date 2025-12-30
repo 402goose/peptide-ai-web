@@ -581,7 +581,13 @@ function JourneyPageContent() {
     <Feedbackable name="Journey Tracker" path="app/journey/page.tsx" className="min-h-screen">
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950">
+      <header
+        className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top, 0px), 0.5rem)',
+          minHeight: 'calc(3.5rem + env(safe-area-inset-top, 0px))'
+        }}
+      >
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => router.push('/chat')}>
             <ArrowLeft className="h-5 w-5" />

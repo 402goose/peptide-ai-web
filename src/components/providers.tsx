@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { FeedbackProvider } from '@/components/feedback/FeedbackProvider'
 import { ToastProvider } from '@/components/ui/Toast'
+import { UpdateToast } from '@/components/pwa/UpdateToast'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -30,6 +31,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <FeedbackProvider>
           <ToastProvider>
             {children}
+            <UpdateToast />
           </ToastProvider>
         </FeedbackProvider>
       </ThemeProvider>

@@ -1,5 +1,5 @@
 // Version this - increment to force update on all clients
-const CACHE_VERSION = 'v2'
+const CACHE_VERSION = 'v5'
 const CACHE_NAME = `peptide-ai-${CACHE_VERSION}`
 
 // Only cache truly static assets

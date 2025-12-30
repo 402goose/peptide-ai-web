@@ -9,6 +9,8 @@ interface PWAState {
   isMobile: boolean
   canInstall: boolean
   installPrompt: BeforeInstallPromptEvent | null
+  updateAvailable: boolean
+  swRegistration: ServiceWorkerRegistration | null
 }
 
 interface BeforeInstallPromptEvent extends Event {
@@ -24,6 +26,8 @@ export function usePWA() {
     isMobile: false,
     canInstall: false,
     installPrompt: null,
+    updateAvailable: false,
+    swRegistration: null,
   })
 
   useEffect(() => {
@@ -58,13 +62,59 @@ export function usePWA() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall)
 
-    // Register service worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(console.error)
+    // Listen for app installed event
+    const handleAppInstalled = () => {
+      console.log('[PWA] App installed successfully')
+      setState(prev => ({
+        ...prev,
+        isInstalled: true,
+        canInstall: false,
+        installPrompt: null,
+      }))
     }
+    window.addEventListener('appinstalled', handleAppInstalled)
+
+    // Register service worker and listen for updates
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then((registration) => {
+        setState(prev => ({ ...prev, swRegistration: registration }))
+
+        // Check for updates immediately
+        registration.update()
+
+        // Listen for new service worker waiting
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New version available
+                console.log('[PWA] Update available')
+                setState(prev => ({ ...prev, updateAvailable: true }))
+              }
+            })
+          }
+        })
+      }).catch(console.error)
+
+      // Handle controller change (after skipWaiting)
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('[PWA] New service worker activated, reloading...')
+        window.location.reload()
+      })
+    }
+
+    // Listen for display mode changes
+    const displayModeQuery = window.matchMedia('(display-mode: standalone)')
+    const handleDisplayModeChange = (e: MediaQueryListEvent) => {
+      setState(prev => ({ ...prev, isInstalled: e.matches }))
+    }
+    displayModeQuery.addEventListener('change', handleDisplayModeChange)
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall)
+      window.removeEventListener('appinstalled', handleAppInstalled)
+      displayModeQuery.removeEventListener('change', handleDisplayModeChange)
     }
   }, [])
 
@@ -78,7 +128,14 @@ export function usePWA() {
     }
   }
 
-  return { ...state, promptInstall }
+  const applyUpdate = () => {
+    if (state.swRegistration?.waiting) {
+      // Tell the waiting service worker to skip waiting
+      state.swRegistration.waiting.postMessage('skipWaiting')
+    }
+  }
+
+  return { ...state, promptInstall, applyUpdate }
 }
 
 export function useMicPermission() {

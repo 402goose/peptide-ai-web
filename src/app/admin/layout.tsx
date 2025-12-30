@@ -37,7 +37,8 @@ export default function AdminLayout({
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-md"
+        className="lg:hidden fixed left-4 z-50 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-md"
+        style={{ top: 'max(calc(env(safe-area-inset-top, 0px) + 1rem), 1rem)' }}
       >
         {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
@@ -50,7 +51,7 @@ export default function AdminLayout({
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="p-6 border-b border-slate-200 dark:border-slate-700" style={{ paddingTop: 'max(calc(env(safe-area-inset-top, 0px) + 1.5rem), 1.5rem)' }}>
             <Link href="/admin" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <Settings className="w-5 h-5 text-white" />

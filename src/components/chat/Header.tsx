@@ -22,7 +22,13 @@ export function Header({ onMenuClick, onShareClick, showShare = false }: HeaderP
     ADMIN_EMAILS.includes(user.primaryEmailAddress.emailAddress)
 
   return (
-    <header className="w-full flex h-14 items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-4 dark:border-slate-800 dark:bg-slate-950 shrink-0 z-40">
+    <header
+      className="w-full flex items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-4 dark:border-slate-800 dark:bg-slate-950 shrink-0 z-40"
+      style={{
+        paddingTop: 'max(env(safe-area-inset-top, 0px), 0.5rem)',
+        minHeight: 'calc(3.5rem + env(safe-area-inset-top, 0px))'
+      }}
+    >
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <Button
           variant="ghost"
