@@ -10,25 +10,16 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icons/icon-192.svg",
+      "src": "/api/icon/192",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512.svg",
+      "src": "/api/icon/512",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/chat-mobile.png",
-      "sizes": "390x844",
       "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Chat Interface"
+      "purpose": "any maskable"
     }
   ],
   "categories": ["health", "lifestyle", "medical"],
