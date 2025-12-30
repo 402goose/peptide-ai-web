@@ -8,9 +8,11 @@ import { MentionedPeptides } from './MentionedPeptides'
 import { ResponseCard } from './ResponseCard'
 import { DisclaimerBanner } from './DisclaimerBanner'
 import { ResponseActions } from './ResponseActions'
+import { SymptomProductCard } from './SymptomProductCard'
 import { ArrowDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Message, Source } from '@/types'
+import type { SymptomCategory } from '@/types/affiliate'
 
 interface MessageListProps {
   messages: Message[]
@@ -23,6 +25,9 @@ interface MessageListProps {
   mentionedPeptides?: string[]
   conversationId?: string
   journeyPrompt?: React.ReactNode
+  detectedSymptomCategories?: SymptomCategory[]
+  symptomCardDismissed?: boolean
+  onSymptomCardDismiss?: () => void
   onAddToStack?: (peptideId: string) => void
   onLearnMore?: (message: string) => void
 }
@@ -41,6 +46,9 @@ export function MessageList({
   mentionedPeptides = [],
   conversationId,
   journeyPrompt,
+  detectedSymptomCategories = [],
+  symptomCardDismissed = false,
+  onSymptomCardDismiss,
   onAddToStack,
   onLearnMore,
 }: MessageListProps) {
@@ -223,6 +231,16 @@ export function MessageList({
         {/* Show interactive elements after the last assistant message */}
         {!isLoading && messages.length > 0 && messages[messages.length - 1].role === 'assistant' && (
           <div className="mt-4 space-y-3">
+            {/* Symptom product suggestions based on detected symptoms */}
+            {detectedSymptomCategories.length > 0 && !symptomCardDismissed && onSymptomCardDismiss && onLearnMore && onAddToStack && (
+              <SymptomProductCard
+                categories={detectedSymptomCategories}
+                onDismiss={onSymptomCardDismiss}
+                onLearnMore={onLearnMore}
+                onAddToStack={onAddToStack}
+              />
+            )}
+
             {/* Peptides mentioned - clickable pills to learn more or add to stack */}
             {mentionedPeptides.length > 0 && (
               <MentionedPeptides

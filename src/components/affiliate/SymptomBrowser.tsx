@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Search, ChevronRight, Pill, FlaskConical, ExternalLink, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, ChevronRight, Pill, FlaskConical, ExternalLink, X, MessageSquare, Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/Toast'
 import { api } from '@/lib/api'
 import type {
   Symptom,
@@ -16,6 +19,8 @@ interface SymptomBrowserProps {
   source: 'journey' | 'chat' | 'stacks' | 'search' | 'symptom_page'
   sourceId?: string
   onProductClick?: (product: HolisticProduct, symptomId?: string) => void
+  onAskAI?: (query: string) => void
+  onAddToStack?: (productName: string) => void
   compact?: boolean
 }
 
@@ -23,8 +28,12 @@ export function SymptomBrowser({
   source,
   sourceId,
   onProductClick,
+  onAskAI,
+  onAddToStack,
   compact = false,
 }: SymptomBrowserProps) {
+  const router = useRouter()
+  const { showToast } = useToast()
   const [categories, setCategories] = useState<CategoryCount[]>([])
   const [symptoms, setSymptoms] = useState<Symptom[]>([])
   const [selectedCategory, setSelectedCategory] = useState<SymptomCategory | null>(null)
@@ -111,6 +120,27 @@ export function SymptomBrowser({
     }
   }
 
+  // Handle "Ask AI" action
+  const handleAskAI = (product: HolisticProduct) => {
+    const symptomName = selectedSymptom?.name || 'this symptom'
+    const query = `Tell me about ${product.name} for ${symptomName}. What are the benefits, dosing, and things to consider?`
+
+    if (onAskAI) {
+      onAskAI(query)
+    } else {
+      // Navigate to chat with the query pre-filled
+      router.push(`/chat?q=${encodeURIComponent(query)}`)
+    }
+  }
+
+  // Handle "Add to Stack" action
+  const handleAddToStack = (product: HolisticProduct) => {
+    if (onAddToStack) {
+      onAddToStack(product.name)
+    }
+    showToast(`Added ${product.name} to your stack`, 'success')
+  }
+
   if (loading && categories.length === 0) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -168,29 +198,64 @@ export function SymptomBrowser({
             </h4>
             <div className="space-y-2">
               {selectedSymptom.products.map((product) => (
-                <button
+                <div
                   key={product.product_id}
-                  onClick={() => handleProductClick(product)}
-                  className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left"
+                  className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg"
                 >
-                  <div>
-                    <span className="font-medium text-slate-900 dark:text-white">
-                      {product.name}
-                    </span>
-                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
-                      {PRODUCT_TYPE_LABELS[product.product_type]}
-                    </span>
-                    {product.is_peptide && (
-                      <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                        Peptide
-                      </span>
-                    )}
-                    {product.description && (
-                      <p className="text-xs text-slate-500 mt-1">{product.description}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {product.name}
+                        </span>
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
+                          {PRODUCT_TYPE_LABELS[product.product_type]}
+                        </span>
+                        {product.is_peptide && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                            Peptide
+                          </span>
+                        )}
+                      </div>
+                      {product.description && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                          {product.description}
+                        </p>
+                      )}
+                    </div>
+                    {onProductClick && (
+                      <button
+                        onClick={() => handleProductClick(product)}
+                        className="shrink-0 p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                        title="View product"
+                      >
+                        <ExternalLink className="w-4 h-4 text-slate-400" />
+                      </button>
                     )}
                   </div>
-                  <ExternalLink className="w-4 h-4 text-slate-400" />
-                </button>
+
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-2 mt-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                      onClick={() => handleAskAI(product)}
+                    >
+                      <MessageSquare className="h-3 w-3" />
+                      Ask AI
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1 text-slate-600 hover:text-slate-700 dark:text-slate-400"
+                      onClick={() => handleAddToStack(product)}
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add to Stack
+                    </Button>
+                  </div>
+                </div>
               ))}
             </div>
           </div>

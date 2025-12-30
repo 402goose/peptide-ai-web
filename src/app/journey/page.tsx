@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { DoseLogForm } from '@/components/journey/DoseLogForm'
 import { CheckInForm } from '@/components/journey/CheckInForm'
+import { CheckInInsights } from '@/components/journey/CheckInInsights'
 import { Feedbackable } from '@/components/feedback'
 import {
   Plus, ArrowLeft, Syringe, Heart, Beaker, Play, Pause,
@@ -176,6 +177,10 @@ function JourneyPageContent() {
   // Editing dose state
   const [editingDose, setEditingDose] = useState<LocalDoseLog | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
+
+  // Check-in insights state
+  const [latestCheckIn, setLatestCheckIn] = useState<LocalCheckIn | null>(null)
+  const [showInsights, setShowInsights] = useState(false)
 
   useEffect(() => {
     const loaded = loadJourneys()
@@ -357,8 +362,21 @@ function JourneyPageContent() {
         : j
     ))
 
+    // Show insights if any metrics are low
+    setLatestCheckIn(checkIn)
+    setShowInsights(true)
+
     setView('list')
     setSelectedJourney(null)
+  }
+
+  function handleDismissInsights() {
+    setShowInsights(false)
+    setLatestCheckIn(null)
+  }
+
+  function handleAskAI(query: string) {
+    router.push(`/chat?q=${encodeURIComponent(query)}`)
   }
 
   const activeJourneys = journeys.filter(j => j.status === 'active')
@@ -606,6 +624,20 @@ function JourneyPageContent() {
       <main className="mx-auto max-w-2xl px-4 py-6">
         {view === 'list' && (
           <>
+            {/* Check-in Insights - shown after completing a check-in */}
+            {showInsights && latestCheckIn && (
+              <CheckInInsights
+                checkIn={{
+                  energyLevel: latestCheckIn.energyLevel,
+                  sleepQuality: latestCheckIn.sleepQuality,
+                  mood: latestCheckIn.mood,
+                  recoveryFeeling: latestCheckIn.recoveryFeeling,
+                }}
+                onDismiss={handleDismissInsights}
+                onAskAI={handleAskAI}
+              />
+            )}
+
             {/* Quick Actions for Active Journeys */}
             {activeJourneys.length > 0 && (
               <div className="mb-6">

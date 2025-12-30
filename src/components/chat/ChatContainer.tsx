@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/Toast'
 import { trackSessionStart, trackPageView, trackChatSent } from '@/lib/analytics'
 import { api } from '@/lib/api'
+import { extractSymptomCategories } from '@/lib/symptomKeywords'
+import type { SymptomCategory } from '@/types/affiliate'
 
 // Higher limit for anonymous users - let them experience the app first
 const ANONYMOUS_CHAT_LIMIT = 10
@@ -96,6 +98,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   const [showSignUpPrompt, setShowSignUpPrompt] = useState(false)
   const [pendingVoiceText, setPendingVoiceText] = useState<string | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [detectedSymptomCategories, setDetectedSymptomCategories] = useState<SymptomCategory[]>([])
+  const [symptomCardDismissed, setSymptomCardDismissed] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const hasHandledQueryParam = useRef(false)
 
@@ -251,6 +255,12 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       messageLength: content.length,
       peptideMentioned: extractPeptideMention(content),
     })
+
+    // Detect symptom categories in user message
+    const symptomCategories = extractSymptomCategories(content)
+    if (symptomCategories.length > 0 && !symptomCardDismissed) {
+      setDetectedSymptomCategories(symptomCategories)
+    }
 
     setViewState('chatting')
 
@@ -684,6 +694,9 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 detectedMode={detectedMode}
                 mentionedPeptides={mentionedPeptides}
                 conversationId={activeConversationId}
+                detectedSymptomCategories={detectedSymptomCategories}
+                onSymptomCardDismiss={() => setSymptomCardDismissed(true)}
+                symptomCardDismissed={symptomCardDismissed}
                 journeyPrompt={
                   userContext &&
                   !journeyPromptDismissed &&
