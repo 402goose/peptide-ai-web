@@ -89,12 +89,7 @@ export default function ChatLayout({
   }, [])
 
   return (
-    <div
-      className="min-h-[calc(100svh+1px)] flex bg-white dark:bg-slate-950"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
+    <div className="h-[100svh] flex bg-white dark:bg-slate-950 overflow-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-slate-200 dark:md:border-slate-800">
         <ConversationSidebar />

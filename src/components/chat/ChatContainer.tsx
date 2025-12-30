@@ -9,11 +9,10 @@ import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
 import { VoiceButton } from './VoiceButton'
 import { JourneyPrompt } from './JourneyPrompt'
-import { OnboardingFlow } from './OnboardingFlow'
 import type { OnboardingContext } from './OnboardingFlow'
 import { InstallHint } from '@/components/pwa/InstallHint'
 import type { Message, Source } from '@/types'
-import { Beaker, Sparkles, ArrowRight, Lock, Target } from 'lucide-react'
+import { Beaker, Sparkles, ArrowRight, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/Toast'
 import { trackSessionStart, trackPageView, trackChatSent } from '@/lib/analytics'
@@ -72,7 +71,7 @@ interface ChatContainerProps {
   conversationId?: string
 }
 
-type ViewState = 'ready' | 'onboarding' | 'chatting'
+type ViewState = 'ready' | 'chatting'
 
 export function ChatContainer({ conversationId }: ChatContainerProps) {
   const router = useRouter()
@@ -479,27 +478,6 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     }
   }
 
-  // Handle onboarding flow completion
-  function handleOnboardingComplete(query: string, context: OnboardingContext) {
-    setUserContext(context)
-    setViewState('chatting')
-
-    // Generate a personalized opening message based on goals
-    const goalLabels = context.goals?.map(g => g.label).join(' and ') || 'peptide research'
-    const peptides = context.peptideSuggestions?.slice(0, 3).join(', ') || ''
-
-    const openingMessage = context.experienceLevel === 'new'
-      ? `I'm interested in ${goalLabels}. I'm new to peptides${peptides ? ` and would like to learn about ${peptides}` : ''}. Can you give me an introduction?`
-      : `I'm looking to optimize my ${goalLabels} protocol${peptides ? ` with ${peptides}` : ''}. What should I know?`
-
-    handleSendMessage(openingMessage)
-  }
-
-  // Handle skipping onboarding
-  function handleOnboardingSkip() {
-    setViewState('ready')
-  }
-
   // Handle query parameter (from Stack Builder)
   useEffect(() => {
     const query = searchParams?.get('q')
@@ -601,28 +579,11 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 />
               </motion.div>
 
-              {/* Guided Start Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25, duration: 0.3 }}
-                className="mb-6"
-              >
-                <Button
-                  onClick={() => setViewState('onboarding')}
-                  variant="outline"
-                  className="gap-2 px-6 py-5 text-base border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                >
-                  <Target className="h-5 w-5 text-blue-500" />
-                  Get Personalized Recommendations
-                </Button>
-              </motion.div>
-
               {/* Quick suggestions */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35, duration: 0.3 }}
+                transition={{ delay: 0.3, duration: 0.3 }}
                 className="flex flex-wrap justify-center gap-2 max-w-xl mb-8"
               >
                 {[
@@ -650,23 +611,6 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
               >
                 <InstallHint />
               </motion.div>
-            </motion.div>
-          )}
-
-          {/* Onboarding State */}
-          {viewState === 'onboarding' && (
-            <motion.div
-              key="onboarding"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="h-full"
-            >
-              <OnboardingFlow
-                onComplete={handleOnboardingComplete}
-                onSkip={handleOnboardingSkip}
-              />
             </motion.div>
           )}
 
