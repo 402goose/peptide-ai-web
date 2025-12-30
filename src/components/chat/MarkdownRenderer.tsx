@@ -25,9 +25,13 @@ export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnM
   )
 
   // Process text to add peptide pills
-  // During streaming, only pill-ify "complete" peptides (followed by space/punctuation)
-  // This enables progressive pill rendering without flickering
   const processPeptides = (text: string): React.ReactNode[] => {
+    // During streaming, skip pill processing to avoid flickering
+    // Pills will appear once streaming completes
+    if (isStreaming) {
+      return [text]
+    }
+
     const parts: React.ReactNode[] = []
     let lastIndex = 0
     let match
@@ -37,17 +41,6 @@ export function MarkdownRenderer({ content, sources = [], onAddToStack, onLearnM
 
     while ((match = PEPTIDE_REGEX.exec(text)) !== null) {
       const matchEnd = match.index + match[0].length
-      const charAfter = text[matchEnd]
-
-      // During streaming, only render pill if peptide is "complete"
-      // (followed by space, punctuation, or nothing more in text)
-      if (isStreaming) {
-        const isComplete = !charAfter || /[\s,.:;!?)}\]>]/.test(charAfter)
-        if (!isComplete) {
-          // Skip this match - peptide might still be streaming
-          continue
-        }
-      }
 
       // Add text before the match
       if (match.index > lastIndex) {
