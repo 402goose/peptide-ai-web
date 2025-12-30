@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageBubble } from './MessageBubble'
 import { TypingIndicator } from './TypingIndicator'
-import { FollowUpChips } from './FollowUpChips'
+import { MentionedPeptides } from './MentionedPeptides'
 import { ResponseCard } from './ResponseCard'
 import { DisclaimerBanner } from './DisclaimerBanner'
 import { ResponseActions } from './ResponseActions'
@@ -19,8 +19,6 @@ interface MessageListProps {
   streamingContent?: string
   sources: Source[]
   disclaimers: string[]
-  followUps: string[]
-  onFollowUpClick: (question: string) => void
   detectedMode?: string
   mentionedPeptides?: string[]
   conversationId?: string
@@ -39,8 +37,6 @@ export function MessageList({
   streamingContent = '',
   sources,
   disclaimers,
-  followUps,
-  onFollowUpClick,
   detectedMode = 'balanced',
   mentionedPeptides = [],
   conversationId,
@@ -227,9 +223,13 @@ export function MessageList({
         {/* Show interactive elements after the last assistant message */}
         {!isLoading && messages.length > 0 && messages[messages.length - 1].role === 'assistant' && (
           <div className="mt-4 space-y-3">
-            {/* Follow-up suggestions - compact horizontal chips */}
-            {followUps.length > 0 && (
-              <FollowUpChips followUps={followUps} onClick={onFollowUpClick} />
+            {/* Peptides mentioned - clickable pills to learn more or add to stack */}
+            {mentionedPeptides.length > 0 && (
+              <MentionedPeptides
+                peptides={mentionedPeptides}
+                onLearnMore={onLearnMore || (() => {})}
+                onAddToStack={onAddToStack}
+              />
             )}
 
             {/* Collapsible research card with sources */}

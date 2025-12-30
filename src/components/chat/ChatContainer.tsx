@@ -442,10 +442,6 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
     }
   }, [messages, isLoading, isStreaming, isAnonymous, activeConversationId, conversationId, detectedMode, router])
 
-  function handleFollowUpClick(question: string) {
-    handleSendMessage(question)
-  }
-
   function handleAddToStack(peptideId: string) {
     if (typeof window === 'undefined') return
 
@@ -484,8 +480,22 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
   function handleOnboardingComplete(query: string, context: OnboardingContext) {
     setUserContext(context)
     setShowOnboarding(false)
+    setViewState('chatting')
 
-    // Generate a personalized opening message based on goals
+    // Create a styled context message showing user's selections
+    const contextMessage: Message = {
+      role: 'user',
+      content: '', // Empty content - the metadata drives the display
+      timestamp: new Date().toISOString(),
+      metadata: {
+        type: 'onboarding_context',
+        goal: context.primaryGoalLabel || context.primaryGoal,
+        conditions: context.conditionLabels || context.conditions,
+        experience: context.experienceLevel,
+      }
+    }
+
+    // Generate the actual query message
     const goalLabels = context.goals?.map(g => g.label).join(' and ') || 'peptide research'
     const peptides = context.peptideSuggestions?.slice(0, 3).join(', ') || ''
 
@@ -493,7 +503,13 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       ? `I'm interested in ${goalLabels}. I'm new to peptides${peptides ? ` and would like to learn about ${peptides}` : ''}. Can you give me an introduction and recommendations?`
       : `I'm looking to optimize my ${goalLabels} protocol${peptides ? ` with ${peptides}` : ''}. What should I know about dosing, timing, and best practices?`
 
-    handleSendMessage(openingMessage)
+    // Add context message first, then send the actual query
+    setMessages([contextMessage])
+
+    // Small delay to let the context message render, then send the query
+    setTimeout(() => {
+      handleSendMessage(openingMessage)
+    }, 100)
   }
 
   // Handle query parameter (from Stack Builder)
@@ -584,16 +600,30 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 </p>
               </motion.div>
 
-              {/* Big Voice Button */}
+              {/* Big Voice Button - Mobile only */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
-                className="mb-12"
+                className="mb-12 sm:hidden"
               >
                 <VoiceButton
                   size="large"
                   onTranscription={handleVoiceTranscription}
+                />
+              </motion.div>
+
+              {/* Text Input - Desktop only in ready state */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="hidden sm:block w-full max-w-2xl mb-8"
+              >
+                <MessageInput
+                  onSend={handleSendMessage}
+                  disabled={isLoading}
+                  placeholder="Ask about peptide research..."
                 />
               </motion.div>
 
@@ -666,8 +696,6 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 streamingContent={streamingContent}
                 sources={currentSources}
                 disclaimers={currentDisclaimers}
-                followUps={currentFollowUps}
-                onFollowUpClick={handleFollowUpClick}
                 onAddToStack={handleAddToStack}
                 onLearnMore={handleLearnMore}
                 detectedMode={detectedMode}
