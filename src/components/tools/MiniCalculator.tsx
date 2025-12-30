@@ -67,10 +67,19 @@ export function MiniCalculator({
     }
   }, [vialSize, vialUnit, bacWater, desiredDose, syringeSize, customVial, customBacWater, customDose, useCustomVial, useCustomBacWater, useCustomDose])
 
+  const [applied, setApplied] = useState(false)
+
   const handleApply = () => {
     if (calculation && onDoseCalculated) {
       const actualDose = useCustomDose ? parseFloat(customDose) || 0 : desiredDose
       onDoseCalculated(actualDose, calculation.unitsToDraw)
+      setApplied(true)
+      // Collapse after a brief moment to show success
+      setTimeout(() => {
+        setIsExpanded(false)
+        // Reset applied state after collapse
+        setTimeout(() => setApplied(false), 300)
+      }, 500)
     }
   }
 
@@ -83,13 +92,13 @@ export function MiniCalculator({
         className="w-full px-3 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Calculator className="w-4 h-4 text-blue-500" />
+          <Calculator className={`w-4 h-4 ${applied ? 'text-green-500' : 'text-blue-500'}`} />
           <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Dose Calculator
           </span>
           {calculation && !isExpanded && (
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              • {useCustomDose ? customDose : desiredDose} mcg = {calculation.unitsToDraw} units
+            <span className={`text-xs ${applied ? 'text-green-600 dark:text-green-400 font-medium' : 'text-slate-500 dark:text-slate-400'}`}>
+              {applied ? '✓ ' : '• '}{useCustomDose ? customDose : desiredDose} mcg = {calculation.unitsToDraw} units
             </span>
           )}
         </div>
@@ -312,9 +321,14 @@ export function MiniCalculator({
                 <button
                   type="button"
                   onClick={handleApply}
-                  className="w-full py-2 text-sm bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors font-medium"
+                  disabled={applied}
+                  className={`w-full py-2 text-sm rounded-lg transition-all font-medium ${
+                    applied
+                      ? 'bg-green-500 text-white'
+                      : 'bg-purple-500 hover:bg-purple-600 text-white'
+                  }`}
                 >
-                  Use this dose ({useCustomDose ? customDose : desiredDose} mcg)
+                  {applied ? '✓ Applied!' : `Use this dose (${useCustomDose ? customDose : desiredDose} mcg)`}
                 </button>
               )}
             </div>
