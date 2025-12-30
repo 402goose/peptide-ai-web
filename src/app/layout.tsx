@@ -18,6 +18,15 @@ export const metadata: Metadata = {
   title: 'Peptide AI - Research Assistant',
   description: 'Research-grade peptide knowledge platform powered by RAG. Explore peer-reviewed research and real user experiences.',
   keywords: ['peptides', 'research', 'BPC-157', 'TB-500', 'health', 'science'],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Peptide AI',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
 export const viewport: Viewport = {
@@ -40,6 +49,11 @@ export default function RootLayout({
       signUpUrl="/sign-up"
     >
       <html lang="en" suppressHydrationWarning>
+        <head>
+          <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        </head>
         <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
           <Providers>
             {children}

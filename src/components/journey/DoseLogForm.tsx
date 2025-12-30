@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Syringe, Clock, MapPin } from 'lucide-react'
+import { Syringe, Clock, MapPin, Calendar } from 'lucide-react'
 import { MiniCalculator } from '@/components/tools/MiniCalculator'
 import type { LogDoseRequest, AdministrationRoute } from '@/types/journey'
 
@@ -13,6 +13,17 @@ interface DoseLogFormProps {
   onSubmit: (data: LogDoseRequest) => Promise<void>
   onCancel?: () => void
   loading?: boolean
+  // For editing existing dose
+  initialData?: {
+    dose_amount?: number
+    dose_unit?: string
+    route?: AdministrationRoute
+    injection_site?: string
+    time_of_day?: string
+    fasted?: boolean
+    notes?: string
+    log_date?: string
+  }
 }
 
 const ROUTES: { value: AdministrationRoute; label: string }[] = [
@@ -40,12 +51,23 @@ const TIME_OF_DAY = [
   { value: 'before_bed', label: 'Before Bed' },
 ]
 
-export function DoseLogForm({ peptide, onSubmit, onCancel, loading }: DoseLogFormProps) {
-  const [formData, setFormData] = useState<Partial<LogDoseRequest>>({
+export function DoseLogForm({ peptide, onSubmit, onCancel, loading, initialData }: DoseLogFormProps) {
+  // Get today's date in local timezone for default
+  const getLocalDate = () => {
+    const now = new Date()
+    return now.toISOString().split('T')[0]
+  }
+
+  const [formData, setFormData] = useState<Partial<LogDoseRequest> & { log_date?: string }>({
     peptide,
-    dose_amount: undefined,
-    dose_unit: 'mcg',
-    route: 'subcutaneous',
+    dose_amount: initialData?.dose_amount ?? undefined,
+    dose_unit: initialData?.dose_unit ?? 'mcg',
+    route: initialData?.route ?? 'subcutaneous',
+    injection_site: initialData?.injection_site,
+    time_of_day: initialData?.time_of_day,
+    fasted: initialData?.fasted,
+    notes: initialData?.notes,
+    log_date: initialData?.log_date ?? getLocalDate(),
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,7 +94,24 @@ export function DoseLogForm({ peptide, onSubmit, onCancel, loading }: DoseLogFor
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <Syringe className="h-5 w-5 text-blue-500" />
-        <h3 className="font-semibold text-slate-900 dark:text-white">Log Dose</h3>
+        <h3 className="font-semibold text-slate-900 dark:text-white">
+          {initialData ? 'Edit Dose' : 'Log Dose'}
+        </h3>
+      </div>
+
+      {/* Date Selection */}
+      <div>
+        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <Calendar className="inline h-3.5 w-3.5 mr-1" />
+          Date
+        </label>
+        <Input
+          type="date"
+          value={formData.log_date || ''}
+          onChange={(e) => setFormData({ ...formData, log_date: e.target.value })}
+          max={getLocalDate()}
+          className="w-full"
+        />
       </div>
 
       {/* Mini Calculator */}

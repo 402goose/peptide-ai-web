@@ -109,7 +109,7 @@ const PEPTIDES = [
   { id: 'melanotan-ii', name: 'Melanotan II', category: 'Tanning' },
 ]
 
-type View = 'list' | 'create' | 'dose' | 'checkin' | 'detail'
+type View = 'list' | 'create' | 'dose' | 'checkin' | 'detail' | 'viewDoses'
 
 const STORAGE_KEY = 'peptide-ai-journeys'
 
@@ -172,6 +172,9 @@ function JourneyPageContent() {
   // Share modal state
   const [shareModalJourney, setShareModalJourney] = useState<LocalJourney | null>(null)
   const [shareLink, setShareLink] = useState('')
+
+  // Editing dose state
+  const [editingDose, setEditingDose] = useState<LocalDoseLog | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
 
   useEffect(() => {

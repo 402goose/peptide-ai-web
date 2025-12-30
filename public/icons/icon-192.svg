@@ -1,0 +1,16 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="40" fill="#0f172a"/>
+  <rect x="8" y="8" width="176" height="176" rx="32" fill="url(#gradient)"/>
+  <!-- Beaker icon -->
+  <path d="M76 56V80L56 120C52.6863 126.627 57.4772 134 64.9443 134H127.056C134.523 134 139.314 126.627 136 120L116 80V56" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M72 56H120" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="80" cy="108" r="8" fill="#60a5fa"/>
+  <circle cx="104" cy="116" r="6" fill="#60a5fa"/>
+  <circle cx="92" cy="98" r="5" fill="#93c5fd"/>
+  <defs>
+    <linearGradient id="gradient" x1="8" y1="8" x2="184" y2="184" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1e3a8a"/>
+      <stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+</svg>
