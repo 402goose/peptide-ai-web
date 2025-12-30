@@ -288,7 +288,7 @@ interface PeptidePillProps {
 
 export function PeptidePill({ name, onAddToStack, onLearnMore }: PeptidePillProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [position, setPosition] = useState<'above' | 'below'>('below')
+  const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({})
   const pillRef = useRef<HTMLButtonElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
 
@@ -308,14 +308,41 @@ export function PeptidePill({ name, onAddToStack, onLearnMore }: PeptidePillProp
 
   const categoryColor = CATEGORY_COLORS[peptideInfo.category] || 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
 
-  // Calculate position when opening
+  // Calculate fixed position when opening
   const handleOpen = () => {
     haptic('light')
     if (pillRef.current) {
       const rect = pillRef.current.getBoundingClientRect()
+      const popoverWidth = 288 // w-72 = 18rem = 288px
+      const popoverHeight = 280 // approximate height
+      const padding = 16
+
+      // Calculate horizontal position (center on pill, but keep in viewport)
+      let left = rect.left + rect.width / 2 - popoverWidth / 2
+      left = Math.max(padding, Math.min(left, window.innerWidth - popoverWidth - padding))
+
+      // Calculate vertical position
       const spaceBelow = window.innerHeight - rect.bottom
       const spaceAbove = rect.top
-      setPosition(spaceBelow < 300 && spaceAbove > spaceBelow ? 'above' : 'below')
+
+      let top: number
+      if (spaceBelow >= popoverHeight + padding || spaceBelow >= spaceAbove) {
+        // Show below
+        top = rect.bottom + 8
+      } else {
+        // Show above
+        top = rect.top - popoverHeight - 8
+      }
+
+      // Keep in viewport vertically
+      top = Math.max(padding, Math.min(top, window.innerHeight - popoverHeight - padding))
+
+      setPopoverStyle({
+        position: 'fixed',
+        top: `${top}px`,
+        left: `${left}px`,
+        width: `${popoverWidth}px`,
+      })
     }
     setIsOpen(true)
   }
@@ -355,15 +382,14 @@ export function PeptidePill({ name, onAddToStack, onLearnMore }: PeptidePillProp
         <Sparkles className="h-2.5 w-2.5 opacity-60" />
       </button>
 
-      {/* Popover */}
+      {/* Popover - Fixed position to avoid clipping */}
       {isOpen && (
         <div
           ref={popoverRef}
+          style={popoverStyle}
           className={cn(
-            "absolute z-50 w-72 p-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700",
-            "bg-white dark:bg-slate-800 animate-in fade-in-0 zoom-in-95 duration-150",
-            position === 'above' ? 'bottom-full mb-2' : 'top-full mt-2',
-            "left-1/2 -translate-x-1/2"
+            "z-[100] p-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700",
+            "bg-white dark:bg-slate-800 animate-in fade-in-0 zoom-in-95 duration-150"
           )}
         >
           {/* Header */}

@@ -2,7 +2,7 @@
 
 import { UserButton, useUser } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
-import { Menu, Moon, Sun, Beaker, BookOpen, Shield, Settings, Share } from 'lucide-react'
+import { Menu, Moon, Sun, Beaker, BookOpen, Shield, Settings, Share, MoreVertical } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
 
@@ -10,11 +10,12 @@ const ADMIN_EMAILS = ['vibetradefox@gmail.com']
 
 interface HeaderProps {
   onMenuClick: () => void
+  onToolsClick?: () => void
   onShareClick?: () => void
   showShare?: boolean
 }
 
-export function Header({ onMenuClick, onShareClick, showShare = false }: HeaderProps) {
+export function Header({ onMenuClick, onToolsClick, onShareClick, showShare = false }: HeaderProps) {
   const { theme, setTheme } = useTheme()
   const { user } = useUser()
 
@@ -95,6 +96,18 @@ export function Header({ onMenuClick, onShareClick, showShare = false }: HeaderP
           <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           <span className="sr-only">Toggle theme</span>
         </Button>
+        {/* Tools button - mobile only */}
+        {onToolsClick && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 md:hidden bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
+            onClick={onToolsClick}
+          >
+            <MoreVertical className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+            <span className="sr-only">Tools & Settings</span>
+          </Button>
+        )}
         <div className="flex items-center">
           {user ? (
             <UserButton

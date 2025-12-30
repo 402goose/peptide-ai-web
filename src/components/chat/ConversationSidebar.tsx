@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useUser } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,6 +16,8 @@ import { Plus, MessageSquare, MoreHorizontal, Trash2, Beaker, FlaskConical, Penc
 import { api } from '@/lib/api'
 import type { ConversationSummary } from '@/types'
 import { cn } from '@/lib/utils'
+import { AuthPromptModal } from '@/components/auth/AuthPromptModal'
+import { haptic } from '@/lib/haptics'
 
 interface ConversationSidebarProps {
   onSelect?: () => void
@@ -23,12 +26,26 @@ interface ConversationSidebarProps {
 export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
   const router = useRouter()
   const params = useParams()
+  const { user, isLoaded } = useUser()
   const currentId = params?.id as string | undefined
 
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
+  const [authModal, setAuthModal] = useState<{ isOpen: boolean; feature: 'journey' | 'stack'; path: string } | null>(null)
+
+  const handleFeatureNavigation = (feature: 'journey' | 'stack', path: string) => {
+    haptic('light')
+    // If user is logged in, navigate directly
+    if (isLoaded && user) {
+      router.push(path)
+      onSelect?.()
+    } else {
+      // Show auth prompt modal
+      setAuthModal({ isOpen: true, feature, path })
+    }
+  }
 
   useEffect(() => {
     // Fetch on client side and refresh when URL changes (new conversation created)
@@ -137,7 +154,7 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
           New Research Query
         </Button>
         <Button
-          onClick={() => router.push('/journey')}
+          onClick={() => handleFeatureNavigation('journey', '/journey')}
           className="w-full justify-start gap-2"
           variant="ghost"
         >
@@ -145,7 +162,7 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
           Journey Tracker
         </Button>
         <Button
-          onClick={() => router.push('/stacks')}
+          onClick={() => handleFeatureNavigation('stack', '/stacks')}
           className="w-full justify-start gap-2"
           variant="ghost"
         >
@@ -292,6 +309,19 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
       <div className="border-t border-slate-200 p-3 text-xs text-slate-500 dark:border-slate-800">
         Research platform. Not medical advice.
       </div>
+
+      {/* Auth Prompt Modal */}
+      {authModal && (
+        <AuthPromptModal
+          isOpen={authModal.isOpen}
+          onClose={() => {
+            setAuthModal(null)
+            onSelect?.()
+          }}
+          feature={authModal.feature}
+          targetPath={authModal.path}
+        />
+      )}
     </div>
   )
 }
