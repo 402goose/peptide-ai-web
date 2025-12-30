@@ -893,6 +893,24 @@ function JourneyPageContent() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Primary Peptide
                 </label>
+
+                {/* Show selected peptide */}
+                {newJourney.primaryPeptide && (
+                  <div className="mb-2 p-2 rounded-lg border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-blue-700 dark:text-blue-300">{newJourney.primaryPeptide}</div>
+                      <div className="text-xs text-blue-500">Selected</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNewJourney({ ...newJourney, primaryPeptide: '' })}
+                      className="text-blue-400 hover:text-blue-600 p-1"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+
                 <div className="relative mb-2">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
@@ -913,7 +931,10 @@ function JourneyPageContent() {
                           ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
                           : 'border-slate-200 hover:border-slate-300 dark:border-slate-600'
                       )}
-                      onClick={() => setNewJourney({ ...newJourney, primaryPeptide: peptide.name })}
+                      onClick={() => {
+                        setNewJourney({ ...newJourney, primaryPeptide: peptide.name })
+                        setPeptideSearch('') // Clear search after selection
+                      }}
                     >
                       <div className="font-medium text-slate-900 dark:text-white">{peptide.name}</div>
                       <div className="text-xs text-slate-500">{peptide.category}</div>
