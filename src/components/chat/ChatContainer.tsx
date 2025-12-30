@@ -12,7 +12,7 @@ import { JourneyPrompt } from './JourneyPrompt'
 import type { OnboardingContext } from './OnboardingFlow'
 import { InstallHint } from '@/components/pwa/InstallHint'
 import type { Message, Source } from '@/types'
-import { Beaker, Sparkles, ArrowRight, Lock } from 'lucide-react'
+import { Beaker, Sparkles, ArrowRight, Lock, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/Toast'
 import { trackSessionStart, trackPageView, trackChatSent } from '@/lib/analytics'
@@ -579,11 +579,28 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 />
               </motion.div>
 
+              {/* Get Personalized Button */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+                className="mb-6"
+              >
+                <Button
+                  onClick={() => handleSendMessage("I'm new to peptides and want personalized recommendations. Can you ask me about my goals and help me find the right peptides?")}
+                  variant="outline"
+                  className="gap-2 px-6 py-5 text-base border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                >
+                  <Target className="h-5 w-5 text-blue-500" />
+                  Get Personalized Recommendations
+                </Button>
+              </motion.div>
+
               {/* Quick suggestions */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.3 }}
+                transition={{ delay: 0.35, duration: 0.3 }}
                 className="flex flex-wrap justify-center gap-2 max-w-xl mb-8"
               >
                 {[
