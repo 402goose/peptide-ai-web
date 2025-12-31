@@ -13,7 +13,8 @@ import { OnboardingFlow } from './OnboardingFlow'
 import type { OnboardingContext } from './OnboardingFlow'
 import { InstallHint } from '@/components/pwa/InstallHint'
 import type { Message, Source } from '@/types'
-import { Beaker, Sparkles, ArrowRight, Lock } from 'lucide-react'
+import { Sparkles, ArrowRight, Lock } from 'lucide-react'
+import { SequenceIcon } from '@/components/brand/SequenceLogo'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/Toast'
 import { trackSessionStart, trackPageView, trackChatSent } from '@/lib/analytics'
@@ -574,8 +575,8 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
       <div className="flex-1 overflow-hidden">
         {showLoadingState ? (
           <div className="h-full flex flex-col items-center justify-center px-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg animate-pulse">
-              <Beaker className="h-7 w-7 text-white" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sequence-gradient shadow-lg animate-pulse">
+              <SequenceIcon size={28} className="[&_*]:stroke-white [&_circle]:fill-white" />
             </div>
             <p className="mt-4 text-slate-500 dark:text-slate-400">Loading conversation...</p>
           </div>
@@ -597,16 +598,18 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                 transition={{ delay: 0.1, duration: 0.3 }}
                 className="text-center mb-8"
               >
-                <div className="mb-6 flex justify-center">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
-                    <Beaker className="h-7 w-7 text-white" />
+                <div className="mb-4 flex justify-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sequence-gradient shadow-xl shadow-indigo-500/20 animate-helix">
+                    <SequenceIcon size={36} className="[&_*]:stroke-white [&_circle]:fill-white" />
                   </div>
                 </div>
-                <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
+                <h1 className="text-3xl font-bold text-sequence-gradient mb-2">
                   Sequence
                 </h1>
-                <p className="text-slate-500 dark:text-slate-400 max-w-sm">
-                  Your research engine for human optimization.
+                <p className="text-slate-500 dark:text-slate-400 max-w-sm flex items-center justify-center gap-2">
+                  <Sparkles className="h-4 w-4 text-sequence-teal" />
+                  Your research engine for human optimization
+                  <Sparkles className="h-4 w-4 text-sequence-teal" />
                 </p>
               </motion.div>
 
@@ -652,11 +655,11 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                   <button
                     key={i}
                     onClick={() => handleSendMessage(suggestion)}
-                    className="group flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-sm text-slate-600 dark:text-slate-300"
+                    className="group flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-200 text-sm text-slate-600 dark:text-slate-300"
                   >
-                    <Sparkles className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                    <Sparkles className="h-3.5 w-3.5 text-sequence-teal group-hover:text-indigo-500 transition-colors" />
                     {suggestion}
-                    <ArrowRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
+                    <ArrowRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all" />
                   </button>
                 ))}
               </motion.div>

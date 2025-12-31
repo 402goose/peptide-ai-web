@@ -25,7 +25,7 @@ export function Header({ onMenuClick, onToolsClick, onShareClick, showShare = fa
 
   return (
     <header
-      className="w-full flex items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-4 dark:border-slate-800 dark:bg-slate-950 shrink-0 z-40"
+      className="w-full flex items-center justify-between border-b border-indigo-100 bg-gradient-to-r from-white via-indigo-50/30 to-white px-3 sm:px-4 dark:border-slate-800 dark:from-slate-950 dark:via-indigo-950/20 dark:to-slate-950 shrink-0 z-40"
       style={{
         paddingTop: 'max(env(safe-area-inset-top, 0px), 0.5rem)',
         minHeight: 'calc(3.5rem + env(safe-area-inset-top, 0px))'
