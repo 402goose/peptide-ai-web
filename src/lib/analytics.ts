@@ -1,5 +1,5 @@
 /**
- * Analytics tracking utility for Peptide AI
+ * Analytics tracking utility for Sequence
  *
  * Tracks user events to populate the admin dashboard metrics.
  */

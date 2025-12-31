@@ -137,9 +137,9 @@ export function ConversationSidebar({ onSelect }: ConversationSidebarProps) {
     <div className="flex h-full flex-col bg-slate-50 dark:bg-slate-900">
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2.5 dark:border-slate-800">
-        <Beaker className="h-5 w-5 text-blue-600" />
+        <Beaker className="h-5 w-5 text-primary" />
         <span className="font-semibold text-slate-900 dark:text-white">
-          Peptide AI
+          Sequence
         </span>
       </div>
 

@@ -603,10 +603,10 @@ export function ChatContainer({ conversationId }: ChatContainerProps) {
                   </div>
                 </div>
                 <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
-                  Peptide AI
+                  Sequence
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 max-w-sm">
-                  Your research companion for peptides, dosing, and protocols.
+                  Your research engine for human optimization.
                 </p>
               </motion.div>
 

@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Beaker, MessageSquare, ArrowRight, Loader2 } from 'lucide-react'
+import { MessageSquare, ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MarkdownRenderer } from '@/components/chat/MarkdownRenderer'
+import { SequenceIcon } from '@/components/brand/SequenceLogo'
 import { api } from '@/lib/api'
 
 interface SharedMessage {
@@ -50,7 +51,7 @@ export default function SharedConversationPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -61,10 +62,10 @@ export default function SharedConversationPage() {
         <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
           <div className="mx-auto max-w-3xl px-4 py-3 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600">
-                <Beaker className="h-4 w-4 text-white" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sequence-gradient">
+                <SequenceIcon size={20} className="[&_*]:stroke-white [&_circle]:fill-white" />
               </div>
-              <span className="font-semibold text-slate-900 dark:text-white">Peptide AI</span>
+              <span className="font-semibold text-slate-900 dark:text-white">Sequence</span>
             </Link>
           </div>
         </header>
@@ -72,7 +73,7 @@ export default function SharedConversationPage() {
           <div className="text-center">
             <div className="mb-6 flex justify-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
-                <Beaker className="h-8 w-8 text-slate-400" />
+                <SequenceIcon size={32} className="opacity-40" />
               </div>
             </div>
             <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
@@ -98,14 +99,14 @@ export default function SharedConversationPage() {
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 shrink-0">
         <div className="mx-auto max-w-3xl px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600">
-              <Beaker className="h-4 w-4 text-white" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sequence-gradient">
+              <SequenceIcon size={20} className="[&_*]:stroke-white [&_circle]:fill-white" />
             </div>
-            <span className="font-semibold text-slate-900 dark:text-white">Peptide AI</span>
+            <span className="font-semibold text-slate-900 dark:text-white">Sequence</span>
           </Link>
           <Link href="/chat">
             <Button size="sm" className="gap-2">
-              Try Peptide AI <ArrowRight className="h-3 w-3" />
+              Try Sequence <ArrowRight className="h-3 w-3" />
             </Button>
           </Link>
         </div>
@@ -128,7 +129,7 @@ export default function SharedConversationPage() {
                 {message.role === 'user' ? (
                   // User message - bubble on right
                   <div className="flex justify-end">
-                    <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/10 px-4 py-3">
+                    <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-sequence-gradient text-white shadow-md shadow-primary/10 px-4 py-3">
                       <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
                         {message.content}
                       </p>
@@ -147,7 +148,7 @@ export default function SharedConversationPage() {
           {/* CTA */}
           <div className="mt-12 rounded-xl border border-slate-200 bg-white p-6 text-center dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-4 flex justify-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sequence-gradient">
                 <MessageSquare className="h-6 w-6 text-white" />
               </div>
             </div>
@@ -155,11 +156,11 @@ export default function SharedConversationPage() {
               Continue the conversation
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-              Start your own peptide research journey with our AI assistant
+              Start your own optimization sequence with our AI research engine
             </p>
             <Link href="/chat">
               <Button className="gap-2">
-                Start Researching <ArrowRight className="h-4 w-4" />
+                Start Your Sequence <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -167,7 +168,7 @@ export default function SharedConversationPage() {
           {/* Footer */}
           <footer className="mt-8 pb-8 text-center text-xs text-slate-400">
             <p>
-              This is a shared conversation from Peptide AI. The information provided is for research purposes only
+              This is a shared conversation from Sequence. The information provided is for research purposes only
               and should not be considered medical advice.
             </p>
           </footer>

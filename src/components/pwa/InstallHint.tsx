@@ -86,7 +86,7 @@ export function InstallHint() {
                   <circle cx="55" cy="66" r="4" fill="white" fillOpacity="0.6" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold">Install Peptide AI</h2>
+              <h2 className="text-xl font-bold">Install Sequence</h2>
               <p className="text-blue-100 text-sm mt-1">Add to your home screen for the best experience</p>
             </div>
 
@@ -198,7 +198,7 @@ export function InstallHint() {
             className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-2xl max-w-sm mx-auto w-full"
           >
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white text-center">
-              <h2 className="text-xl font-bold">Install Peptide AI</h2>
+              <h2 className="text-xl font-bold">Install Sequence</h2>
               <p className="text-blue-100 text-sm mt-1">Add to your home screen</p>
             </div>
 

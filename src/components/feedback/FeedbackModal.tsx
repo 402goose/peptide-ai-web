@@ -18,10 +18,10 @@ interface FeedbackModalProps {
   onSubmit: (feedback: FeedbackItem) => Promise<{ success: boolean; error?: string }>
 }
 
-const SYSTEM_PROMPT = `You are a product feedback assistant for Peptide AI. You have COMPLETE awareness of the product and its goals.
+const SYSTEM_PROMPT = `You are a product feedback assistant for Sequence. You have COMPLETE awareness of the product and its goals.
 
 ## PRODUCT OVERVIEW
-Peptide AI is a research platform that helps people:
+Sequence is a research platform that helps people:
 1. **Research Peptides**: Access scientific information about peptides like BPC-157, Semaglutide, TB-500, etc.
 2. **Build Stacks**: Create peptide combinations with synergy detection, conflict warnings, dosing protocols
 3. **Track Journeys**: Log doses, daily check-ins (energy, sleep, mood, recovery), track progress over time
@@ -54,7 +54,7 @@ Be conversational and curious. Ask one question at a time. Focus on:
 
 Keep responses short. When ready, tell them you'll submit the feedback.`
 
-const SUMMARY_PROMPT = `You are analyzing feedback for Peptide AI, a peptide research platform with Stack Builder, Journey Tracker, and Chat features.
+const SUMMARY_PROMPT = `You are analyzing feedback for Sequence, a peptide research platform with Stack Builder, Journey Tracker, and Chat features.
 
 Component: "{component}" (path: {path})
 
@@ -98,7 +98,7 @@ export function FeedbackModal({
     if (isOpen && messages.length === 0) {
       // Start the conversation with a cleaner intro
       const intro = componentName === 'General Feedback'
-        ? "Hi! I'd love to hear your thoughts about Peptide AI. What would you like to share? Is it a bug, a feature idea, or general feedback?"
+        ? "Hi! I'd love to hear your thoughts about Sequence. What would you like to share? Is it a bug, a feature idea, or general feedback?"
         : `Hi! I see you have feedback about **${componentName}**. I'd love to understand your thoughts. What would you like to share?`
       setMessages([{ role: 'assistant', content: intro }])
     }

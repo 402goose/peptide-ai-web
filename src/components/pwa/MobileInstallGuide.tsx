@@ -47,8 +47,8 @@ export function MobileInstallGuide({ onComplete }: { onComplete: () => void }) {
   const steps: Step[] = isIOS ? [
     {
       id: 'welcome',
-      title: 'Welcome to Peptide AI',
-      description: 'Your AI-powered research journal. Talk naturally about your peptide journey and get insights.',
+      title: 'Welcome to Sequence',
+      description: 'Your optimization sequence starts here. Research peptides with AI, track your journey, and discover what works.',
     },
     {
       id: 'share',
@@ -68,13 +68,13 @@ export function MobileInstallGuide({ onComplete }: { onComplete: () => void }) {
     {
       id: 'done',
       title: 'You\'re All Set!',
-      description: 'Open Peptide AI from your home screen to get started',
+      description: 'Open Sequence from your home screen to get started',
     },
   ] : [
     {
       id: 'welcome',
-      title: 'Welcome to Peptide AI',
-      description: 'Your AI-powered research journal. Talk naturally about your peptide journey and get insights.',
+      title: 'Welcome to Sequence',
+      description: 'Your optimization sequence starts here. Research peptides with AI, track your journey, and discover what works.',
     },
     {
       id: 'install',
@@ -89,7 +89,7 @@ export function MobileInstallGuide({ onComplete }: { onComplete: () => void }) {
     {
       id: 'done',
       title: 'You\'re All Set!',
-      description: 'Open Peptide AI from your home screen to get started',
+      description: 'Open Sequence from your home screen to get started',
     },
   ]
 
@@ -106,7 +106,7 @@ export function MobileInstallGuide({ onComplete }: { onComplete: () => void }) {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
             <Beaker className="h-5 w-5 text-white" />
           </div>
-          <span className="text-lg font-semibold text-white">Peptide AI</span>
+          <span className="text-lg font-semibold text-white">Sequence</span>
         </div>
         <Button
           variant="ghost"
@@ -412,7 +412,7 @@ export function MobileInstallGuide({ onComplete }: { onComplete: () => void }) {
                     onComplete()
                   }}
                 >
-                  Start Using Peptide AI
+                  Start Your Sequence
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>

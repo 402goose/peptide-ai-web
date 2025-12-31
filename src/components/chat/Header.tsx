@@ -2,9 +2,10 @@
 
 import { UserButton, useUser } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
-import { Menu, Moon, Sun, Beaker, BookOpen, Shield, Settings, Share, MoreVertical } from 'lucide-react'
+import { Menu, Moon, Sun, BookOpen, Shield, Settings, Share, MoreVertical } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
+import { SequenceIcon } from '@/components/brand/SequenceLogo'
 
 const ADMIN_EMAILS = ['vibetradefox@gmail.com']
 
@@ -40,15 +41,15 @@ export function Header({ onMenuClick, onToolsClick, onShareClick, showShare = fa
           <Menu className="h-5 w-5 text-slate-700 dark:text-slate-300" />
         </Button>
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm shrink-0">
-            <Beaker className="h-4 w-4 text-white" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sequence-gradient shadow-sm shrink-0">
+            <SequenceIcon size={20} className="[&_*]:stroke-white [&_circle]:fill-white" />
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-sm font-semibold text-slate-900 dark:text-white leading-tight truncate">
-              Peptide AI
+              Sequence
             </span>
             <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-none hidden sm:block">
-              Research Assistant
+              Research Engine
             </span>
           </div>
         </div>

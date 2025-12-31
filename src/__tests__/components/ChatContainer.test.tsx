@@ -157,9 +157,9 @@ describe('ChatContainer', () => {
     it('should render ready view by default', () => {
       render(<ChatContainer />)
 
-      // Should show the ready state with Peptide AI branding
-      expect(screen.getByText('Peptide AI')).toBeInTheDocument()
-      expect(screen.getByText(/Your research companion/)).toBeInTheDocument()
+      // Should show the ready state with Sequence branding
+      expect(screen.getByText('Sequence')).toBeInTheDocument()
+      expect(screen.getByText(/Your research engine/)).toBeInTheDocument()
     })
 
     it('should show voice button in ready state', () => {
@@ -466,7 +466,7 @@ describe('ChatContainer', () => {
 
       // Should redirect and show ready state
       await waitFor(() => {
-        expect(screen.getByText('Peptide AI')).toBeInTheDocument()
+        expect(screen.getByText('Sequence')).toBeInTheDocument()
       })
     })
 
@@ -477,7 +477,7 @@ describe('ChatContainer', () => {
 
       // Should redirect to ready state
       await waitFor(() => {
-        expect(screen.getByText('Peptide AI')).toBeInTheDocument()
+        expect(screen.getByText('Sequence')).toBeInTheDocument()
       })
     })
   })

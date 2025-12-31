@@ -17,7 +17,7 @@ export default function Icon() {
       <div
         style={{
           fontSize: 120,
-          background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+          background: 'linear-gradient(135deg, #4F46E5 0%, #14B8A6 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -32,23 +32,39 @@ export default function Icon() {
           viewBox="0 0 100 100"
           fill="none"
         >
-          {/* Beaker icon */}
+          {/* Sequence helix icon - three ascending nodes */}
+          {/* Helix spiral path */}
           <path
-            d="M35 20V40L20 70C17.5 76 21 82 28 82H72C79 82 82.5 76 80 70L65 40V20"
-            stroke="white"
-            strokeWidth="5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            d="M30 75 Q50 65 70 75 Q50 85 30 75"
+            stroke="rgba(255,255,255,0.4)"
+            strokeWidth="3"
+            fill="none"
           />
           <path
-            d="M32 20H68"
-            stroke="white"
-            strokeWidth="5"
-            strokeLinecap="round"
+            d="M30 50 Q50 40 70 50 Q50 60 30 50"
+            stroke="rgba(255,255,255,0.5)"
+            strokeWidth="3"
+            fill="none"
           />
-          <circle cx="40" cy="60" r="6" fill="#60a5fa" />
-          <circle cx="55" cy="66" r="4" fill="#60a5fa" />
-          <circle cx="48" cy="52" r="4" fill="#93c5fd" />
+          <path
+            d="M30 25 Q50 15 70 25 Q50 35 30 25"
+            stroke="rgba(255,255,255,0.6)"
+            strokeWidth="3"
+            fill="none"
+          />
+          {/* Connecting strand */}
+          <path
+            d="M50 20 L50 80"
+            stroke="rgba(255,255,255,0.3)"
+            strokeWidth="2"
+            strokeDasharray="4 4"
+          />
+          {/* Three ascending nodes */}
+          <circle cx="50" cy="75" r="10" fill="rgba(255,255,255,0.6)" />
+          <circle cx="50" cy="50" r="10" fill="rgba(255,255,255,0.8)" />
+          <circle cx="50" cy="25" r="10" fill="white" />
+          {/* Inner glow on top node */}
+          <circle cx="50" cy="25" r="5" fill="rgba(79,70,229,0.3)" />
         </svg>
       </div>
     ),

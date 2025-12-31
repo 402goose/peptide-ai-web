@@ -125,7 +125,7 @@ export default function SharePage() {
             <FlaskConical className="h-4 w-4 text-white" />
           </div>
           <span className="font-semibold text-slate-900 dark:text-white">
-            Peptide AI
+            Sequence
           </span>
         </div>
         <Button size="sm" onClick={() => router.push('/sign-up')}>
@@ -278,7 +278,7 @@ export default function SharePage() {
       {/* Footer */}
       <footer className="py-8 text-center text-xs text-slate-400 border-t border-slate-200 dark:border-slate-800">
         <p>For research purposes only. Not medical advice.</p>
-        <p className="mt-1">Peptide AI - Research smarter, not harder.</p>
+        <p className="mt-1">Sequence - Your Optimization Sequence</p>
       </footer>
     </div>
   )

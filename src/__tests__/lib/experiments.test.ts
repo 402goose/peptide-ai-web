@@ -113,7 +113,7 @@ describe('A/B Testing Patterns', () => {
       if (variant) {
         return "Let's get you started with a personalized journey!"
       }
-      return 'Welcome to Peptide AI'
+      return 'Welcome to Sequence'
     }
 
     it('should show standard message for control', () => {
@@ -121,7 +121,7 @@ describe('A/B Testing Patterns', () => {
 
       const message = getWelcomeMessage(experiments)
 
-      expect(message).toBe('Welcome to Peptide AI')
+      expect(message).toBe('Welcome to Sequence')
     })
 
     it('should show personalized message for treatment', () => {

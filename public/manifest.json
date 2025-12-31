@@ -1,14 +1,14 @@
 {
   "id": "/chat",
-  "name": "Peptide AI",
-  "short_name": "Peptide AI",
-  "description": "Your AI Research Journal for Peptide Science. Get research-backed answers about peptides, build your stack, and track your journey.",
+  "name": "Sequence",
+  "short_name": "Sequence",
+  "description": "Your optimization sequence. Research peptides with AI, track your journey, and discover the protocols that work for your biology.",
   "start_url": "/chat",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
-  "background_color": "#0f172a",
-  "theme_color": "#3b82f6",
+  "background_color": "#020617",
+  "theme_color": "#4F46E5",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -26,22 +26,22 @@
   ],
   "shortcuts": [
     {
-      "name": "New Chat",
-      "short_name": "Chat",
-      "description": "Start a new AI conversation",
+      "name": "New Research",
+      "short_name": "Research",
+      "description": "Start a new AI research session",
       "url": "/chat?utm_source=shortcut",
       "icons": [{ "src": "/api/icon/192", "sizes": "192x192" }]
     },
     {
-      "name": "My Stack",
-      "short_name": "Stack",
-      "description": "View your peptide stack",
+      "name": "My Protocol",
+      "short_name": "Protocol",
+      "description": "View your peptide protocol",
       "url": "/stack?utm_source=shortcut",
       "icons": [{ "src": "/api/icon/192", "sizes": "192x192" }]
     },
     {
       "name": "Journey Log",
-      "short_name": "Journal",
+      "short_name": "Journey",
       "description": "Log your daily progress",
       "url": "/journey?utm_source=shortcut",
       "icons": [{ "src": "/api/icon/192", "sizes": "192x192" }]

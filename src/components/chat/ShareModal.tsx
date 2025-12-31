@@ -64,7 +64,7 @@ export function ShareModal({
       try {
         await navigator.share({
           title: conversationTitle,
-          text: `Check out this Peptide AI conversation: ${conversationTitle}`,
+          text: `Check out this Sequence conversation: ${conversationTitle}`,
           url: shareUrl,
         })
       } catch (err) {

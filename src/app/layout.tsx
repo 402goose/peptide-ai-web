@@ -18,14 +18,25 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Peptide AI - Research Assistant',
-  description: 'Research-grade peptide knowledge platform powered by RAG. Explore peer-reviewed research and real user experiences.',
-  keywords: ['peptides', 'research', 'BPC-157', 'TB-500', 'health', 'science'],
+  title: 'Sequence - Your Optimization Sequence',
+  description: 'The research engine for human optimization. Research peptides with AI, track your journey, and discover the protocols that work for your biology.',
+  keywords: ['peptides', 'research', 'BPC-157', 'TB-500', 'optimization', 'biohacking', 'health', 'science', 'protocols'],
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Peptide AI',
+    title: 'Sequence',
+  },
+  openGraph: {
+    title: 'Sequence - Your Optimization Sequence',
+    description: 'The research engine for human optimization. 1,200+ peer-reviewed papers. Real user data. Evidence-based answers.',
+    type: 'website',
+    siteName: 'Sequence',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sequence - Your Optimization Sequence',
+    description: 'The research engine for human optimization. 1,200+ peer-reviewed papers. Real user data. Evidence-based answers.',
   },
   other: {
     'mobile-web-app-capable': 'yes',
@@ -40,7 +51,7 @@ export const viewport: Viewport = {
   userScalable: false,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: light)', color: '#F8FAFC' },
     { media: '(prefers-color-scheme: dark)', color: '#020617' },
   ],
 }
@@ -62,7 +73,7 @@ export default function RootLayout({
           {/* iOS PWA support */}
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-          <meta name="apple-mobile-web-app-title" content="Peptide AI" />
+          <meta name="apple-mobile-web-app-title" content="Sequence" />
           <meta name="mobile-web-app-capable" content="yes" />
           <link rel="apple-touch-icon" sizes="180x180" href="/api/icon/192" />
           <link rel="apple-touch-icon" sizes="152x152" href="/api/icon/192" />

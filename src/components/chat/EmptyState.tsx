@@ -1,7 +1,8 @@
 'use client'
 
-import { Beaker, Search, BookOpen, Shield, FlaskConical, Activity, Pill, CheckCircle2 } from 'lucide-react'
+import { Search, BookOpen, Shield, FlaskConical, Activity, Pill, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { SequenceLogo, SequenceIcon } from '@/components/brand/SequenceLogo'
 
 interface EmptyStateProps {
   onExampleClick: (query: string) => void
@@ -26,24 +27,27 @@ const EXAMPLE_QUERIES = [
 ]
 
 const TRUST_STATS = [
-  { value: '1,200+', label: 'Research Papers' },
-  { value: 'PubMed', label: 'Verified Sources' },
+  { value: '1,200+', label: 'Peer-Reviewed Papers' },
+  { value: 'PubMed', label: '& arXiv Sourced' },
   { value: '100+', label: 'Peptides Covered' },
 ]
 
 export function EmptyState({ onExampleClick }: EmptyStateProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-8">
-      {/* Logo and Title */}
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
-        <Beaker className="h-8 w-8 text-white" />
+      {/* Logo Mark */}
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-sequence-gradient shadow-lg">
+        <SequenceIcon size={32} className="text-white [&_*]:stroke-white [&_circle]:fill-white" />
       </div>
 
-      <h1 className="mb-2 text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-        Peptide Research Assistant
+      {/* Hero Title */}
+      <h1 className="mb-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        The Research Engine
       </h1>
+
+      {/* Subtitle */}
       <p className="mb-6 max-w-lg text-center text-slate-600 dark:text-slate-400">
-        Evidence-based insights from peer-reviewed research and real user experiences. Ask questions about peptides, protocols, and mechanisms.
+        Evidence-based insights from peer-reviewed research. Ask about peptides, protocols, mechanisms, and safety.
       </p>
 
       {/* Trust Stats */}
@@ -52,7 +56,7 @@ export function EmptyState({ onExampleClick }: EmptyStateProps) {
           <div key={stat.label} className="flex items-center gap-4">
             {i > 0 && <div className="h-8 w-px bg-slate-200 dark:bg-slate-700" />}
             <div className="text-center">
-              <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{stat.value}</div>
+              <div className="text-lg font-bold text-primary">{stat.value}</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</div>
             </div>
           </div>
@@ -65,12 +69,12 @@ export function EmptyState({ onExampleClick }: EmptyStateProps) {
           <Button
             key={example.label}
             variant="outline"
-            className="h-auto flex-col items-start gap-2 p-4 text-left hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 transition-colors"
+            className="h-auto flex-col items-start gap-2 p-4 text-left hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors"
             onClick={() => onExampleClick(example.query)}
           >
             <div className="flex items-center gap-2 text-slate-900 dark:text-white">
-              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/50">
-                <example.icon className="h-3.5 w-3.5 text-blue-600" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 dark:bg-primary/20">
+                <example.icon className="h-3.5 w-3.5 text-primary" />
               </div>
               <span className="font-medium">{example.label}</span>
             </div>
@@ -84,15 +88,15 @@ export function EmptyState({ onExampleClick }: EmptyStateProps) {
       {/* Trust Signals */}
       <div className="flex flex-wrap justify-center gap-4 text-xs text-slate-500 dark:text-slate-400 mb-4">
         <div className="flex items-center gap-1">
-          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+          <CheckCircle2 className="h-3.5 w-3.5 text-sequence-teal" />
           <span>Peer-Reviewed Sources</span>
         </div>
         <div className="flex items-center gap-1">
-          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+          <CheckCircle2 className="h-3.5 w-3.5 text-sequence-teal" />
           <span>Updated Weekly</span>
         </div>
         <div className="flex items-center gap-1">
-          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+          <CheckCircle2 className="h-3.5 w-3.5 text-sequence-teal" />
           <span>Cited References</span>
         </div>
       </div>
